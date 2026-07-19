@@ -1,24 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Dashboard from './src/screens/Dashboard/Dashboard';
+import theme from './src/constants/theme';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Welcome to Reels Vault</Text>
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={false} />
+        <Dashboard />
+      </View>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
+    backgroundColor: theme.colors.background,
   },
 });
+
+
+
