@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import styles from './Categories.styles';
 
-const DEFAULT_CATEGORIES = [
+export const DEFAULT_CATEGORIES = [
   { id: 'all', label: 'All', icon: '✨' },
   { id: 'shopping', label: 'Shopping', icon: '🛍️' },
   { id: 'binge', label: 'Binge', icon: '🎬' },
@@ -23,9 +23,20 @@ export default function Categories({
   const [activeCategory, setActiveCategory] = useState(
     categories[0]?.id || 'all',
   );
+  const scrollViewRef = useRef(null);
+  const chipLayouts = useRef({});
 
   const currentActive =
     selectedCategory !== undefined ? selectedCategory : activeCategory;
+
+  useEffect(() => {
+    if (chipLayouts.current[currentActive] && scrollViewRef.current) {
+      const layout = chipLayouts.current[currentActive];
+      // Scroll to position chip with padding
+      const scrollX = Math.max(0, layout.x - 20);
+      scrollViewRef.current.scrollTo({ x: scrollX, animated: true });
+    }
+  }, [currentActive]);
 
   const handleSelect = categoryId => {
     if (selectedCategory === undefined) {
@@ -39,6 +50,7 @@ export default function Categories({
   return (
     <View style={styles?.container}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles?.scrollContent}
@@ -51,6 +63,9 @@ export default function Categories({
               key={item?.id}
               style={[styles?.categoryChip, isSelected && styles?.activeChip]}
               onPress={() => handleSelect(item?.id)}
+              onLayout={e => {
+                chipLayouts.current[item?.id] = e.nativeEvent.layout;
+              }}
               activeOpacity={0.7}
             >
               {item?.icon ? (
@@ -59,7 +74,7 @@ export default function Categories({
               <Text
                 style={[styles?.chipText, isSelected && styles?.activeChipText]}
               >
-                {item.label}
+                {item?.label}
               </Text>
             </TouchableOpacity>
           );
