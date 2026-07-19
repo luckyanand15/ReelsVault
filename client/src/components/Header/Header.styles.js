@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     fontSize: theme?.typography?.fontSize?.xl,
     fontWeight: theme?.typography?.fontWeight?.bold,
     color: theme?.colors?.textPrimary,
-    letterSpacing: 0.5,
+    letterSpacing: theme?.latterSpacing?.sm,
   },
   rightContainer: {
     flexDirection: 'row',

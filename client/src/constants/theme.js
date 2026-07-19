@@ -64,6 +64,14 @@ export const borderRadius = {
   round: 9999,
 };
 
+export const latterSpacing = {
+  xs: 0.25,
+  sm: 0.5,
+  md: 1,
+  lg: 1.5,
+  xl: 2,
+}
+
 const theme = {
   colors,
   spacing,
