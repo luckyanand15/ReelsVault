@@ -86,6 +86,26 @@ const styles = StyleSheet.create({
   dragHandleIconActive: {
     color: theme?.colors?.textPrimary,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme?.spacing?.xs || 4,
+    marginLeft: 'auto',
+  },
+  actionButton: {
+    padding: theme?.spacing?.xs || 6,
+    borderRadius: theme?.borderRadius?.sm || 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editIcon: {
+    fontSize: 16,
+  },
+  deleteIcon: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme?.colors?.gray500 || '#737373',
+  },
 });
 
 export default styles;

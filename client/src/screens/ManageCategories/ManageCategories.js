@@ -5,9 +5,12 @@ import {
   ScrollView,
   Animated,
   PanResponder,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
+import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
+import ConfirmationComponent from '../../components/ConfirmationComponent/ConfirmationComponent';
 import styles from './ManageCategories.styles';
 
 export default function ManageCategories({
@@ -17,6 +20,8 @@ export default function ManageCategories({
 }) {
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [rowHeight, setRowHeight] = useState(56);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
 
   // Filter out the 'All' category from the manage list
   const displayCategories = categories.filter(cat => cat?.id !== 'all');
@@ -24,6 +29,48 @@ export default function ManageCategories({
   displayCategoriesRef.current = displayCategories;
 
   const dragY = useRef(new Animated.Value(0)).current;
+
+  const handleEditCategory = item => {
+    setEditingCategory(item);
+  };
+
+  const handleSaveCategory = ({ id, label, icon }) => {
+    const updatedDisplay = displayCategories?.map(cat =>
+      cat?.id === id ? { ...cat, label, icon } : cat,
+    );
+
+    const allCategory = categories?.find(cat => cat?.id === 'all');
+    const updatedFullList = allCategory
+      ? [allCategory, ...updatedDisplay]
+      : updatedDisplay;
+
+    if (onUpdateCategories) {
+      onUpdateCategories(updatedFullList);
+    }
+    setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = category => {
+    setCategoryToDelete(category);
+  };
+
+  const confirmDeleteCategory = () => {
+    if (!categoryToDelete) return;
+
+    const updatedDisplay = displayCategories?.filter(
+      cat => cat?.id !== categoryToDelete?.id,
+    );
+
+    const allCategory = categories?.find(cat => cat?.id === 'all');
+    const updatedFullList = allCategory
+      ? [allCategory, ...updatedDisplay]
+      : updatedDisplay;
+
+    if (onUpdateCategories) {
+      onUpdateCategories(updatedFullList);
+    }
+    setCategoryToDelete(null);
+  };
 
   const createPanResponder = index => {
     return PanResponder.create({
@@ -131,12 +178,51 @@ export default function ManageCategories({
 
                   <Text style={styles?.categoryIcon}>{item?.icon || '📁'}</Text>
                   <Text style={styles?.categoryLabel}>{item?.label}</Text>
+
+                  <View style={styles?.actionButtons}>
+                    <TouchableOpacity
+                      style={styles?.actionButton}
+                      onPress={() => handleEditCategory(item)}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles?.editIcon}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles?.actionButton}
+                      onPress={() => handleDeleteCategory(item)}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles?.deleteIcon}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </Animated.View>
             );
           })}
         </View>
       </ScrollView>
+
+      {/* Add / Edit Category Modal */}
+      <AddCategoryModal
+        visible={!!editingCategory}
+        onClose={() => setEditingCategory(null)}
+        onAddCategory={handleSaveCategory}
+        categoryToEdit={editingCategory}
+      />
+
+      {/* Delete Confirmation Component Modal */}
+      <ConfirmationComponent
+        visible={!!categoryToDelete}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${categoryToDelete?.label || 'this category'}"?`}
+        confirmText="Yes"
+        cancelText="Cancel"
+        isDestructive={true}
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setCategoryToDelete(null)}
+      />
     </SafeAreaView>
   );
 }

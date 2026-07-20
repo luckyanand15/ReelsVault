@@ -21,7 +21,12 @@ const PRESET_ICONS = [
   '💬', '🔔', '❤️', '📍', '🎉', '🛠️',
 ];
 
-export default function AddCategoryModal({ visible, onClose, onAddCategory }) {
+export default function AddCategoryModal({
+  visible,
+  onClose,
+  onAddCategory,
+  categoryToEdit = null,
+}) {
   const [selectedIcon, setSelectedIcon] = useState(PRESET_ICONS[0]);
   const [categoryName, setCategoryName] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -30,6 +35,18 @@ export default function AddCategoryModal({ visible, onClose, onAddCategory }) {
   const [scrollY, setScrollY] = useState(0);
 
   const iconScrollViewRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      if (categoryToEdit) {
+        setCategoryName(categoryToEdit.label || '');
+        setSelectedIcon(categoryToEdit.icon || PRESET_ICONS[0]);
+      } else {
+        setCategoryName('');
+        setSelectedIcon(PRESET_ICONS[0]);
+      }
+    }
+  }, [visible, categoryToEdit]);
 
   useEffect(() => {
     const showEvent =
@@ -58,6 +75,7 @@ export default function AddCategoryModal({ visible, onClose, onAddCategory }) {
 
     if (onAddCategory) {
       onAddCategory({
+        id: categoryToEdit?.id,
         label: trimmed,
         icon: selectedIcon,
       });
@@ -87,6 +105,8 @@ export default function AddCategoryModal({ visible, onClose, onAddCategory }) {
   const maxThumbTop = containerHeight - thumbHeight;
   const thumbTop = maxScroll > 0 ? (scrollY / maxScroll) * maxThumbTop : 0;
 
+  const isEditing = !!categoryToEdit;
+
   return (
     <Modal
       visible={visible}
@@ -111,7 +131,9 @@ export default function AddCategoryModal({ visible, onClose, onAddCategory }) {
           </View>
 
           <View style={styles?.header}>
-            <Text style={styles?.title}>Add Category</Text>
+            <Text style={styles?.title}>
+              {isEditing ? 'Edit Category' : 'Add Category'}
+            </Text>
             <TouchableOpacity
               style={styles?.closeButton}
               onPress={handleClose}
@@ -199,7 +221,9 @@ export default function AddCategoryModal({ visible, onClose, onAddCategory }) {
               disabled={!categoryName.trim()}
               activeOpacity={0.8}
             >
-              <Text style={styles?.submitButtonText}>Create Category</Text>
+              <Text style={styles?.submitButtonText}>
+                {isEditing ? 'Save Changes' : 'Create Category'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
