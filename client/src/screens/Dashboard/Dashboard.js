@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Text,
   View,
@@ -11,20 +11,40 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
-import Categories, {
-  DEFAULT_CATEGORIES,
-} from '../../components/Categories/Categories';
+import Categories from '../../components/Categories/Categories';
 import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
 import Settings from '../Settings/Settings';
 import styles from './Dashboard.styles';
+import { fetchCategories, createCategory } from '../../api/category.api';
+import { mapCategory } from '../../utils/mapCategory';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
+const ALL_CATEGORY = { id: 'all', label: 'All', icon: '✨' };
 
 export default function Dashboard() {
-  const [categoriesList, setCategoriesList] = useState(DEFAULT_CATEGORIES);
+  const [categoriesList, setCategoriesList] = useState([ALL_CATEGORY]);
   const categoriesListRef = useRef(categoriesList);
   categoriesListRef.current = categoriesList;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      try {
+        const categories = await fetchCategories();
+        if (isMounted) {
+          setCategoriesList([ALL_CATEGORY, ...categories.map(mapCategory)]);
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error?.message);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const selectedCategoryRef = useRef(selectedCategory);
@@ -136,16 +156,20 @@ export default function Dashboard() {
     changeCategoryWithAnimation(direction, catId);
   };
 
-  const handleAddCategory = ({ label, icon }) => {
-    const newId = `${label.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
-    const newCategory = { id: newId, label, icon };
-    setCategoriesList(prev => {
-      if (prev?.length > 0 && prev[0]?.id === 'all') {
-        return [prev[0], newCategory, ...prev.slice(1)];
-      }
-      return [newCategory, ...prev];
-    });
-    handleSelectCategoryFromBar(newId);
+  const handleAddCategory = async ({ label, icon }) => {
+    try {
+      const created = await createCategory({ title: label, icon });
+      const newCategory = mapCategory(created);
+      setCategoriesList(prev => {
+        if (prev?.length > 0 && prev[0]?.id === 'all') {
+          return [prev[0], newCategory, ...prev.slice(1)];
+        }
+        return [newCategory, ...prev];
+      });
+      handleSelectCategoryFromBar(newCategory.id);
+    } catch (error) {
+      console.error('Failed to create category:', error?.message);
+    }
   };
 
   const panResponder = useRef(

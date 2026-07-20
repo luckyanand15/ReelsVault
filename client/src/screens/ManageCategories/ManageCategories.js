@@ -12,6 +12,12 @@ import Header from '../../components/Header/Header';
 import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
 import ConfirmationComponent from '../../components/ConfirmationComponent/ConfirmationComponent';
 import styles from './ManageCategories.styles';
+import {
+  updateCategory,
+  deleteCategory,
+  reorderCategories,
+} from '../../api/category.api';
+import { mapCategory } from '../../utils/mapCategory';
 
 export default function ManageCategories({
   categories = [],
@@ -34,42 +40,56 @@ export default function ManageCategories({
     setEditingCategory(item);
   };
 
-  const handleSaveCategory = ({ id, label, icon }) => {
-    const updatedDisplay = displayCategories?.map(cat =>
-      cat?.id === id ? { ...cat, label, icon } : cat,
-    );
+  const handleSaveCategory = async ({ id, label, icon }) => {
+    try {
+      const updated = await updateCategory(id, { title: label, icon });
+      const mapped = mapCategory(updated);
+      const updatedDisplay = displayCategories?.map(cat =>
+        cat?.id === id ? mapped : cat,
+      );
 
-    const allCategory = categories?.find(cat => cat?.id === 'all');
-    const updatedFullList = allCategory
-      ? [allCategory, ...updatedDisplay]
-      : updatedDisplay;
+      const allCategory = categories?.find(cat => cat?.id === 'all');
+      const updatedFullList = allCategory
+        ? [allCategory, ...updatedDisplay]
+        : updatedDisplay;
 
-    if (onUpdateCategories) {
-      onUpdateCategories(updatedFullList);
+      if (onUpdateCategories) {
+        onUpdateCategories(updatedFullList);
+      }
+    } catch (error) {
+      console.error('Failed to update category:', error?.message);
+    } finally {
+      setEditingCategory(null);
     }
-    setEditingCategory(null);
   };
 
   const handleDeleteCategory = category => {
     setCategoryToDelete(category);
   };
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
 
-    const updatedDisplay = displayCategories?.filter(
-      cat => cat?.id !== categoryToDelete?.id,
-    );
+    try {
+      await deleteCategory(categoryToDelete.id);
 
-    const allCategory = categories?.find(cat => cat?.id === 'all');
-    const updatedFullList = allCategory
-      ? [allCategory, ...updatedDisplay]
-      : updatedDisplay;
+      const updatedDisplay = displayCategories?.filter(
+        cat => cat?.id !== categoryToDelete?.id,
+      );
 
-    if (onUpdateCategories) {
-      onUpdateCategories(updatedFullList);
+      const allCategory = categories?.find(cat => cat?.id === 'all');
+      const updatedFullList = allCategory
+        ? [allCategory, ...updatedDisplay]
+        : updatedDisplay;
+
+      if (onUpdateCategories) {
+        onUpdateCategories(updatedFullList);
+      }
+    } catch (error) {
+      console.error('Failed to delete category:', error?.message);
+    } finally {
+      setCategoryToDelete(null);
     }
-    setCategoryToDelete(null);
   };
 
   const createPanResponder = index => {
@@ -114,6 +134,10 @@ export default function ManageCategories({
       if (onUpdateCategories) {
         onUpdateCategories(updatedFullList);
       }
+
+      reorderCategories(updatedDisplay.map(cat => cat.id)).catch(error => {
+        console.error('Failed to persist category order:', error?.message);
+      });
     }
 
     setDraggingIndex(null);
