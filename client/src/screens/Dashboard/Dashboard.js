@@ -7,6 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
@@ -14,6 +15,7 @@ import Categories, {
   DEFAULT_CATEGORIES,
 } from '../../components/Categories/Categories';
 import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
+import Settings from '../Settings/Settings';
 import styles from './Dashboard.styles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -30,6 +32,7 @@ export default function Dashboard() {
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -180,7 +183,7 @@ export default function Dashboard() {
 
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header />
+      <Header onRightPress={() => setIsSettingsOpen(true)} />
       <Categories
         categories={categoriesList}
         selectedCategory={selectedCategory}
@@ -256,6 +259,15 @@ export default function Dashboard() {
         onClose={() => setIsAddCategoryOpen(false)}
         onAddCategory={handleAddCategory}
       />
+
+      {/* Settings Screen Modal */}
+      <Modal
+        visible={isSettingsOpen}
+        animationType="slide"
+        onRequestClose={() => setIsSettingsOpen(false)}
+      >
+        <Settings onBack={() => setIsSettingsOpen(false)} />
+      </Modal>
     </SafeAreaView>
   );
 }
