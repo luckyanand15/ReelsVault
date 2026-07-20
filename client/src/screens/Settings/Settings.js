@@ -1,16 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
+import ManageCategories from '../ManageCategories/ManageCategories';
 import styles from './Settings.styles';
 
-export default function Settings({ onBack, onManageCategory }) {
-  const handleManageCategoryPress = () => {
-    if (onManageCategory) {
-      onManageCategory();
-    }
-    // Currently clicking on this will not do anything as requested
-  };
+export default function Settings({
+  categories = [],
+  onUpdateCategories,
+  onBack,
+}) {
+  const [currentView, setCurrentView] = useState('main');
+
+  if (currentView === 'manageCategories') {
+    return (
+      <ManageCategories
+        categories={categories}
+        onUpdateCategories={onUpdateCategories}
+        onBack={() => setCurrentView('main')}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
@@ -23,7 +33,7 @@ export default function Settings({ onBack, onManageCategory }) {
           <View style={styles?.sectionCard}>
             <TouchableOpacity
               style={styles?.settingItem}
-              onPress={handleManageCategoryPress}
+              onPress={() => setCurrentView('manageCategories')}
               activeOpacity={0.7}
             >
               <View style={styles?.itemLeft}>

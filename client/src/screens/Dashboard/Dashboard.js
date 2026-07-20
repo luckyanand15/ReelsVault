@@ -266,7 +266,11 @@ export default function Dashboard() {
         animationType="slide"
         onRequestClose={() => setIsSettingsOpen(false)}
       >
-        <Settings onBack={() => setIsSettingsOpen(false)} />
+        <Settings
+          categories={categoriesList}
+          onUpdateCategories={setCategoriesList}
+          onBack={() => setIsSettingsOpen(false)}
+        />
       </Modal>
     </SafeAreaView>
   );
