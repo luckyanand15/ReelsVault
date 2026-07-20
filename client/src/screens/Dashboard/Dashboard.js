@@ -1,19 +1,38 @@
 import React, { useState, useRef } from 'react';
-import { Text, View, PanResponder, Animated, Dimensions } from 'react-native';
+import {
+  Text,
+  View,
+  PanResponder,
+  Animated,
+  Dimensions,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Modal,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import Categories, {
   DEFAULT_CATEGORIES,
 } from '../../components/Categories/Categories';
+import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
+import Settings from '../Settings/Settings';
 import styles from './Dashboard.styles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
 
 export default function Dashboard() {
+  const [categoriesList, setCategoriesList] = useState(DEFAULT_CATEGORIES);
+  const categoriesListRef = useRef(categoriesList);
+  categoriesListRef.current = categoriesList;
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const selectedCategoryRef = useRef(selectedCategory);
   selectedCategoryRef.current = selectedCategory;
+
+  const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -59,12 +78,12 @@ export default function Dashboard() {
   };
 
   const handleSwipeLeft = () => {
-    const currentIndex =
-      DEFAULT_CATEGORIES?.findIndex(
-        cat => cat?.id === selectedCategoryRef?.current,
-      ) ?? -1;
-    if (currentIndex < (DEFAULT_CATEGORIES?.length ?? 0) - 1) {
-      const nextCategoryId = DEFAULT_CATEGORIES?.[currentIndex + 1]?.id;
+    const list = categoriesListRef?.current || [];
+    const currentIndex = list?.findIndex(
+      cat => cat?.id === selectedCategoryRef?.current,
+    );
+    if (currentIndex !== -1 && currentIndex < list?.length - 1) {
+      const nextCategoryId = list?.[currentIndex + 1]?.id;
       if (nextCategoryId) {
         changeCategoryWithAnimation('left', nextCategoryId);
       }
@@ -74,12 +93,12 @@ export default function Dashboard() {
   };
 
   const handleSwipeRight = () => {
-    const currentIndex =
-      DEFAULT_CATEGORIES?.findIndex(
-        cat => cat?.id === selectedCategoryRef?.current,
-      ) ?? -1;
+    const list = categoriesListRef?.current || [];
+    const currentIndex = list?.findIndex(
+      cat => cat?.id === selectedCategoryRef?.current,
+    );
     if (currentIndex > 0) {
-      const previousCategoryId = DEFAULT_CATEGORIES?.[currentIndex - 1]?.id;
+      const previousCategoryId = list?.[currentIndex - 1]?.id;
       if (previousCategoryId) {
         changeCategoryWithAnimation('right', previousCategoryId);
       }
@@ -110,11 +129,23 @@ export default function Dashboard() {
       setSelectedCategory(catId);
       return;
     }
-    const currentIdx =
-      DEFAULT_CATEGORIES?.findIndex(c => c?.id === selectedCategory) ?? -1;
-    const newIdx = DEFAULT_CATEGORIES?.findIndex(c => c?.id === catId) ?? -1;
+    const list = categoriesListRef?.current || [];
+    const currentIdx = list?.findIndex(c => c?.id === selectedCategory);
+    const newIdx = list?.findIndex(c => c?.id === catId);
     const direction = newIdx > currentIdx ? 'left' : 'right';
     changeCategoryWithAnimation(direction, catId);
+  };
+
+  const handleAddCategory = ({ label, icon }) => {
+    const newId = `${label.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
+    const newCategory = { id: newId, label, icon };
+    setCategoriesList(prev => {
+      if (prev?.length > 0 && prev[0]?.id === 'all') {
+        return [prev[0], newCategory, ...prev.slice(1)];
+      }
+      return [newCategory, ...prev];
+    });
+    handleSelectCategoryFromBar(newId);
   };
 
   const panResponder = useRef(
@@ -147,13 +178,14 @@ export default function Dashboard() {
   ).current;
 
   const activeCategoryObj =
-    DEFAULT_CATEGORIES?.find(c => c?.id === selectedCategory) ||
-    DEFAULT_CATEGORIES?.[0];
+    categoriesList?.find(c => c?.id === selectedCategory) ||
+    categoriesList?.[0];
 
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header />
+      <Header onRightPress={() => setIsSettingsOpen(true)} />
       <Categories
+        categories={categoriesList}
         selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategoryFromBar}
       />
@@ -174,6 +206,72 @@ export default function Dashboard() {
           </Text>
         </Animated.View>
       </View>
+
+      {/* FAB Backdrop */}
+      {isFabOpen && (
+        <TouchableWithoutFeedback onPress={() => setIsFabOpen(false)}>
+          <View style={styles?.fabBackdrop} />
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* Floating Action Button (FAB) & Menu */}
+      <View style={styles?.fabContainer}>
+        {isFabOpen && (
+          <View style={styles?.menuContainer}>
+            {/* Add Categories Option (Enabled) */}
+            <TouchableOpacity
+              style={styles?.menuItem}
+              onPress={() => {
+                setIsFabOpen(false);
+                setIsAddCategoryOpen(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles?.menuItemText}>Add Categories</Text>
+            </TouchableOpacity>
+
+            {/* Add Reels Option (Disabled) */}
+            <TouchableOpacity
+              style={[styles?.menuItem, styles?.menuItemDisabled]}
+              disabled={true}
+              activeOpacity={1}
+            >
+              <Text style={[styles?.menuItemText, styles?.menuItemTextDisabled]}>
+                Add Reels
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Plus / Close Floating Button */}
+        <TouchableOpacity
+          style={[styles?.fabButton, isFabOpen && styles?.fabButtonActive]}
+          onPress={() => setIsFabOpen(prev => !prev)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles?.fabIconText}>+</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Add Category Bottom Drawer Modal */}
+      <AddCategoryModal
+        visible={isAddCategoryOpen}
+        onClose={() => setIsAddCategoryOpen(false)}
+        onAddCategory={handleAddCategory}
+      />
+
+      {/* Settings Screen Modal */}
+      <Modal
+        visible={isSettingsOpen}
+        animationType="slide"
+        onRequestClose={() => setIsSettingsOpen(false)}
+      >
+        <Settings
+          categories={categoriesList}
+          onUpdateCategories={setCategoriesList}
+          onBack={() => setIsSettingsOpen(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -26,6 +26,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  menuButton: {
+    padding: theme?.spacing?.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuIconContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 3,
+    width: 24,
+    height: 24,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme?.colors?.textPrimary,
+  },
+  leftButton: {
+    paddingRight: theme?.spacing?.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backIconText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: theme?.colors?.textPrimary,
+  },
 });
 
 export default styles;
