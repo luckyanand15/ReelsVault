@@ -18,12 +18,12 @@ import {
   reorderCategories,
 } from '../../api/category.api';
 import { mapCategory } from '../../utils/mapCategory';
+import { useCategories } from '../../context/CategoriesContext';
 
-export default function ManageCategories({
-  categories = [],
-  onUpdateCategories,
-  onBack,
-}) {
+export default function ManageCategories({ navigation }) {
+  const { categoriesList: categories, setCategoriesList: onUpdateCategories } =
+    useCategories();
+
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [rowHeight, setRowHeight] = useState(56);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -151,7 +151,7 @@ export default function ManageCategories({
 
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header title="Manage Categories" onLeftPress={onBack} />
+      <Header title="Manage Categories" onLeftPress={() => navigation.goBack()} />
 
       <ScrollView
         style={styles?.container}

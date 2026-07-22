@@ -1,17 +1,26 @@
 import React from 'react';
 import { StyleSheet, View, StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Dashboard from './src/screens/Dashboard/Dashboard';
+import AppNavigator from './src/navigation/AppNavigator';
+import { CategoriesProvider } from './src/context/CategoriesContext';
 import theme from './src/constants/theme';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={false} />
-        <Dashboard />
-      </View>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaProvider>
+        <View style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={false} />
+          <NavigationContainer>
+            <CategoriesProvider>
+              <AppNavigator />
+            </CategoriesProvider>
+          </NavigationContainer>
+        </View>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

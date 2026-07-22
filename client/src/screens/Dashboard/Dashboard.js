@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Text,
   View,
@@ -7,44 +7,26 @@ import {
   Dimensions,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import Header from '../../components/Header/Header';
 import Categories from '../../components/Categories/Categories';
 import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
-import Settings from '../Settings/Settings';
 import styles from './Dashboard.styles';
-import { fetchCategories, createCategory } from '../../api/category.api';
+import { createCategory } from '../../api/category.api';
 import { mapCategory } from '../../utils/mapCategory';
+import { useCategories } from '../../context/CategoriesContext';
+import routes from '../../routes/routes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
-const ALL_CATEGORY = { id: 'all', label: 'All', icon: '✨' };
 
 export default function Dashboard() {
-  const [categoriesList, setCategoriesList] = useState([ALL_CATEGORY]);
+  const navigation = useNavigation();
+  const { categoriesList, setCategoriesList } = useCategories();
   const categoriesListRef = useRef(categoriesList);
   categoriesListRef.current = categoriesList;
-
-  useEffect(() => {
-    let isMounted = true;
-
-    (async () => {
-      try {
-        const categories = await fetchCategories();
-        if (isMounted) {
-          setCategoriesList([ALL_CATEGORY, ...categories.map(mapCategory)]);
-        }
-      } catch (error) {
-        console.error('Failed to load categories:', error?.message);
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const selectedCategoryRef = useRef(selectedCategory);
@@ -52,7 +34,6 @@ export default function Dashboard() {
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -207,7 +188,7 @@ export default function Dashboard() {
 
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onRightPress={() => setIsSettingsOpen(true)} />
+      <Header onRightPress={() => navigation.navigate(routes.Settings)} />
       <Categories
         categories={categoriesList}
         selectedCategory={selectedCategory}
@@ -283,19 +264,6 @@ export default function Dashboard() {
         onClose={() => setIsAddCategoryOpen(false)}
         onAddCategory={handleAddCategory}
       />
-
-      {/* Settings Screen Modal */}
-      <Modal
-        visible={isSettingsOpen}
-        animationType="slide"
-        onRequestClose={() => setIsSettingsOpen(false)}
-      >
-        <Settings
-          categories={categoriesList}
-          onUpdateCategories={setCategoriesList}
-          onBack={() => setIsSettingsOpen(false)}
-        />
-      </Modal>
     </SafeAreaView>
   );
 }

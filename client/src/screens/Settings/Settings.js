@@ -1,30 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
-import ManageCategories from '../ManageCategories/ManageCategories';
 import styles from './Settings.styles';
+import routes from '../../routes/routes';
 
-export default function Settings({
-  categories = [],
-  onUpdateCategories,
-  onBack,
-}) {
-  const [currentView, setCurrentView] = useState('main');
-
-  if (currentView === 'manageCategories') {
-    return (
-      <ManageCategories
-        categories={categories}
-        onUpdateCategories={onUpdateCategories}
-        onBack={() => setCurrentView('main')}
-      />
-    );
-  }
-
+export default function Settings({ navigation }) {
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header title="Settings" onLeftPress={onBack} />
+      <Header title="Settings" onLeftPress={() => navigation.goBack()} />
 
       <ScrollView style={styles?.container} contentContainerStyle={styles?.content}>
         <View style={styles?.section}>
@@ -33,7 +17,7 @@ export default function Settings({
           <View style={styles?.sectionCard}>
             <TouchableOpacity
               style={styles?.settingItem}
-              onPress={() => setCurrentView('manageCategories')}
+              onPress={() => navigation.navigate(routes.ManageCategories)}
               activeOpacity={0.7}
             >
               <View style={styles?.itemLeft}>
