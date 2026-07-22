@@ -2,7 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
-import ManageCategories from '../screens/ManageCategories/ManageCategories';
+import ManageCategories from '../components/ManageCategories/ManageCategories';
 import routes from '../routes/routes';
 
 const Stack = createStackNavigator();

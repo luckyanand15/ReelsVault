@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
-import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
-import ConfirmationComponent from '../../components/ConfirmationComponent/ConfirmationComponent';
+import Header from '../Header/Header';
+import AddCategoryModal from '../AddCategoryModal/AddCategoryModal';
+import ConfirmationComponent from '../ConfirmationComponent/ConfirmationComponent';
 import styles from './ManageCategories.styles';
 import {
   updateCategory,
