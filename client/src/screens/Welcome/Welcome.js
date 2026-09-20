@@ -8,6 +8,10 @@ import styles from './Welcome.styles';
 export default function Welcome() {
   const navigation = useNavigation();
 
+  const handleNavigateToSignup = () => {
+    navigation?.navigate?.(routes?.Signup);
+  };
+
   const handleNavigateToDashboard = () => {
     navigation?.navigate?.(routes?.Dashboard);
   };
@@ -30,7 +34,7 @@ export default function Welcome() {
         <View style={styles?.buttonContainer}>
           <TouchableOpacity
             style={[styles?.button, styles?.signUpButton]}
-            onPress={handleNavigateToDashboard}
+            onPress={handleNavigateToSignup}
             activeOpacity={0.8}
           >
             <Text style={styles?.signUpButtonText}>Sign up</Text>
