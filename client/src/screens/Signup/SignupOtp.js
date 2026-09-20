@@ -8,21 +8,29 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import { sendOtp, verifyOtp } from '../../api/otp.api';
+import { createUser } from '../../api/user.api';
 import styles from './SignupOtp.styles';
+
+const RESEND_COOLDOWN_SECONDS = 30;
 
 export default function SignupOtp({ navigation }) {
   const { canAccessStep, confirmEmailVerification, signupData } = useSignupFlow();
-  const { email } = signupData;
+  const { email, firstName, lastName } = signupData;
   const canAccessOtpStep = canAccessStep(SignupStep.Otp) && Boolean(email);
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [focusedIndex, setFocusedIndex] = useState(null);
   const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN_SECONDS);
 
   const inputRefs = useRef([]);
 
@@ -31,6 +39,18 @@ export default function SignupOtp({ navigation }) {
       navigation.replace(routes.Signup);
     }
   }, [canAccessOtpStep, navigation]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) {
+      return undefined;
+    }
+
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const fullOtp = otp.join('');
   const isOtpComplete = fullOtp.length === 6;
@@ -72,21 +92,60 @@ export default function SignupOtp({ navigation }) {
     }
   };
 
-  const handleArrowPress = () => {
+  const handleArrowPress = async () => {
     if (!isOtpComplete) {
       setError('Please enter all 6 digits.');
       return;
     }
 
-    // Temporary verification check as requested (accept 111111)
-    if (fullOtp !== '111111') {
-      setError('Invalid OTP code. Enter 111111 to proceed.');
+    if (isVerifying) {
       return;
     }
 
+    setIsVerifying(true);
     setError('');
-    confirmEmailVerification();
-    navigation.navigate(routes.SignupPin);
+
+    try {
+      const verifyResult = await verifyOtp(email, fullOtp);
+      const verificationToken = verifyResult?.data?.verificationToken;
+      const user = await createUser({ firstName, lastName, email, verificationToken });
+      confirmEmailVerification({ userId: user?.id });
+      navigation.navigate(routes.SignupPin);
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        setError('This email is already registered.');
+      } else {
+        setError(
+          err?.response?.data?.message || 'Something went wrong. Please try again.',
+        );
+      }
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0 || isResending) {
+      return;
+    }
+
+    setIsResending(true);
+    setError('');
+
+    try {
+      await sendOtp(email);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } catch (err) {
+      if (err?.response?.status === 429) {
+        setError('Too many requests. Please wait a moment and try again.');
+      } else {
+        setError('Failed to resend code. Please try again.');
+      }
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (!canAccessOtpStep) {
@@ -139,13 +198,21 @@ export default function SignupOtp({ navigation }) {
                 ))}
               </View>
 
-              {error ? (
-                <Text style={styles?.errorText}>{error}</Text>
-              ) : (
+              {error ? <Text style={styles?.errorText}>{error}</Text> : null}
+
+              <TouchableOpacity
+                onPress={handleResend}
+                disabled={resendCooldown > 0 || isResending}
+                activeOpacity={0.7}
+              >
                 <Text style={styles?.hintText}>
-                  Use code <Text style={styles?.emailHighlight}>111111</Text> to verify
+                  {isResending
+                    ? 'Sending...'
+                    : resendCooldown > 0
+                    ? `Resend code in ${resendCooldown}s`
+                    : "Didn't receive the code? Resend"}
                 </Text>
-              )}
+              </TouchableOpacity>
             </View>
 
             {/* Footer with Arrow Button */}
@@ -153,22 +220,26 @@ export default function SignupOtp({ navigation }) {
               <TouchableOpacity
                 style={[
                   styles?.arrowButton,
-                  !isOtpComplete && styles?.arrowButtonDisabled,
+                  (!isOtpComplete || isVerifying) && styles?.arrowButtonDisabled,
                 ]}
                 onPress={handleArrowPress}
-                disabled={!isOtpComplete}
+                disabled={!isOtpComplete || isVerifying}
                 activeOpacity={0.8}
                 accessibilityLabel="Verify OTP"
-                accessibilityState={{ disabled: !isOtpComplete }}
+                accessibilityState={{ disabled: !isOtpComplete || isVerifying }}
               >
-                <Text
-                  style={[
-                    styles?.arrowIcon,
-                    !isOtpComplete && styles?.arrowIconDisabled,
-                  ]}
-                >
-                  ➔
-                </Text>
+                {isVerifying ? (
+                  <ActivityIndicator color={styles?.arrowIcon?.color} />
+                ) : (
+                  <Text
+                    style={[
+                      styles?.arrowIcon,
+                      !isOtpComplete && styles?.arrowIconDisabled,
+                    ]}
+                  >
+                    ➔
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>

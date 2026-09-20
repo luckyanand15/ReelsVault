@@ -14,13 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
-import { createUser } from '../../api/user.api';
+import { sendOtp } from '../../api/otp.api';
 import styles from './SignupEmail.styles';
 
 export default function SignupEmail({ navigation }) {
-  const { canAccessStep, continueWithEmail, signupData } = useSignupFlow();
+  const { canAccessStep, continueWithEmail } = useSignupFlow();
   const canAccessEmailStep = canAccessStep(SignupStep.Email);
-  const { firstName, lastName } = signupData;
 
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
@@ -66,18 +65,14 @@ export default function SignupEmail({ navigation }) {
     setError('');
 
     try {
-      const user = await createUser({
-        firstName,
-        lastName,
-        email: email.trim(),
-      });
-      continueWithEmail({ userId: user?.id, email: email.trim() });
+      await sendOtp(email.trim());
+      continueWithEmail({ email: email.trim() });
       navigation.navigate(routes.SignupOtp);
     } catch (err) {
-      if (err?.response?.status === 409) {
-        setError('This email is already in use.');
+      if (err?.response?.status === 429) {
+        setError('Too many requests. Please wait a moment and try again.');
       } else {
-        setError('Something went wrong. Please try again.');
+        setError('Failed to send verification code. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
