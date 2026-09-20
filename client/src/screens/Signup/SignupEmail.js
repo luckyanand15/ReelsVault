@@ -8,20 +8,24 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import { createUser } from '../../api/user.api';
 import styles from './SignupEmail.styles';
 
 export default function SignupEmail({ navigation }) {
-  const { canAccessStep, continueWithEmail } = useSignupFlow();
+  const { canAccessStep, continueWithEmail, signupData } = useSignupFlow();
   const canAccessEmailStep = canAccessStep(SignupStep.Email);
+  const { firstName, lastName } = signupData;
 
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!canAccessEmailStep) {
@@ -43,7 +47,7 @@ export default function SignupEmail({ navigation }) {
     }
   };
 
-  const handleArrowPress = () => {
+  const handleArrowPress = async () => {
     if (!email.trim()) {
       setError('Email address is required.');
       return;
@@ -54,9 +58,30 @@ export default function SignupEmail({ navigation }) {
       return;
     }
 
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
     setError('');
-    continueWithEmail(email.trim());
-    navigation.navigate(routes.SignupOtp);
+
+    try {
+      const user = await createUser({
+        firstName,
+        lastName,
+        email: email.trim(),
+      });
+      continueWithEmail({ userId: user?.id, email: email.trim() });
+      navigation.navigate(routes.SignupOtp);
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        setError('This email is already in use.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!canAccessEmailStep) {
@@ -117,22 +142,26 @@ export default function SignupEmail({ navigation }) {
               <TouchableOpacity
                 style={[
                   styles?.arrowButton,
-                  !isEmailValid && styles?.arrowButtonDisabled,
+                  (!isEmailValid || isSubmitting) && styles?.arrowButtonDisabled,
                 ]}
                 onPress={handleArrowPress}
-                disabled={!isEmailValid}
+                disabled={!isEmailValid || isSubmitting}
                 activeOpacity={0.8}
                 accessibilityLabel="Next step"
-                accessibilityState={{ disabled: !isEmailValid }}
+                accessibilityState={{ disabled: !isEmailValid || isSubmitting }}
               >
-                <Text
-                  style={[
-                    styles?.arrowIcon,
-                    !isEmailValid && styles?.arrowIconDisabled,
-                  ]}
-                >
-                  ➔
-                </Text>
+                {isSubmitting ? (
+                  <ActivityIndicator color={styles?.arrowIcon?.color} />
+                ) : (
+                  <Text
+                    style={[
+                      styles?.arrowIcon,
+                      !isEmailValid && styles?.arrowIconDisabled,
+                    ]}
+                  >
+                    ➔
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
