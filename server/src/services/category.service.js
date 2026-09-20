@@ -1,4 +1,5 @@
 const Category = require('../models/Category');
+const generateId = require('../utils/generateId');
 
 const getAllCategories = async () => {
   return Category.find().sort({ position: 1 });
@@ -7,8 +8,9 @@ const getAllCategories = async () => {
 const createCategory = async ({ title, icon }) => {
   const lastCategory = await Category.findOne().sort({ position: -1 });
   const position = lastCategory ? lastCategory.position + 1 : 0;
+  const id = await generateId('category', 'CAT');
 
-  return Category.create({ title, icon, position });
+  return Category.create({ _id: id, title, icon, position });
 };
 
 const updateCategory = async (id, updates) => {
