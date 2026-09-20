@@ -10,12 +10,14 @@ const updateCategorySchema = Joi.object({
   icon: Joi.string().trim().min(1).max(10),
 }).min(1);
 
+const categoryIdSchema = Joi.string().pattern(/^CAT\d+$/);
+
 const reorderCategoriesSchema = Joi.object({
-  order: Joi.array().items(Joi.string().hex().length(24)).min(1).required(),
+  order: Joi.array().items(categoryIdSchema).min(1).required(),
 });
 
 const idParamSchema = Joi.object({
-  id: Joi.string().hex().length(24).required(),
+  id: categoryIdSchema.required(),
 });
 
 module.exports = {
