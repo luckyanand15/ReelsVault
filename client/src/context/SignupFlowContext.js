@@ -8,6 +8,7 @@ export const SignupStep = {
 };
 
 const initialSignupData = {
+  userId: '',
   firstName: '',
   lastName: '',
   email: '',
@@ -32,9 +33,10 @@ export function SignupFlowProvider({ children }) {
         });
         setCurrentStep(SignupStep.Email);
       },
-      continueWithEmail: (email) => {
+      continueWithEmail: ({ userId, email }) => {
         setSignupData((currentData) => ({
           ...currentData,
+          userId,
           email,
           isEmailVerified: false,
         }));
