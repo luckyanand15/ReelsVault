@@ -33,18 +33,19 @@ export function SignupFlowProvider({ children }) {
         });
         setCurrentStep(SignupStep.Email);
       },
-      continueWithEmail: ({ userId, email }) => {
+      continueWithEmail: ({ email }) => {
         setSignupData((currentData) => ({
           ...currentData,
-          userId,
+          userId: '',
           email,
           isEmailVerified: false,
         }));
         setCurrentStep(SignupStep.Otp);
       },
-      confirmEmailVerification: () => {
+      confirmEmailVerification: ({ userId }) => {
         setSignupData((currentData) => ({
           ...currentData,
+          userId,
           isEmailVerified: true,
         }));
         setCurrentStep(SignupStep.Pin);
