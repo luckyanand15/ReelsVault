@@ -9,7 +9,12 @@ const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
+const refreshTokenSchema = Joi.object({
+  refreshToken: Joi.string().hex().length(96).required(),
+});
+
 module.exports = {
   checkEmailSchema,
   loginSchema,
+  refreshTokenSchema,
 };

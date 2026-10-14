@@ -59,8 +59,8 @@ export default function LoginPassword({ navigation }) {
     setError('');
 
     try {
-      const user = await login(email, password);
-      await authLogin(user?.id);
+      const session = await login(email, password);
+      await authLogin(session);
       navigation.reset({
         index: 0,
         routes: [{ name: routes.Dashboard }],

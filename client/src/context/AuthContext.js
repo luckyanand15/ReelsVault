@@ -1,22 +1,58 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setCurrentUserId } from '../api/axiosClient';
-
-const USER_ID_STORAGE_KEY = 'userId';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import {
+  getRefreshToken,
+  setSessionHandlers,
+  setSessionTokens,
+} from '../api/axiosClient';
+import { logout as logoutRequest } from '../api/auth.api';
+import { resetTo } from '../navigation/navigationRef';
+import routes from '../routes/routes';
+import * as secureSession from '../utils/secureSession';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  // The refresh handler is registered once, so it reads the user id from a
+  // ref rather than a stale closure over state.
+  const userIdRef = useRef(null);
+
+  const applySession = useCallback(session => {
+    userIdRef.current = session?.userId ?? null;
+    setSessionTokens(session);
+    setUserId(session?.userId ?? null);
+  }, []);
+
+  const clearSession = useCallback(async () => {
+    applySession(null);
+    await secureSession.clearSession();
+  }, [applySession]);
 
   useEffect(() => {
+    setSessionHandlers({
+      onTokensRefreshed: tokens =>
+        secureSession.saveSession({ userId: userIdRef.current, ...tokens }),
+      onSessionExpired: () => {
+        clearSession().catch(error =>
+          console.error('Failed to clear session:', error?.message),
+        );
+        resetTo(routes.Welcome);
+      },
+    });
+
     (async () => {
       try {
-        const storedUserId = await AsyncStorage.getItem(USER_ID_STORAGE_KEY);
-        if (storedUserId) {
-          setUserId(storedUserId);
-          setCurrentUserId(storedUserId);
+        const session = await secureSession.loadSession();
+        if (session) {
+          applySession(session);
         }
       } catch (error) {
         console.error('Failed to restore session:', error?.message);
@@ -24,21 +60,29 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
       }
     })();
-  }, []);
 
-  const authLogin = async id => {
-    if (!id) {
+    return () => setSessionHandlers(null);
+  }, [applySession, clearSession]);
+
+  const authLogin = async ({ user, accessToken, refreshToken }) => {
+    if (!user?.id || !accessToken || !refreshToken) {
       return;
     }
-    await AsyncStorage.setItem(USER_ID_STORAGE_KEY, id);
-    setCurrentUserId(id);
-    setUserId(id);
+    const session = { userId: user.id, accessToken, refreshToken };
+    await secureSession.saveSession(session);
+    applySession(session);
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem(USER_ID_STORAGE_KEY);
-    setCurrentUserId(null);
-    setUserId(null);
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
+      // Best effort: revoke server-side, but never block logging out locally
+      // just because the network is down.
+      await logoutRequest(refreshToken).catch(error =>
+        console.error('Failed to revoke session:', error?.message),
+      );
+    }
+    await clearSession();
   };
 
   return (

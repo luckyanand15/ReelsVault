@@ -11,13 +11,22 @@ import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
 import routes from '../routes/routes';
+import { useAuth } from '../context/AuthContext';
 
 const Stack = createStackNavigator();
 
 export default function AppNavigator() {
+  const { userId, isLoading } = useAuth();
+
+  // initialRouteName is only read on first mount, so wait until the stored
+  // session has been restored before picking where the app opens.
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <Stack.Navigator
-      initialRouteName={routes.Welcome}
+      initialRouteName={userId ? routes.Dashboard : routes.Welcome}
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name={routes.Welcome} component={Welcome} />

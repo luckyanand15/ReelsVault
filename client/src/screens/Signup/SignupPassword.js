@@ -84,7 +84,7 @@ export default function SignupPassword({ navigation }) {
     setError('');
 
     try {
-      const user = await createUser({
+      const session = await createUser({
         firstName,
         lastName,
         email,
@@ -93,8 +93,8 @@ export default function SignupPassword({ navigation }) {
         confirmPassword,
       });
       hasCompletedSignupRef.current = true;
-      completeSignup({ userId: user?.id });
-      await authLogin(user?.id);
+      completeSignup({ userId: session?.user?.id });
+      await authLogin(session);
       // Reset navigation stack and open Dashboard
       navigation.reset({
         index: 0,
