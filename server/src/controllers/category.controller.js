@@ -2,12 +2,12 @@ const asyncHandler = require('../utils/asyncHandler');
 const categoryService = require('../services/category.service');
 
 const getCategories = asyncHandler(async (req, res) => {
-  const categories = await categoryService.getAllCategories();
+  const categories = await categoryService.getAllCategories(req.userId);
   res.status(200).json({ success: true, data: categories });
 });
 
 const createCategory = asyncHandler(async (req, res) => {
-  const category = await categoryService.createCategory(req.body);
+  const category = await categoryService.createCategory(req.body, req.userId);
   res.status(201).json({ success: true, data: category });
 });
 
@@ -15,6 +15,7 @@ const updateCategory = asyncHandler(async (req, res) => {
   const category = await categoryService.updateCategory(
     req.params.id,
     req.body,
+    req.userId,
   );
 
   if (!category) {
@@ -27,7 +28,7 @@ const updateCategory = asyncHandler(async (req, res) => {
 });
 
 const deleteCategory = asyncHandler(async (req, res) => {
-  const category = await categoryService.deleteCategory(req.params.id);
+  const category = await categoryService.deleteCategory(req.params.id, req.userId);
 
   if (!category) {
     return res
@@ -39,7 +40,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
 });
 
 const reorderCategories = asyncHandler(async (req, res) => {
-  const categories = await categoryService.reorderCategories(req.body.order);
+  const categories = await categoryService.reorderCategories(req.body.order, req.userId);
   res.status(200).json({ success: true, data: categories });
 });
 

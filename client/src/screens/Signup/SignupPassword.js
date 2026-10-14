@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import { useAuth } from '../../context/AuthContext';
 import { createUser } from '../../api/user.api';
 import styles from './SignupPassword.styles';
 
@@ -21,6 +22,7 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export default function SignupPassword({ navigation }) {
   const { canAccessStep, completeSignup, signupData } = useSignupFlow();
+  const { authLogin } = useAuth();
   const { firstName, lastName, email, isEmailVerified, verificationToken } = signupData;
   const canAccessPasswordStep =
     canAccessStep(SignupStep.Password) &&
@@ -92,6 +94,7 @@ export default function SignupPassword({ navigation }) {
       });
       hasCompletedSignupRef.current = true;
       completeSignup({ userId: user?.id });
+      await authLogin(user?.id);
       // Reset navigation stack and open Dashboard
       navigation.reset({
         index: 0,

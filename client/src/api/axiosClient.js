@@ -7,4 +7,17 @@ const axiosClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+let currentUserId = null;
+
+export const setCurrentUserId = id => {
+  currentUserId = id;
+};
+
+axiosClient.interceptors.request.use(config => {
+  if (currentUserId) {
+    config.headers['x-user-id'] = currentUserId;
+  }
+  return config;
+});
+
 export default axiosClient;

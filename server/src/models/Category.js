@@ -21,6 +21,10 @@ const categorySchema = new mongoose.Schema(
       required: true,
       default: 0,
     },
+    userId: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true },
 );
