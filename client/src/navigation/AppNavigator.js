@@ -4,7 +4,7 @@ import Welcome from '../screens/Welcome/Welcome';
 import Signup from '../screens/Signup/Signup';
 import SignupEmail from '../screens/Signup/SignupEmail';
 import SignupOtp from '../screens/Signup/SignupOtp';
-import SignupPin from '../screens/Signup/SignupPin';
+import SignupPassword from '../screens/Signup/SignupPassword';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
@@ -22,7 +22,7 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.Signup} component={Signup} />
       <Stack.Screen name={routes.SignupEmail} component={SignupEmail} />
       <Stack.Screen name={routes.SignupOtp} component={SignupOtp} />
-      <Stack.Screen name={routes.SignupPin} component={SignupPin} />
+      <Stack.Screen name={routes.SignupPassword} component={SignupPassword} />
       <Stack.Screen name={routes.Dashboard} component={Dashboard} />
       <Stack.Screen name={routes.Settings} component={Settings} />
       <Stack.Screen name={routes.ManageCategories} component={ManageCategories} />

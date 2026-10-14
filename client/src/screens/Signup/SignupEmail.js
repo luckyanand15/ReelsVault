@@ -69,7 +69,9 @@ export default function SignupEmail({ navigation }) {
       continueWithEmail({ email: email.trim() });
       navigation.navigate(routes.SignupOtp);
     } catch (err) {
-      if (err?.response?.status === 429) {
+      if (err?.response?.status === 409) {
+        setError('This email is already registered.');
+      } else if (err?.response?.status === 429) {
         setError('Too many requests. Please wait a moment and try again.');
       } else {
         setError('Failed to send verification code. Please try again.');
@@ -95,7 +97,7 @@ export default function SignupEmail({ navigation }) {
           <View style={styles?.container}>
             {/* Header Content */}
             <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 2 of 3</Text>
+              <Text style={styles?.stepIndicator}>Step 2 of 4</Text>
               <Text style={styles?.title}>What's your email?</Text>
               <Text style={styles?.subtitle}>
                 Enter your email address to continue setting up your account.

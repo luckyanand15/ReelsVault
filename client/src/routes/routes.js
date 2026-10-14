@@ -3,7 +3,7 @@ const routes = {
   Signup: 'Signup',
   SignupEmail: 'SignupEmail',
   SignupOtp: 'SignupOtp',
-  SignupPin: 'SignupPin',
+  SignupPassword: 'SignupPassword',
   Dashboard: 'Dashboard',
   Settings: 'Settings',
   ManageCategories: 'ManageCategories',

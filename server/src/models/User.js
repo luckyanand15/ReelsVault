@@ -23,6 +23,13 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    // Stored as plain text for now — hashing will be added later.
+    // select: false keeps it out of queries unless explicitly requested.
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
   },
   { timestamps: true },
 );
