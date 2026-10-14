@@ -37,9 +37,10 @@ export default function SignupPassword({ navigation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const confirmInputRef = useRef(null);
+  const hasCompletedSignupRef = useRef(false);
 
   useEffect(() => {
-    if (!canAccessPasswordStep) {
+    if (!canAccessPasswordStep && !hasCompletedSignupRef.current) {
       navigation.replace(routes.Signup);
     }
   }, [canAccessPasswordStep, navigation]);
@@ -89,6 +90,7 @@ export default function SignupPassword({ navigation }) {
         password,
         confirmPassword,
       });
+      hasCompletedSignupRef.current = true;
       completeSignup({ userId: user?.id });
       // Reset navigation stack and open Dashboard
       navigation.reset({
