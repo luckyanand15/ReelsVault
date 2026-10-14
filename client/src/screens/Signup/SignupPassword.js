@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import { useAuth } from '../../context/AuthContext';
 import { createUser } from '../../api/user.api';
 import styles from './SignupPassword.styles';
 
@@ -21,6 +22,7 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export default function SignupPassword({ navigation }) {
   const { canAccessStep, completeSignup, signupData } = useSignupFlow();
+  const { authLogin } = useAuth();
   const { firstName, lastName, email, isEmailVerified, verificationToken } = signupData;
   const canAccessPasswordStep =
     canAccessStep(SignupStep.Password) &&
@@ -37,9 +39,10 @@ export default function SignupPassword({ navigation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const confirmInputRef = useRef(null);
+  const hasCompletedSignupRef = useRef(false);
 
   useEffect(() => {
-    if (!canAccessPasswordStep) {
+    if (!canAccessPasswordStep && !hasCompletedSignupRef.current) {
       navigation.replace(routes.Signup);
     }
   }, [canAccessPasswordStep, navigation]);
@@ -81,7 +84,7 @@ export default function SignupPassword({ navigation }) {
     setError('');
 
     try {
-      const user = await createUser({
+      const session = await createUser({
         firstName,
         lastName,
         email,
@@ -89,7 +92,9 @@ export default function SignupPassword({ navigation }) {
         password,
         confirmPassword,
       });
-      completeSignup({ userId: user?.id });
+      hasCompletedSignupRef.current = true;
+      completeSignup({ userId: session?.user?.id });
+      await authLogin(session);
       // Reset navigation stack and open Dashboard
       navigation.reset({
         index: 0,

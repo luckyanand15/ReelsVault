@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { fetchCategories } from '../api/category.api';
 import { mapCategory } from '../utils/mapCategory';
+import { useAuth } from './AuthContext';
 
 export const ALL_CATEGORY = { id: 'all', label: 'All', icon: '✨' };
 
@@ -8,8 +9,14 @@ const CategoriesContext = createContext(null);
 
 export function CategoriesProvider({ children }) {
   const [categoriesList, setCategoriesList] = useState([ALL_CATEGORY]);
+  const { userId } = useAuth();
 
   useEffect(() => {
+    if (!userId) {
+      setCategoriesList([ALL_CATEGORY]);
+      return;
+    }
+
     let isMounted = true;
 
     (async () => {
@@ -26,7 +33,7 @@ export function CategoriesProvider({ children }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [userId]);
 
   return (
     <CategoriesContext.Provider value={{ categoriesList, setCategoriesList }}>

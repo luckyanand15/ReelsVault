@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const mongooseIdPlugin = require('../utils/mongooseIdPlugin');
+
+const SALT_ROUNDS = 12;
 
 const userSchema = new mongoose.Schema(
   {
@@ -23,7 +26,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
-    // Stored as plain text for now — hashing will be added later.
     // select: false keeps it out of queries unless explicitly requested.
     password: {
       type: String,
@@ -33,6 +35,18 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+userSchema.pre('save', async function hashPassword() {
+  if (!this.isModified('password')) {
+    return;
+  }
+
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+});
+
+userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 userSchema.plugin(mongooseIdPlugin);
 

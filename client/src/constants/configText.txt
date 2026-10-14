@@ -1,2 +1,3 @@
 Production: export const API_BASE_URL = 'https://reelsvault-production.up.railway.app/api
 Codespace Dev: export const API_BASE_URL = 'http://<Codespace-IP>:8080/api'
+Local Dev: export const API_BASE_URL = 'http://<ip-4>:8080/api'
