@@ -13,7 +13,8 @@ const login = async ({ email, password }) => {
     throw new UserNotFoundError('Email not found.');
   }
 
-  if (user.password !== password) {
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
     throw new InvalidCredentialsError('Incorrect password.');
   }
 
