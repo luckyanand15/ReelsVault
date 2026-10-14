@@ -1,9 +1,17 @@
 const asyncHandler = require('../utils/asyncHandler');
 const otpService = require('../services/otp.service');
 const brevoService = require('../services/brevo.service');
+const userService = require('../services/user.service');
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
+
+  // No point sending a code for an address that can't be used to sign up
+  if (await userService.isEmailRegistered(email)) {
+    return res
+      .status(409)
+      .json({ success: false, message: 'Email is already in use' });
+  }
 
   let code;
   try {

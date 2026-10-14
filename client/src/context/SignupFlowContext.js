@@ -4,7 +4,7 @@ export const SignupStep = {
   Name: 0,
   Email: 1,
   Otp: 2,
-  Pin: 3,
+  Password: 3,
 };
 
 const initialSignupData = {
@@ -13,6 +13,7 @@ const initialSignupData = {
   lastName: '',
   email: '',
   isEmailVerified: false,
+  verificationToken: '',
 };
 
 const SignupFlowContext = createContext(null);
@@ -39,16 +40,24 @@ export function SignupFlowProvider({ children }) {
           userId: '',
           email,
           isEmailVerified: false,
+          verificationToken: '',
         }));
         setCurrentStep(SignupStep.Otp);
       },
-      confirmEmailVerification: ({ userId }) => {
+      confirmEmailVerification: ({ verificationToken }) => {
+        setSignupData((currentData) => ({
+          ...currentData,
+          isEmailVerified: true,
+          verificationToken,
+        }));
+        setCurrentStep(SignupStep.Password);
+      },
+      completeSignup: ({ userId }) => {
         setSignupData((currentData) => ({
           ...currentData,
           userId,
-          isEmailVerified: true,
+          verificationToken: '',
         }));
-        setCurrentStep(SignupStep.Pin);
       },
     }),
     [currentStep, signupData],

@@ -43,42 +43,55 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: theme?.spacing?.lg,
   },
-  pinContainer: {
+  inputGroup: {
+    gap: theme?.spacing?.xs,
+  },
+  labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: theme?.spacing?.md,
+    marginBottom: 4,
   },
-  pinBox: {
-    width: 48,
-    height: 56,
-    borderWidth: 1.5,
-    borderColor: theme?.colors?.border,
-    borderRadius: theme?.borderRadius?.lg,
-    textAlign: 'center',
-    fontSize: theme?.typography?.fontSize?.xl,
-    fontWeight: theme?.typography?.fontWeight?.bold,
+  label: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    fontWeight: theme?.typography?.fontWeight?.semibold,
     color: theme?.colors?.textPrimary,
-    backgroundColor: theme?.colors?.surface,
   },
-  pinBoxFocused: {
-    borderColor: theme?.colors?.textPrimary,
-    backgroundColor: theme?.colors?.background,
-  },
-  pinBoxError: {
-    borderColor: '#E53E3E',
+  toggleText: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    fontWeight: theme?.typography?.fontWeight?.semibold,
+    color: theme?.colors?.textMuted,
   },
   hintText: {
     fontSize: theme?.typography?.fontSize?.xs,
     color: theme?.colors?.textMuted,
-    textAlign: 'center',
-    marginTop: theme?.spacing?.xs,
+    marginTop: 2,
+  },
+  star: {
+    color: '#E53E3E',
+    fontWeight: theme?.typography?.fontWeight?.bold,
+  },
+  input: {
+    height: 52,
+    borderWidth: 1.5,
+    borderColor: theme?.colors?.border,
+    borderRadius: theme?.borderRadius?.lg,
+    paddingHorizontal: theme?.spacing?.md,
+    fontSize: theme?.typography?.fontSize?.md,
+    color: theme?.colors?.textPrimary,
+    backgroundColor: theme?.colors?.surface,
+  },
+  inputFocused: {
+    borderColor: theme?.colors?.textPrimary,
+    backgroundColor: theme?.colors?.background,
+  },
+  inputError: {
+    borderColor: '#E53E3E',
   },
   errorText: {
     fontSize: theme?.typography?.fontSize?.xs,
     color: '#E53E3E',
-    textAlign: 'center',
-    marginTop: theme?.spacing?.xs,
+    marginTop: 2,
   },
   footer: {
     alignItems: 'flex-end',

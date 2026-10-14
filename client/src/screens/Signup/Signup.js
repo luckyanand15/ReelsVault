@@ -57,7 +57,7 @@ export default function Signup({ navigation }) {
           <View style={styles?.container}>
             {/* Header Content */}
             <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 1 of 3</Text>
+              <Text style={styles?.stepIndicator}>Step 1 of 4</Text>
               <Text style={styles?.title}>What's your name?</Text>
               <Text style={styles?.subtitle}>
                 Enter your first and last name to get started.

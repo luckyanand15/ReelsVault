@@ -15,14 +15,13 @@ import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
 import { sendOtp, verifyOtp } from '../../api/otp.api';
-import { createUser } from '../../api/user.api';
 import styles from './SignupOtp.styles';
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
 export default function SignupOtp({ navigation }) {
   const { canAccessStep, confirmEmailVerification, signupData } = useSignupFlow();
-  const { email, firstName, lastName } = signupData;
+  const { email } = signupData;
   const canAccessOtpStep = canAccessStep(SignupStep.Otp) && Boolean(email);
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -108,17 +107,12 @@ export default function SignupOtp({ navigation }) {
     try {
       const verifyResult = await verifyOtp(email, fullOtp);
       const verificationToken = verifyResult?.data?.verificationToken;
-      const user = await createUser({ firstName, lastName, email, verificationToken });
-      confirmEmailVerification({ userId: user?.id });
-      navigation.navigate(routes.SignupPin);
+      confirmEmailVerification({ verificationToken });
+      navigation.navigate(routes.SignupPassword);
     } catch (err) {
-      if (err?.response?.status === 409) {
-        setError('This email is already registered.');
-      } else {
-        setError(
-          err?.response?.data?.message || 'Something went wrong. Please try again.',
-        );
-      }
+      setError(
+        err?.response?.data?.message || 'Something went wrong. Please try again.',
+      );
     } finally {
       setIsVerifying(false);
     }
@@ -164,7 +158,7 @@ export default function SignupOtp({ navigation }) {
           <View style={styles?.container}>
             {/* Header Content */}
             <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 3 of 3</Text>
+              <Text style={styles?.stepIndicator}>Step 3 of 4</Text>
               <Text style={styles?.title}>Enter verification code</Text>
               <Text style={styles?.subtitle}>
                 We sent a 6-digit code to{' '}
