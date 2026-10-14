@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { CategoriesProvider } from './src/context/CategoriesContext';
 import { SignupFlowProvider } from './src/context/SignupFlowContext';
+import { LoginFlowProvider } from './src/context/LoginFlowContext';
 import theme from './src/constants/theme';
 
 export default function App() {
@@ -17,7 +18,9 @@ export default function App() {
           <NavigationContainer>
             <CategoriesProvider>
               <SignupFlowProvider>
-                <AppNavigator />
+                <LoginFlowProvider>
+                  <AppNavigator />
+                </LoginFlowProvider>
               </SignupFlowProvider>
             </CategoriesProvider>
           </NavigationContainer>

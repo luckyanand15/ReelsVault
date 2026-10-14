@@ -12,8 +12,8 @@ export default function Welcome() {
     navigation?.navigate?.(routes?.Signup);
   };
 
-  const handleNavigateToDashboard = () => {
-    navigation?.navigate?.(routes?.Dashboard);
+  const handleNavigateToLogin = () => {
+    navigation?.navigate?.(routes?.LoginEmail);
   };
 
   return (
@@ -42,7 +42,7 @@ export default function Welcome() {
 
           <TouchableOpacity
             style={[styles?.button, styles?.loginButton]}
-            onPress={handleNavigateToDashboard}
+            onPress={handleNavigateToLogin}
             activeOpacity={0.7}
           >
             <Text style={styles?.loginButtonText}>Login</Text>

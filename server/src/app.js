@@ -3,6 +3,7 @@ const cors = require('cors');
 const categoryRoutes = require('./routes/category.routes');
 const userRoutes = require('./routes/user.routes');
 const otpRoutes = require('./routes/otp.routes');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/categories', categoryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/otp', otpRoutes);
+app.use('/api/auth', authRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
