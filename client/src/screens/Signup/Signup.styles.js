@@ -14,7 +14,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme?.spacing?.xl,
     paddingTop: theme?.spacing?.lg,
     paddingBottom: theme?.spacing?.xl,
-    justifyContent: 'space-between',
   },
   headerContent: {
     marginTop: theme?.spacing?.md,
@@ -40,7 +39,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   form: {
-    flex: 1,
     gap: theme?.spacing?.lg,
   },
   inputGroup: {
@@ -84,6 +82,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   footer: {
+    marginTop: 'auto',
     alignItems: 'flex-end',
     paddingVertical: theme?.spacing?.md,
   },
