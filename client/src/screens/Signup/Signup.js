@@ -88,6 +88,7 @@ export default function Signup({ navigation }) {
                   autoCapitalize="words"
                   autoCorrect={false}
                   returnKeyType="next"
+                  autoFocus
                 />
                 {!!error && <Text style={styles?.errorText}>{error}</Text>}
               </View>
