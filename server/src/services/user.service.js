@@ -8,7 +8,7 @@ const createUser = async ({ firstName, lastName, email, verificationToken, passw
     throw new otpService.EmailNotVerifiedError('Email has not been verified.');
   }
 
-  const id = await generateId('user', 'USER');
+  const id = generateId('USER');
 
   const user = await User.create({ _id: id, firstName, lastName, email, password });
 

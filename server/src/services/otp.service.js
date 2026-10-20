@@ -11,6 +11,11 @@ class EmailNotVerifiedError extends Error {}
 const generateCode = () =>
   crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 
+// Constant-time so response timing can't leak how many leading digits match.
+const codesMatch = (expected, actual) =>
+  expected.length === actual.length &&
+  crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
+
 const createOtp = async email => {
   // Server-side enforcement: the client's own cooldown UI can be bypassed by
   // calling the API directly, so this is the real anti-spam boundary per address.
@@ -65,12 +70,11 @@ const verifyOtp = async (email, code) => {
     return { valid: false, message: 'OTP has expired. Please request a new code.' };
   }
 
-  if (otp.verified) {
-    // Idempotent: also protects an already-verified-but-not-yet-consumed
-    // record from being wiped out by a stray/duplicate guess before
-    // account creation gets a chance to consume it.
-    return { valid: true, verificationToken: otp.verificationToken };
-  }
+  // No early return for already-verified records: that handed the
+  // verificationToken to anyone who knew the email, whatever code they sent.
+  // A verified record goes through the same attempt cap and code check below,
+  // and a correct retry still gets the original token via the
+  // alreadyVerified fallback at the end.
 
   // Atomic check-and-claim: `otp.attempts += 1; otp.save()` was a
   // read-modify-write in application code, so concurrent wrong guesses could
@@ -92,7 +96,7 @@ const verifyOtp = async (email, code) => {
     return { valid: false, message: 'Too many incorrect attempts. Please request a new code.' };
   }
 
-  if (claimed.code !== code) {
+  if (!codesMatch(claimed.code, code)) {
     return { valid: false, message: 'Invalid OTP code.' };
   }
 

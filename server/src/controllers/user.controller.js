@@ -9,7 +9,9 @@ const createUser = asyncHandler(async (req, res) => {
     const tokens = await tokenService.issueTokens(user.id);
     res.status(201).json({ success: true, data: { user, ...tokens } });
   } catch (err) {
-    if (err.code === 11000) {
+    // Only an email collision means "in use"; any other duplicate key is a
+    // real server error and must not be reported as this.
+    if (err.code === 11000 && err.keyPattern?.email) {
       return res
         .status(409)
         .json({ success: false, message: 'Email is already in use' });
