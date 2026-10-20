@@ -8,7 +8,7 @@ const getAllCategories = async userId => {
 const createCategory = async ({ title, icon }, userId) => {
   const lastCategory = await Category.findOne({ userId }).sort({ position: -1 });
   const position = lastCategory ? lastCategory.position + 1 : 0;
-  const id = await generateId('category', 'CAT');
+  const id = generateId('CATE');
 
   return Category.create({ _id: id, title, icon, position, userId });
 };

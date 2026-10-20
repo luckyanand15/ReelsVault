@@ -26,7 +26,7 @@ export default function Welcome() {
           </View>
           <Text style={styles?.title}>Welcome to Reels Vault</Text>
           <Text style={styles?.subtitle}>
-            Your premium, offline-first space to organize, categorize, and safeguard your favorite video reels.
+            Your premium, space to organize, categorize, Reels and Shorts.
           </Text>
         </View>
 

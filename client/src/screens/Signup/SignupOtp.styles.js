@@ -84,36 +84,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: theme?.spacing?.xs,
   },
-  footer: {
-    alignItems: 'flex-end',
-    paddingVertical: theme?.spacing?.md,
-  },
-  arrowButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme?.colors?.textPrimary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  arrowButtonDisabled: {
-    backgroundColor: theme?.colors?.gray300,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  arrowIcon: {
-    fontSize: 24,
-    color: theme?.colors?.background,
-    fontWeight: 'bold',
-  },
-  arrowIconDisabled: {
-    color: theme?.colors?.gray500,
-  },
 });
 
 export default styles;
