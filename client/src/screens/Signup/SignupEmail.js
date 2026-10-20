@@ -129,6 +129,7 @@ export default function SignupEmail({ navigation }) {
                   autoCorrect={false}
                   returnKeyType="done"
                   onSubmitEditing={handleArrowPress}
+                  autoFocus
                 />
                 {!!error && <Text style={styles?.errorText}>{error}</Text>}
               </View>

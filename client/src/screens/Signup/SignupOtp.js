@@ -51,9 +51,6 @@ export default function SignupOtp({ navigation }) {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const fullOtp = otp.join('');
-  const isOtpComplete = fullOtp.length === 6;
-
   const handleChangeText = (text, index) => {
     const cleanedText = text.replace(/[^0-9]/g, '');
 
@@ -80,6 +77,11 @@ export default function SignupOtp({ navigation }) {
     if (error) {
       setError('');
     }
+
+    const code = newOtp.join('');
+    if (code.length === 6) {
+      handleVerify(code);
+    }
   };
 
   const handleKeyPress = (e, index) => {
@@ -91,12 +93,7 @@ export default function SignupOtp({ navigation }) {
     }
   };
 
-  const handleArrowPress = async () => {
-    if (!isOtpComplete) {
-      setError('Please enter all 6 digits.');
-      return;
-    }
-
+  const handleVerify = async (code) => {
     if (isVerifying) {
       return;
     }
@@ -105,13 +102,13 @@ export default function SignupOtp({ navigation }) {
     setError('');
 
     try {
-      const verifyResult = await verifyOtp(email, fullOtp);
+      const verifyResult = await verifyOtp(email, code);
       const verificationToken = verifyResult?.data?.verificationToken;
       confirmEmailVerification({ verificationToken });
       navigation.navigate(routes.SignupPassword);
     } catch (err) {
       setError(
-        err?.response?.data?.message || 'Something went wrong. Please try again.',
+        err?.response ? 'Invalid OTP code.' : 'Something went wrong. Please try again.',
       );
     } finally {
       setIsVerifying(false);
@@ -188,9 +185,12 @@ export default function SignupOtp({ navigation }) {
                     keyboardType="number-pad"
                     maxLength={6}
                     selectTextOnFocus
+                    autoFocus={index === 0}
                   />
                 ))}
               </View>
+
+              {isVerifying && <ActivityIndicator />}
 
               {error ? <Text style={styles?.errorText}>{error}</Text> : null}
 
@@ -206,34 +206,6 @@ export default function SignupOtp({ navigation }) {
                     ? `Resend code in ${resendCooldown}s`
                     : "Didn't receive the code? Resend"}
                 </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Footer with Arrow Button */}
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isOtpComplete || isVerifying) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isOtpComplete || isVerifying}
-                activeOpacity={0.8}
-                accessibilityLabel="Verify OTP"
-                accessibilityState={{ disabled: !isOtpComplete || isVerifying }}
-              >
-                {isVerifying ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[
-                      styles?.arrowIcon,
-                      !isOtpComplete && styles?.arrowIconDisabled,
-                    ]}
-                  >
-                    ➔
-                  </Text>
-                )}
               </TouchableOpacity>
             </View>
           </View>

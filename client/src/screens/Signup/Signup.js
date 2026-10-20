@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ export default function Signup({ navigation }) {
   const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [lastNameFocused, setLastNameFocused] = useState(false);
   const [error, setError] = useState('');
+  const lastNameRef = useRef(null);
 
   const isFirstNameValid = firstName.trim().length > 0;
 
@@ -35,6 +36,11 @@ export default function Signup({ navigation }) {
   const handleArrowPress = () => {
     if (!isFirstNameValid) {
       setError('First name is required.');
+      return;
+    }
+
+    if (firstNameFocused) {
+      lastNameRef.current?.focus();
       return;
     }
 
@@ -89,6 +95,8 @@ export default function Signup({ navigation }) {
                   autoCorrect={false}
                   returnKeyType="next"
                   autoFocus
+                  onSubmitEditing={() => lastNameRef.current?.focus()}
+                  submitBehavior="submit"
                 />
                 {!!error && <Text style={styles?.errorText}>{error}</Text>}
               </View>
@@ -99,6 +107,7 @@ export default function Signup({ navigation }) {
                   <Text style={styles?.label}>Last Name</Text>
                 </View>
                 <TextInput
+                  ref={lastNameRef}
                   style={[
                     styles?.input,
                     lastNameFocused && styles?.inputFocused,
