@@ -66,7 +66,13 @@ const claimDailySlot = async (email, field, max) => {
 const generateCode = () =>
   crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 
-// Constant-time so response timing can't leak how many leading digits match.
+// Only this hash is stored, so a leaked database doesn't hand out live codes.
+// Keyed with the server secret (HMAC, not a bare SHA-256): there are only a
+// million 6-digit codes, so a plain hash could be reversed by trying them all.
+const hashCode = code =>
+  crypto.createHmac('sha256', process.env.JWT_SECRET).update(code).digest('hex');
+
+// Constant-time so response timing can't leak how much of the hash matches.
 const codesMatch = (expected, actual) =>
   expected.length === actual.length &&
   crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
@@ -94,7 +100,7 @@ const createOtp = async email => {
       { email, lastSentAt: { $lte: cooldownCutoff } },
       {
         $set: {
-          code,
+          code: hashCode(code),
           expiresAt,
           attempts: 0,
           verified: false,
@@ -170,7 +176,7 @@ const verifyOtp = async (email, code) => {
     return { valid: false, message: 'Too many incorrect attempts. Please request a new code.' };
   }
 
-  if (!codesMatch(claimed.code, code)) {
+  if (!codesMatch(claimed.code, hashCode(code))) {
     return { valid: false, message: 'Invalid OTP code.' };
   }
 

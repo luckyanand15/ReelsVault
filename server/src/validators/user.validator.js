@@ -7,12 +7,16 @@ const createUserSchema = Joi.object({
   verificationToken: Joi.string().required(),
   // Must contain a letter; numbers and special characters are optional.
   // Keep in sync with the client's SignupPassword screen.
+  // Max is 72 UTF-8 bytes because bcrypt silently ignores anything past that.
   password: Joi.string()
     .min(8)
-    .max(128)
+    .max(72, 'utf8')
     .pattern(/[A-Za-z]/)
     .required()
-    .messages({ 'string.pattern.base': 'Password must include at least one letter' }),
+    .messages({
+      'string.pattern.base': 'Password must include at least one letter',
+      'string.max': 'Password must be 72 characters or fewer',
+    }),
   confirmPassword: Joi.string()
     .valid(Joi.ref('password'))
     .required()

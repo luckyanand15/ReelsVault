@@ -19,6 +19,8 @@ import { createUser } from '../../api/user.api';
 import styles from './SignupPassword.styles';
 
 const MIN_PASSWORD_LENGTH = 8;
+// bcrypt ignores anything past 72 bytes; must match user.validator.js.
+const MAX_PASSWORD_BYTES = 72;
 
 export default function SignupPassword({ navigation }) {
   const { canAccessStep, completeSignup, signupData } = useSignupFlow();
@@ -50,6 +52,9 @@ export default function SignupPassword({ navigation }) {
   const isPasswordLongEnough = password.length >= MIN_PASSWORD_LENGTH;
   // Must match the server rule in user.validator.js.
   const hasLetter = /[A-Za-z]/.test(password);
+  // Bytes, not characters: an emoji counts as up to 4.
+  const isPasswordShortEnough =
+    new TextEncoder().encode(password).length <= MAX_PASSWORD_BYTES;
   const doPasswordsMatch = password === confirmPassword;
   // hasLetter is left out on purpose: the button stays enabled so pressing it
   // shows the reason, instead of a disabled button with no explanation.
@@ -72,6 +77,11 @@ export default function SignupPassword({ navigation }) {
   const handleArrowPress = async () => {
     if (!isPasswordLongEnough) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+
+    if (!isPasswordShortEnough) {
+      setError(`Password must be ${MAX_PASSWORD_BYTES} characters or fewer.`);
       return;
     }
 
@@ -185,7 +195,7 @@ export default function SignupPassword({ navigation }) {
                   blurOnSubmit={false}
                 />
                 <Text style={styles?.hintText}>
-                  At least {MIN_PASSWORD_LENGTH} characters, including a letter.
+                  {MIN_PASSWORD_LENGTH} to {MAX_PASSWORD_BYTES} characters, including a letter.
                 </Text>
               </View>
 
