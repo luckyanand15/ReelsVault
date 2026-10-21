@@ -8,22 +8,19 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
 import { useLoginFlow } from '../../context/LoginFlowContext';
-import { checkEmail } from '../../api/auth.api';
 import styles from './LoginEmail.styles';
 
 export default function LoginEmail({ navigation }) {
-  const { confirmEmailChecked } = useLoginFlow();
+  const { confirmEmail } = useLoginFlow();
 
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateEmail = (text) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,7 +36,7 @@ export default function LoginEmail({ navigation }) {
     }
   };
 
-  const handleArrowPress = async () => {
+  const handleArrowPress = () => {
     if (!email.trim()) {
       setError('Email address is required.');
       return;
@@ -50,28 +47,12 @@ export default function LoginEmail({ navigation }) {
       return;
     }
 
-    if (isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
+    // No "is this email registered?" lookup here: that would let anyone
+    // probe which emails have accounts. The password screen's login call
+    // answers with a generic "Invalid email or password" either way.
     setError('');
-
-    try {
-      const exists = await checkEmail(email.trim());
-      if (!exists) {
-        setError('Email not found.');
-        return;
-      }
-      confirmEmailChecked({ email: email.trim() });
-      navigation.navigate(routes.LoginPassword);
-    } catch (err) {
-      setError(
-        err?.response?.data?.message || 'Something went wrong. Please try again.',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    confirmEmail({ email: email.trim() });
+    navigation.navigate(routes.LoginPassword);
   };
 
   return (
@@ -127,26 +108,22 @@ export default function LoginEmail({ navigation }) {
               <TouchableOpacity
                 style={[
                   styles?.arrowButton,
-                  (!isEmailValid || isSubmitting) && styles?.arrowButtonDisabled,
+                  !isEmailValid && styles?.arrowButtonDisabled,
                 ]}
                 onPress={handleArrowPress}
-                disabled={!isEmailValid || isSubmitting}
+                disabled={!isEmailValid}
                 activeOpacity={0.8}
                 accessibilityLabel="Next step"
-                accessibilityState={{ disabled: !isEmailValid || isSubmitting }}
+                accessibilityState={{ disabled: !isEmailValid }}
               >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[
-                      styles?.arrowIcon,
-                      !isEmailValid && styles?.arrowIconDisabled,
-                    ]}
-                  >
-                    ➔
-                  </Text>
-                )}
+                <Text
+                  style={[
+                    styles?.arrowIcon,
+                    !isEmailValid && styles?.arrowIconDisabled,
+                  ]}
+                >
+                  ➔
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -51,7 +51,7 @@ axiosClient.interceptors.response.use(
     const config = error?.config;
     const sentToken = config?.headers?.Authorization;
 
-    // Requests without a token (login's "Incorrect password" is a 401 too)
+    // Requests without a token (login's "Invalid email or password" is a 401 too)
     // and already-retried requests are passed through untouched.
     if (error?.response?.status !== 401 || !sentToken || config._retried || !refreshToken) {
       return Promise.reject(error);

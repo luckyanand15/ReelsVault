@@ -10,7 +10,9 @@ const updateCategorySchema = Joi.object({
   icon: Joi.string().trim().min(1).max(10),
 }).min(1);
 
-const categoryIdSchema = Joi.string().pattern(/^CAT\d+$/);
+// Legacy counter IDs (CAT12) and current generateId IDs
+// (CATE + YYYYMMDDHHmmss + 8 hex, e.g. CATE20261020143005A7F3C91E).
+const categoryIdSchema = Joi.string().pattern(/^(CAT\d+|CATE\d{14}[0-9A-F]{8})$/);
 
 const reorderCategoriesSchema = Joi.object({
   order: Joi.array().items(categoryIdSchema).min(1).required(),

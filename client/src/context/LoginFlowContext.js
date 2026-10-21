@@ -19,7 +19,7 @@ export function LoginFlowProvider({ children }) {
     () => ({
       loginData,
       canAccessStep: (step) => currentStep >= step,
-      confirmEmailChecked: ({ email }) => {
+      confirmEmail: ({ email }) => {
         setLoginData({ email });
         setCurrentStep(LoginStep.Password);
       },
