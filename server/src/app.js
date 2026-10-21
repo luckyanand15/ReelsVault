@@ -27,9 +27,12 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.status || 500).json({
+  const status = err.status || 500;
+  // Only deliberate 4xx messages reach the client; 5xx details (e.g. raw
+  // Brevo responses) stay in the server log.
+  res.status(status).json({
     success: false,
-    message: err.message || 'Internal Server Error',
+    message: status < 500 && err.message ? err.message : 'Internal Server Error',
   });
 });
 
