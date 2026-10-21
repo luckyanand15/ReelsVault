@@ -8,6 +8,8 @@ const otpSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    // HMAC-SHA256 of the code (see hashCode in otp.service.js), never the
+    // plain code.
     code: {
       type: String,
       required: true,

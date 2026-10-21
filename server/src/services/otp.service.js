@@ -1,9 +1,13 @@
 const crypto = require('crypto');
 const Otp = require('../models/Otp');
+const OtpUsage = require('../models/OtpUsage');
 
 const OTP_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 const SEND_COOLDOWN_SECONDS = 30;
+const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MAX_DAILY_SENDS = 10;
+const MAX_DAILY_VERIFY_ATTEMPTS = 20;
 
 class OtpCooldownError extends Error {
   constructor(message, retryAfter) {
@@ -11,12 +15,64 @@ class OtpCooldownError extends Error {
     this.retryAfter = retryAfter;
   }
 }
+class OtpDailyLimitError extends Error {
+  constructor(message, retryAfter) {
+    super(message);
+    this.retryAfter = retryAfter;
+  }
+}
 class EmailNotVerifiedError extends Error {}
+
+// Takes one of today's `field` slots (sends or verifyAttempts) for this email,
+// or throws OtpDailyLimitError once all `max` are used.
+const claimDailySlot = async (email, field, max) => {
+  const now = Date.now();
+
+  // Mongo's TTL sweep only runs about once a minute, so an expired record
+  // can still be around. Clear it so this starts a fresh 24h window.
+  await OtpUsage.deleteOne({ email, expiresAt: { $lte: new Date(now) } });
+
+  const filter = { email, [field]: { $lt: max } };
+  const inc = { $inc: { [field]: 1 } };
+
+  try {
+    await OtpUsage.findOneAndUpdate(
+      filter,
+      { ...inc, $setOnInsert: { expiresAt: new Date(now + DAILY_WINDOW_MS) } },
+      { upsert: true },
+    );
+    return;
+  } catch (err) {
+    if (err.code !== 11000) {
+      throw err;
+    }
+  }
+
+  // The duplicate key means a record exists that the filter didn't match:
+  // either it's at the cap, or a concurrent request inserted it first.
+  // Retry without upsert to tell which.
+  const claimed = await OtpUsage.findOneAndUpdate(filter, inc);
+  if (claimed) {
+    return;
+  }
+
+  const usage = await OtpUsage.findOne({ email }).select('expiresAt').lean();
+  const retryAfter = usage
+    ? Math.max(Math.ceil((usage.expiresAt.getTime() - now) / 1000), 1)
+    : 1;
+  throw new OtpDailyLimitError('Daily OTP limit reached for this email.', retryAfter);
+};
 
 const generateCode = () =>
   crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 
-// Constant-time so response timing can't leak how many leading digits match.
+// Only this hash is stored, so a leaked database doesn't hand out live codes.
+// Keyed with the server secret (HMAC, not a bare SHA-256): there are only a
+// million 6-digit codes, so a plain hash could be reversed by trying them all.
+const hashCode = code =>
+  crypto.createHmac('sha256', process.env.JWT_SECRET).update(code).digest('hex');
+
+// Constant-time so response timing can't leak how much of the hash matches.
 const codesMatch = (expected, actual) =>
   expected.length === actual.length &&
   crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
@@ -35,12 +91,16 @@ const createOtp = async email => {
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
   const cooldownCutoff = new Date(Date.now() - SEND_COOLDOWN_SECONDS * 1000);
 
+  // Claimed before the Otp write below, because that write resets the
+  // per-code guess counter — which is exactly what this cap has to bound.
+  await claimDailySlot(email, 'sends', MAX_DAILY_SENDS);
+
   try {
     await Otp.findOneAndUpdate(
       { email, lastSentAt: { $lte: cooldownCutoff } },
       {
         $set: {
-          code,
+          code: hashCode(code),
           expiresAt,
           attempts: 0,
           verified: false,
@@ -52,6 +112,9 @@ const createOtp = async email => {
     );
   } catch (err) {
     if (err.code === 11000) {
+      // No code was sent, so give back the daily slot claimed above.
+      await OtpUsage.updateOne({ email, sends: { $gt: 0 } }, { $inc: { sends: -1 } });
+
       // Tell the client how long is left so it can resume its countdown
       // instead of guessing. The record can vanish in between (expired or
       // deleted), in which case the user can retry right away.
@@ -89,6 +152,10 @@ const verifyOtp = async (email, code) => {
   // and a correct retry still gets the original token via the
   // alreadyVerified fallback at the end.
 
+  // The per-code cap below resets with every new code; this one doesn't, so
+  // it bounds the total guesses one email can get per day.
+  await claimDailySlot(email, 'verifyAttempts', MAX_DAILY_VERIFY_ATTEMPTS);
+
   // Atomic check-and-claim: `otp.attempts += 1; otp.save()` was a
   // read-modify-write in application code, so concurrent wrong guesses could
   // race past a stale attempts count and only one increment would stick.
@@ -109,7 +176,7 @@ const verifyOtp = async (email, code) => {
     return { valid: false, message: 'Too many incorrect attempts. Please request a new code.' };
   }
 
-  if (!codesMatch(claimed.code, code)) {
+  if (!codesMatch(claimed.code, hashCode(code))) {
     return { valid: false, message: 'Invalid OTP code.' };
   }
 
@@ -166,5 +233,6 @@ module.exports = {
   consumeVerifiedOtp,
   OTP_TTL_MINUTES,
   OtpCooldownError,
+  OtpDailyLimitError,
   EmailNotVerifiedError,
 };

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const categoryRoutes = require('./routes/category.routes');
 const userRoutes = require('./routes/user.routes');
 const otpRoutes = require('./routes/otp.routes');
@@ -12,6 +13,8 @@ const app = express();
 // reads the real client IP from X-Forwarded-For instead of the proxy's own IP.
 app.set('trust proxy', 1);
 
+// Standard security headers; also drops the X-Powered-By: Express banner.
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
@@ -27,9 +30,12 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.status || 500).json({
+  const status = err.status || 500;
+  // Only deliberate 4xx messages reach the client; 5xx details (e.g. raw
+  // Brevo responses) stay in the server log.
+  res.status(status).json({
     success: false,
-    message: err.message || 'Internal Server Error',
+    message: status < 500 && err.message ? err.message : 'Internal Server Error',
   });
 });
 
