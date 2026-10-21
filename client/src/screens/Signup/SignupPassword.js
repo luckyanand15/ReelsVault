@@ -48,7 +48,11 @@ export default function SignupPassword({ navigation }) {
   }, [canAccessPasswordStep, navigation]);
 
   const isPasswordLongEnough = password.length >= MIN_PASSWORD_LENGTH;
+  // Must match the server rule in user.validator.js.
+  const hasLetter = /[A-Za-z]/.test(password);
   const doPasswordsMatch = password === confirmPassword;
+  // hasLetter is left out on purpose: the button stays enabled so pressing it
+  // shows the reason, instead of a disabled button with no explanation.
   const isFormValid = isPasswordLongEnough && confirmPassword.length > 0 && doPasswordsMatch;
 
   const handlePasswordChange = (text) => {
@@ -68,6 +72,11 @@ export default function SignupPassword({ navigation }) {
   const handleArrowPress = async () => {
     if (!isPasswordLongEnough) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+
+    if (!hasLetter) {
+      setError('Must contain at least one letter.');
       return;
     }
 
@@ -176,7 +185,7 @@ export default function SignupPassword({ navigation }) {
                   blurOnSubmit={false}
                 />
                 <Text style={styles?.hintText}>
-                  At least {MIN_PASSWORD_LENGTH} characters.
+                  At least {MIN_PASSWORD_LENGTH} characters, including a letter.
                 </Text>
               </View>
 

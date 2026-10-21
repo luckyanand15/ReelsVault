@@ -15,7 +15,7 @@ const createCategory = async ({ title, icon }, userId) => {
 
 const updateCategory = async (id, updates, userId) => {
   return Category.findOneAndUpdate({ _id: id, userId }, updates, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
 };

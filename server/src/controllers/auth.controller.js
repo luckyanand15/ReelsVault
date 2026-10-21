@@ -12,6 +12,16 @@ const login = asyncHandler(async (req, res) => {
     const session = await authService.login(req.body);
     res.status(200).json({ success: true, data: session });
   } catch (err) {
+    if (err instanceof authService.LoginLockedError) {
+      const minutes = Math.ceil(err.retryAfter / 60);
+      res.set('Retry-After', String(err.retryAfter));
+      return res.status(429).json({
+        success: false,
+        code: 'LOGIN_LOCKED',
+        retryAfter: err.retryAfter,
+        message: `Too many failed login attempts. Please try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`,
+      });
+    }
     if (err instanceof authService.UserNotFoundError) {
       return res.status(404).json({ success: false, message: 'Email not found' });
     }
