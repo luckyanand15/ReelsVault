@@ -13,15 +13,22 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
-import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import {
+  OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS,
+  SignupStep,
+  useSignupFlow,
+} from '../../context/SignupFlowContext';
 import { sendOtp, verifyOtp } from '../../api/otp.api';
+import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import styles from './SignupOtp.styles';
 
-const RESEND_COOLDOWN_SECONDS = 30;
-
-export default function SignupOtp({ navigation }) {
-  const { canAccessStep, confirmEmailVerification, signupData } = useSignupFlow();
-  const { email } = signupData;
+export default function SignupOtp({ navigation, route }) {
+  // Set when we came here without sending a new code, because one sent
+  // earlier to this address is still valid.
+  const alreadySent = Boolean(route?.params?.alreadySent);
+  const { canAccessStep, confirmEmailVerification, markOtpResent, signupData } =
+    useSignupFlow();
+  const { email, otpSentAt } = signupData;
   const canAccessOtpStep = canAccessStep(SignupStep.Otp) && Boolean(email);
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -29,7 +36,16 @@ export default function SignupOtp({ navigation }) {
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+  // Count down from when the code was actually sent, not from when this
+  // screen opened: coming back here after going back to the email screen
+  // shouldn't restart the full wait.
+  const [resendCooldown, setResendCooldown] = useState(() => {
+    if (!otpSentAt) {
+      return RESEND_COOLDOWN_SECONDS;
+    }
+    const elapsedSeconds = Math.floor((Date.now() - otpSentAt) / 1000);
+    return Math.max(RESEND_COOLDOWN_SECONDS - elapsedSeconds, 0);
+  });
 
   const inputRefs = useRef([]);
 
@@ -107,9 +123,18 @@ export default function SignupOtp({ navigation }) {
       confirmEmailVerification({ verificationToken });
       navigation.navigate(routes.SignupPassword);
     } catch (err) {
-      setError(
-        err?.response ? 'Invalid OTP code.' : 'Something went wrong. Please try again.',
-      );
+      const { status, data } = err?.response || {};
+      if (status === 429) {
+        setError(`Too many attempts. Please try again ${formatRetryAfter(data?.retryAfter)}.`);
+      } else if (status === 400 && data?.message) {
+        // The server's message says what to do next, e.g. "Too many incorrect
+        // attempts. Please request a new code." or "OTP has expired...".
+        setError(data.message);
+      } else if (err?.response) {
+        setError('Invalid OTP code.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setIsVerifying(false);
     }
@@ -125,12 +150,19 @@ export default function SignupOtp({ navigation }) {
 
     try {
       await sendOtp(email);
+      markOtpResent();
+      navigation.setParams({ alreadySent: false });
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err) {
-      if (err?.response?.status === 429) {
-        setError('Too many requests. Please wait a moment and try again.');
+      const { status, data } = err?.response || {};
+      if (status === 429 && data?.code === 'OTP_COOLDOWN') {
+        // Our timer drifted from the server's; resync to its remaining wait.
+        // The countdown on the button already tells the user what to do.
+        setResendCooldown(data.retryAfter ?? RESEND_COOLDOWN_SECONDS);
+      } else if (status === 429) {
+        setError(`Too many requests. Please try again ${formatRetryAfter(data?.retryAfter)}.`);
       } else {
         setError('Failed to resend code. Please try again.');
       }
@@ -158,10 +190,11 @@ export default function SignupOtp({ navigation }) {
               <Text style={styles?.stepIndicator}>Step 3 of 4</Text>
               <Text style={styles?.title}>Enter verification code</Text>
               <Text style={styles?.subtitle}>
-                We sent a 6-digit code to{' '}
+                {alreadySent ? 'We already sent a 6-digit code to' : 'We sent a 6-digit code to'}{' '}
                 <Text style={styles?.emailHighlight}>
                   {email || 'your email'}
                 </Text>
+                {alreadySent ? '. It is still valid, so you can use it below.' : ''}
               </Text>
             </View>
 

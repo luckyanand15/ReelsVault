@@ -7,6 +7,12 @@ export const SignupStep = {
   Password: 3,
 };
 
+// Mirrors OTP_TTL_MINUTES on the server: how long a sent code stays usable.
+export const OTP_VALID_MS = 10 * 60 * 1000;
+
+// Mirrors SEND_COOLDOWN_SECONDS on the server: minimum gap between sends.
+export const OTP_RESEND_COOLDOWN_SECONDS = 30;
+
 const initialSignupData = {
   userId: '',
   firstName: '',
@@ -14,6 +20,10 @@ const initialSignupData = {
   email: '',
   isEmailVerified: false,
   verificationToken: '',
+  // When the last code was sent to `email`. Lets the email screen skip
+  // re-sending (and hitting the server's 30s cooldown) when the user goes
+  // back and continues with the same address.
+  otpSentAt: null,
 };
 
 const SignupFlowContext = createContext(null);
@@ -34,15 +44,22 @@ export function SignupFlowProvider({ children }) {
         });
         setCurrentStep(SignupStep.Email);
       },
-      continueWithEmail: ({ email }) => {
+      continueWithEmail: ({ email, otpSentAt }) => {
         setSignupData((currentData) => ({
           ...currentData,
           userId: '',
           email,
           isEmailVerified: false,
           verificationToken: '',
+          otpSentAt,
         }));
         setCurrentStep(SignupStep.Otp);
+      },
+      markOtpResent: () => {
+        setSignupData((currentData) => ({
+          ...currentData,
+          otpSentAt: Date.now(),
+        }));
       },
       confirmEmailVerification: ({ verificationToken }) => {
         setSignupData((currentData) => ({

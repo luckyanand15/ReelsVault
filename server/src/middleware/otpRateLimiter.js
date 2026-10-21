@@ -1,8 +1,19 @@
 const rateLimit = require('express-rate-limit');
 
-const genericLimitResponse = {
-  success: false,
-  message: 'Too many requests. Please try again later.',
+// Includes a code and the seconds until the window resets, so the client can
+// tell this apart from the per-email OTP_COOLDOWN and show the real wait.
+const rateLimitHandler = (req, res, next, options) => {
+  const resetTime = req.rateLimit?.resetTime;
+  const retryAfter = resetTime
+    ? Math.max(Math.ceil((resetTime.getTime() - Date.now()) / 1000), 1)
+    : undefined;
+
+  res.status(options.statusCode).json({
+    success: false,
+    code: 'RATE_LIMITED',
+    retryAfter,
+    message: 'Too many requests. Please try again later.',
+  });
 };
 
 // Per-IP backstop: a single script hammering many different target emails.
@@ -13,7 +24,7 @@ const otpSendLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: genericLimitResponse,
+  handler: rateLimitHandler,
 });
 
 const otpVerifyLimiter = rateLimit({
@@ -21,7 +32,7 @@ const otpVerifyLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  message: genericLimitResponse,
+  handler: rateLimitHandler,
 });
 
 module.exports = { otpSendLimiter, otpVerifyLimiter };
