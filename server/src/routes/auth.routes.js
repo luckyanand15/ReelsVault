@@ -1,7 +1,7 @@
 const express = require('express');
 const validate = require('../middleware/validation.middleware');
 const requireAuth = require('../middleware/requireAuth.middleware');
-const { authLimiter } = require('../middleware/authRateLimiter');
+const { authLimiter, checkEmailLimiter } = require('../middleware/authRateLimiter');
 const {
   checkEmailSchema,
   loginSchema,
@@ -11,7 +11,7 @@ const controller = require('../controllers/auth.controller');
 
 const router = express.Router();
 
-router.post('/check-email', validate(checkEmailSchema), controller.checkEmail);
+router.post('/check-email', checkEmailLimiter, validate(checkEmailSchema), controller.checkEmail);
 router.post('/login', authLimiter, validate(loginSchema), controller.login);
 router.post('/refresh', authLimiter, validate(refreshTokenSchema), controller.refresh);
 // No access token required: it may already be expired. Holding the refresh

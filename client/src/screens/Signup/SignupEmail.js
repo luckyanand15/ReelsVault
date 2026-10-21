@@ -13,12 +13,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header/Header';
 import routes from '../../routes/routes';
-import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import {
+  OTP_RESEND_COOLDOWN_SECONDS,
+  OTP_VALID_MS,
+  SignupStep,
+  useSignupFlow,
+} from '../../context/SignupFlowContext';
 import { sendOtp } from '../../api/otp.api';
+import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import styles from './SignupEmail.styles';
 
 export default function SignupEmail({ navigation }) {
-  const { canAccessStep, continueWithEmail } = useSignupFlow();
+  const { canAccessStep, continueWithEmail, signupData } = useSignupFlow();
   const canAccessEmailStep = canAccessStep(SignupStep.Email);
 
   const [email, setEmail] = useState('');
@@ -61,18 +67,46 @@ export default function SignupEmail({ navigation }) {
       return;
     }
 
+    const trimmedEmail = email.trim();
+
+    // A code already sent to this address is still in the user's inbox and
+    // still valid, so don't send another (the server would reject it within
+    // its 30s cooldown anyway). The server lowercases emails, so compare that way.
+    const { email: sentEmail, otpSentAt } = signupData;
+    const hasValidCode =
+      Boolean(otpSentAt) &&
+      sentEmail.toLowerCase() === trimmedEmail.toLowerCase() &&
+      Date.now() - otpSentAt < OTP_VALID_MS;
+
+    if (hasValidCode) {
+      setError('');
+      continueWithEmail({ email: trimmedEmail, otpSentAt });
+      navigation.navigate(routes.SignupOtp, { alreadySent: true });
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 
     try {
-      await sendOtp(email.trim());
-      continueWithEmail({ email: email.trim() });
+      await sendOtp(trimmedEmail);
+      continueWithEmail({ email: trimmedEmail, otpSentAt: Date.now() });
       navigation.navigate(routes.SignupOtp);
     } catch (err) {
-      if (err?.response?.status === 409) {
+      const { status, data } = err?.response || {};
+      if (status === 409) {
         setError('This email is already registered.');
-      } else if (err?.response?.status === 429) {
-        setError('Too many requests. Please wait a moment and try again.');
+      } else if (status === 429 && data?.code === 'OTP_COOLDOWN') {
+        // A code was sent to this address moments ago (e.g. before the app
+        // restarted) and is still valid, so carry on rather than block.
+        // Backdate otpSentAt so the code screen's resend timer shows the
+        // server's remaining wait.
+        const retryAfter = data.retryAfter ?? OTP_RESEND_COOLDOWN_SECONDS;
+        const otpSentAt = Date.now() - (OTP_RESEND_COOLDOWN_SECONDS - retryAfter) * 1000;
+        continueWithEmail({ email: trimmedEmail, otpSentAt });
+        navigation.navigate(routes.SignupOtp, { alreadySent: true });
+      } else if (status === 429) {
+        setError(`Too many requests. Please try again ${formatRetryAfter(data?.retryAfter)}.`);
       } else {
         setError('Failed to send verification code. Please try again.');
       }

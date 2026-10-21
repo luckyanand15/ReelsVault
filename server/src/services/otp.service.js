@@ -5,7 +5,12 @@ const OTP_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 const SEND_COOLDOWN_SECONDS = 30;
 
-class OtpCooldownError extends Error {}
+class OtpCooldownError extends Error {
+  constructor(message, retryAfter) {
+    super(message);
+    this.retryAfter = retryAfter;
+  }
+}
 class EmailNotVerifiedError extends Error {}
 
 const generateCode = () =>
@@ -47,7 +52,15 @@ const createOtp = async email => {
     );
   } catch (err) {
     if (err.code === 11000) {
-      throw new OtpCooldownError('Please wait before requesting another code.');
+      // Tell the client how long is left so it can resume its countdown
+      // instead of guessing. The record can vanish in between (expired or
+      // deleted), in which case the user can retry right away.
+      const existing = await Otp.findOne({ email }).select('lastSentAt').lean();
+      const elapsedSeconds = existing
+        ? (Date.now() - existing.lastSentAt.getTime()) / 1000
+        : SEND_COOLDOWN_SECONDS;
+      const retryAfter = Math.max(Math.ceil(SEND_COOLDOWN_SECONDS - elapsedSeconds), 1);
+      throw new OtpCooldownError('Please wait before requesting another OTP.', retryAfter);
     }
     throw err;
   }
