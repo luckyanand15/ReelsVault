@@ -1,13 +1,17 @@
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const LoginAttempt = require('../models/LoginAttempt');
-const userService = require('./user.service');
 const tokenService = require('./token.service');
 
 const MAX_FAILED_LOGINS = 5;
 const FAILED_LOGIN_WINDOW_MINUTES = 15;
 const LOGIN_LOCK_MINUTES = 15;
 
-class UserNotFoundError extends Error {}
+// Compared against when the email doesn't exist, so an unknown email takes
+// as long as a wrong password and response timing can't tell them apart.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 12);
+
 class InvalidCredentialsError extends Error {}
 class LoginLockedError extends Error {
   constructor(message, retryAfter) {
@@ -16,13 +20,15 @@ class LoginLockedError extends Error {
   }
 }
 
-const checkEmailExists = email => userService.isEmailRegistered(email);
-
 // Checked before the password, so a locked account rejects even a correct
 // guess — otherwise the lock wouldn't stop anything.
-const assertNotLocked = async email => {
+const assertNotLocked = async (email, ip) => {
   const now = Date.now();
-  const attempt = await LoginAttempt.findOne({ email, expiresAt: { $gt: new Date(now) } }).lean();
+  const attempt = await LoginAttempt.findOne({
+    email,
+    ip,
+    expiresAt: { $gt: new Date(now) },
+  }).lean();
 
   if (attempt && attempt.failures >= MAX_FAILED_LOGINS) {
     const retryAfter = Math.max(Math.ceil((attempt.expiresAt.getTime() - now) / 1000), 1);
@@ -30,12 +36,12 @@ const assertNotLocked = async email => {
   }
 };
 
-const recordFailedLogin = async email => {
+const recordFailedLogin = async (email, ip) => {
   const now = Date.now();
 
   // Mongo's TTL sweep only runs about once a minute, so an expired record
   // can still be around. Clear it so this failure starts a fresh window.
-  await LoginAttempt.deleteOne({ email, expiresAt: { $lte: new Date(now) } });
+  await LoginAttempt.deleteOne({ email, ip, expiresAt: { $lte: new Date(now) } });
 
   const update = {
     $inc: { failures: 1 },
@@ -44,7 +50,7 @@ const recordFailedLogin = async email => {
 
   let attempt;
   try {
-    attempt = await LoginAttempt.findOneAndUpdate({ email }, update, {
+    attempt = await LoginAttempt.findOneAndUpdate({ email, ip }, update, {
       upsert: true,
       returnDocument: 'after',
     });
@@ -53,7 +59,9 @@ const recordFailedLogin = async email => {
     if (err.code !== 11000) {
       throw err;
     }
-    attempt = await LoginAttempt.findOneAndUpdate({ email }, update, { returnDocument: 'after' });
+    attempt = await LoginAttempt.findOneAndUpdate({ email, ip }, update, {
+      returnDocument: 'after',
+    });
   }
 
   if (attempt && attempt.failures >= MAX_FAILED_LOGINS) {
@@ -64,22 +72,24 @@ const recordFailedLogin = async email => {
   }
 };
 
-const login = async ({ email, password }) => {
-  await assertNotLocked(email);
+const login = async ({ email, password }, ip) => {
+  await assertNotLocked(email, ip);
 
   const user = await User.findOne({ email }).select('+password');
 
-  if (!user) {
-    throw new UserNotFoundError('Email not found.');
+  // Unknown email and wrong password take the same path — same bcrypt cost,
+  // same failure counting, same error — so login can't reveal which emails
+  // are registered.
+  const isMatch = user
+    ? await user.comparePassword(password)
+    : await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+
+  if (!user || !isMatch) {
+    await recordFailedLogin(email, ip);
+    throw new InvalidCredentialsError('Invalid email or password.');
   }
 
-  const isMatch = await user.comparePassword(password);
-  if (!isMatch) {
-    await recordFailedLogin(email);
-    throw new InvalidCredentialsError('Incorrect password.');
-  }
-
-  await LoginAttempt.deleteOne({ email });
+  await LoginAttempt.deleteOne({ email, ip });
 
   const { password: _password, ...safeUser } = user.toJSON();
   const tokens = await tokenService.issueTokens(user.id);
@@ -92,10 +102,8 @@ const getUserById = async id => {
 };
 
 module.exports = {
-  checkEmailExists,
   login,
   getUserById,
-  UserNotFoundError,
   InvalidCredentialsError,
   LoginLockedError,
 };

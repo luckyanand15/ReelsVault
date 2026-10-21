@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
-// Failed-login counter per email. Unlike the per-IP authLimiter, this can't
-// be dodged by spreading guesses for one account across many IPs.
+// Failed-login counter per email + IP pair. Keyed on both so a stranger
+// guessing from their own IP locks only themselves out of that account,
+// not the real owner on a different IP.
 const loginAttemptSchema = new mongoose.Schema(
   {
     email: {
@@ -9,6 +10,10 @@ const loginAttemptSchema = new mongoose.Schema(
       required: true,
       trim: true,
       lowercase: true,
+    },
+    ip: {
+      type: String,
+      required: true,
     },
     failures: {
       type: Number,
@@ -24,7 +29,7 @@ const loginAttemptSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-loginAttemptSchema.index({ email: 1 }, { unique: true });
+loginAttemptSchema.index({ email: 1, ip: 1 }, { unique: true });
 loginAttemptSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const LoginAttempt = mongoose.model('LoginAttempt', loginAttemptSchema);
