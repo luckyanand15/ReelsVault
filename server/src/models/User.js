@@ -32,6 +32,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    // Access tokens issued before this are rejected (see requireAuth), so a
+    // password reset ends every session, not just the refreshable ones.
+    passwordChangedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );

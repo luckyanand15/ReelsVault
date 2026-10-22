@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-const sendOtpEmail = async (email, code, ttlMinutes) => {
+const sendEmail = async (email, subject, htmlContent) => {
   try {
     await axios.post(
       BREVO_API_URL,
@@ -12,8 +12,8 @@ const sendOtpEmail = async (email, code, ttlMinutes) => {
           email: process.env.BREVO_SENDER_EMAIL,
         },
         to: [{ email }],
-        subject: 'Your ReelsVault verification code',
-        htmlContent: `<p>Your ReelsVault verification code is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p>`,
+        subject,
+        htmlContent,
       },
       {
         headers: {
@@ -25,8 +25,22 @@ const sendOtpEmail = async (email, code, ttlMinutes) => {
     );
   } catch (err) {
     const errorBody = err.response ? JSON.stringify(err.response.data) : err.message;
-    throw new Error(`Failed to send OTP email: ${errorBody}`);
+    throw new Error(`Failed to send email: ${errorBody}`);
   }
 };
 
-module.exports = { sendOtpEmail };
+const sendOtpEmail = (email, code, ttlMinutes) =>
+  sendEmail(
+    email,
+    'Your ReelsVault verification code',
+    `<p>Your ReelsVault verification code is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p>`,
+  );
+
+const sendPasswordResetEmail = (email, code, ttlMinutes) =>
+  sendEmail(
+    email,
+    'Reset your ReelsVault password',
+    `<p>Your ReelsVault password reset code is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p><p>If you didn't ask to reset your password, you can ignore this email. Your password won't change.</p>`,
+  );
+
+module.exports = { sendOtpEmail, sendPasswordResetEmail };

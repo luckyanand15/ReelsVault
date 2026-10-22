@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const LoginAttempt = require('../models/LoginAttempt');
 const tokenService = require('./token.service');
+const otpService = require('./otp.service');
 
 const MAX_FAILED_LOGINS = 5;
 const FAILED_LOGIN_WINDOW_MINUTES = 15;
@@ -13,6 +14,7 @@ const LOGIN_LOCK_MINUTES = 15;
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 12);
 
 class InvalidCredentialsError extends Error {}
+class InvalidResetTokenError extends Error {}
 class LoginLockedError extends Error {
   constructor(message, retryAfter) {
     super(message);
@@ -96,6 +98,37 @@ const login = async ({ email, password }, ip) => {
   return { user: safeUser, ...tokens };
 };
 
+const resetPassword = async ({ email, resetToken, password }, ip) => {
+  // Spends the verified reset code, so the same token can't set the
+  // password twice.
+  const isVerified = await otpService.consumeVerifiedOtp(
+    email,
+    resetToken,
+    otpService.OTP_PURPOSE.PasswordReset,
+  );
+  if (!isVerified) {
+    throw new InvalidResetTokenError('Password reset code is invalid or has expired.');
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new InvalidResetTokenError('Password reset code is invalid or has expired.');
+  }
+
+  // save(), not updateOne: the pre-save hook is what hashes the password.
+  user.password = password;
+  user.passwordChangedAt = new Date();
+  await user.save();
+
+  // Log out everywhere: refreshable sessions are revoked here, and access
+  // tokens already handed out are rejected by requireAuth via passwordChangedAt.
+  await tokenService.revokeAllForUser(user.id);
+
+  // Proving ownership of the inbox is at least as strong as a correct
+  // password, so lift any lockout this user hit from this IP.
+  await LoginAttempt.deleteOne({ email, ip });
+};
+
 const getUserById = async id => {
   const user = await User.findById(id);
   return user ? user.toJSON() : null;
@@ -103,7 +136,9 @@ const getUserById = async id => {
 
 module.exports = {
   login,
+  resetPassword,
   getUserById,
   InvalidCredentialsError,
+  InvalidResetTokenError,
   LoginLockedError,
 };

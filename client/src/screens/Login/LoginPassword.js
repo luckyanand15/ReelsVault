@@ -134,6 +134,15 @@ export default function LoginPassword({ navigation }) {
                 />
                 {!!error && <Text style={styles?.errorText}>{error}</Text>}
               </View>
+
+              <TouchableOpacity
+                style={styles?.forgotPasswordButton}
+                onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+              >
+                <Text style={styles?.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Footer with Arrow Button */}

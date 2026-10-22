@@ -46,7 +46,10 @@ const rotateRefreshToken = async refreshToken => {
     throw new InvalidRefreshTokenError('Invalid refresh token.');
   }
 
-  if (!(await User.exists({ _id: current.userId }))) {
+  // A password reset revokes every token, but a refresh already past the
+  // claim above when that happened would otherwise mint a fresh one.
+  const user = await User.findById(current.userId).select('passwordChangedAt').lean();
+  if (!user || (user.passwordChangedAt && current.createdAt < user.passwordChangedAt)) {
     await revokeFamily(current.family);
     throw new InvalidRefreshTokenError('Invalid refresh token.');
   }
@@ -61,8 +64,13 @@ const revokeRefreshToken = async refreshToken => {
   }
 };
 
+// Ends every session the user has, on every device.
+const revokeAllForUser = userId =>
+  RefreshToken.updateMany({ userId, revokedAt: null }, { $set: { revokedAt: new Date() } });
+
 module.exports = {
   issueTokens,
+  revokeAllForUser,
   rotateRefreshToken,
   revokeRefreshToken,
   InvalidRefreshTokenError,

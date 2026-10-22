@@ -2,17 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const otpService = require('../services/otp.service');
 const brevoService = require('../services/brevo.service');
 const userService = require('../services/user.service');
-
-const sendDailyLimit = (res, err) => {
-  const hours = Math.ceil(err.retryAfter / 3600);
-  res.set('Retry-After', String(err.retryAfter));
-  return res.status(429).json({
-    success: false,
-    code: 'OTP_DAILY_LIMIT',
-    retryAfter: err.retryAfter,
-    message: `Too many verification attempts for this email. Please try again in ${hours} hour${hours === 1 ? '' : 's'}.`,
-  });
-};
+const { sendDailyLimit, sendCooldown } = require('../utils/otpLimitResponses');
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -29,16 +19,7 @@ const sendOtp = asyncHandler(async (req, res) => {
     code = await otpService.createOtp(email);
   } catch (err) {
     if (err instanceof otpService.OtpCooldownError) {
-      // Distinct from the per-IP RATE_LIMITED response: this one means a code
-      // was already sent to this address and is still in the inbox, so the
-      // client can carry on to the code screen instead of showing an error.
-      res.set('Retry-After', String(err.retryAfter));
-      return res.status(429).json({
-        success: false,
-        code: 'OTP_COOLDOWN',
-        retryAfter: err.retryAfter,
-        message: `An OTP was already sent. You can request a new one in ${err.retryAfter}s.`,
-      });
+      return sendCooldown(res, err);
     }
     if (err instanceof otpService.OtpDailyLimitError) {
       return sendDailyLimit(res, err);

@@ -9,6 +9,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { CategoriesProvider } from './src/context/CategoriesContext';
 import { SignupFlowProvider } from './src/context/SignupFlowContext';
 import { LoginFlowProvider } from './src/context/LoginFlowContext';
+import { ForgotPasswordFlowProvider } from './src/context/ForgotPasswordFlowContext';
 import theme from './src/constants/theme';
 
 export default function App() {
@@ -22,7 +23,9 @@ export default function App() {
               <CategoriesProvider>
                 <SignupFlowProvider>
                   <LoginFlowProvider>
-                    <AppNavigator />
+                    <ForgotPasswordFlowProvider>
+                      <AppNavigator />
+                    </ForgotPasswordFlowProvider>
                   </LoginFlowProvider>
                 </SignupFlowProvider>
               </CategoriesProvider>

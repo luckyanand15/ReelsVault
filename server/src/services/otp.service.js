@@ -9,6 +9,11 @@ const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_DAILY_SENDS = 10;
 const MAX_DAILY_VERIFY_ATTEMPTS = 20;
 
+const OTP_PURPOSE = {
+  Signup: 'signup',
+  PasswordReset: 'password_reset',
+};
+
 class OtpCooldownError extends Error {
   constructor(message, retryAfter) {
     super(message);
@@ -77,7 +82,7 @@ const codesMatch = (expected, actual) =>
   expected.length === actual.length &&
   crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
 
-const createOtp = async email => {
+const createOtp = async (email, purpose = OTP_PURPOSE.Signup) => {
   // Server-side enforcement: the client's own cooldown UI can be bypassed by
   // calling the API directly, so this is the real anti-spam boundary per address.
   //
@@ -101,6 +106,7 @@ const createOtp = async email => {
       {
         $set: {
           code: hashCode(code),
+          purpose,
           expiresAt,
           attempts: 0,
           verified: false,
@@ -131,10 +137,12 @@ const createOtp = async email => {
   return code;
 };
 
-const verifyOtp = async (email, code) => {
+const verifyOtp = async (email, code, purpose = OTP_PURPOSE.Signup) => {
   const otp = await Otp.findOne({ email });
 
-  if (!otp) {
+  // A code sent for the other flow is treated as no code at all, so it
+  // doesn't cost a guess either.
+  if (!otp || otp.purpose !== purpose) {
     return { valid: false, message: 'OTP not found. Please request a new code.' };
   }
 
@@ -213,13 +221,14 @@ const verifyOtp = async (email, code) => {
   return { valid: true, verificationToken: alreadyVerified?.verificationToken };
 };
 
-const consumeVerifiedOtp = async (email, verificationToken) => {
+const consumeVerifiedOtp = async (email, verificationToken, purpose = OTP_PURPOSE.Signup) => {
   // Atomic find+delete: the record can only ever be spent once, requires
   // the exact token issued to the verifying client (not just "verified for
   // this email"), and must still be within its original expiry window even
   // though "verified" alone would otherwise never expire on its own.
   const consumed = await Otp.findOneAndDelete({
     email,
+    purpose,
     verified: true,
     verificationToken,
     expiresAt: { $gt: new Date() },
@@ -232,6 +241,7 @@ module.exports = {
   verifyOtp,
   consumeVerifiedOtp,
   OTP_TTL_MINUTES,
+  OTP_PURPOSE,
   OtpCooldownError,
   OtpDailyLimitError,
   EmailNotVerifiedError,

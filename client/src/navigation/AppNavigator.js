@@ -7,6 +7,9 @@ import SignupOtp from '../screens/Signup/SignupOtp';
 import SignupPassword from '../screens/Signup/SignupPassword';
 import LoginEmail from '../screens/Login/LoginEmail';
 import LoginPassword from '../screens/Login/LoginPassword';
+import ForgotPasswordEmail from '../screens/ForgotPassword/ForgotPasswordEmail';
+import ForgotPasswordOtp from '../screens/ForgotPassword/ForgotPasswordOtp';
+import ForgotPasswordReset from '../screens/ForgotPassword/ForgotPasswordReset';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
@@ -36,6 +39,9 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.SignupPassword} component={SignupPassword} />
       <Stack.Screen name={routes.LoginEmail} component={LoginEmail} />
       <Stack.Screen name={routes.LoginPassword} component={LoginPassword} />
+      <Stack.Screen name={routes.ForgotPasswordEmail} component={ForgotPasswordEmail} />
+      <Stack.Screen name={routes.ForgotPasswordOtp} component={ForgotPasswordOtp} />
+      <Stack.Screen name={routes.ForgotPasswordReset} component={ForgotPasswordReset} />
       <Stack.Screen name={routes.Dashboard} component={Dashboard} />
       <Stack.Screen name={routes.Settings} component={Settings} />
       <Stack.Screen name={routes.ManageCategories} component={ManageCategories} />
