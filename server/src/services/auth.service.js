@@ -4,6 +4,7 @@ const User = require('../models/User');
 const LoginAttempt = require('../models/LoginAttempt');
 const tokenService = require('./token.service');
 const otpService = require('./otp.service');
+const brevoService = require('./brevo.service');
 
 const MAX_FAILED_LOGINS = 5;
 const FAILED_LOGIN_WINDOW_MINUTES = 15;
@@ -127,6 +128,14 @@ const resetPassword = async ({ email, resetToken, password }, ip) => {
   // Proving ownership of the inbox is at least as strong as a correct
   // password, so lift any lockout this user hit from this IP.
   await LoginAttempt.deleteOne({ email, ip });
+
+  // Lets the real owner notice a reset they didn't make. The password has
+  // already changed by now, so a failed email mustn't fail the request.
+  try {
+    await brevoService.sendPasswordChangedEmail(email);
+  } catch (err) {
+    console.error('Password changed email failed:', err.message);
+  }
 };
 
 const getUserById = async id => {

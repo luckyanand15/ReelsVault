@@ -43,4 +43,11 @@ const sendPasswordResetEmail = (email, code, ttlMinutes) =>
     `<p>Your ReelsVault password reset code is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p><p>If you didn't ask to reset your password, you can ignore this email. Your password won't change.</p>`,
   );
 
-module.exports = { sendOtpEmail, sendPasswordResetEmail };
+const sendPasswordChangedEmail = email =>
+  sendEmail(
+    email,
+    'Your ReelsVault password was changed',
+    `<p>The password for your ReelsVault account was just changed, and you've been logged out on every device.</p><p>If this was you, you don't need to do anything.</p><p>If it wasn't, reset your password right away from the login screen using "Forgot password".</p>`,
+  );
+
+module.exports = { sendOtpEmail, sendPasswordResetEmail, sendPasswordChangedEmail };

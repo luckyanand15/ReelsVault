@@ -9,6 +9,13 @@ const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_DAILY_SENDS = 10;
 const MAX_DAILY_VERIFY_ATTEMPTS = 20;
 
+// Its own key, not JWT_SECRET, so leaking one doesn't also give away the other.
+const OTP_HMAC_SECRET = process.env.OTP_HMAC_SECRET;
+
+if (!OTP_HMAC_SECRET) {
+  throw new Error('OTP_HMAC_SECRET is not set. Add it to the server environment.');
+}
+
 const OTP_PURPOSE = {
   Signup: 'signup',
   PasswordReset: 'password_reset',
@@ -75,7 +82,7 @@ const generateCode = () =>
 // Keyed with the server secret (HMAC, not a bare SHA-256): there are only a
 // million 6-digit codes, so a plain hash could be reversed by trying them all.
 const hashCode = code =>
-  crypto.createHmac('sha256', process.env.JWT_SECRET).update(code).digest('hex');
+  crypto.createHmac('sha256', OTP_HMAC_SECRET).update(code).digest('hex');
 
 // Constant-time so response timing can't leak how much of the hash matches.
 const codesMatch = (expected, actual) =>
