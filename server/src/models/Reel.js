@@ -29,6 +29,8 @@ const reelSchema = new mongoose.Schema(
 );
 
 reelSchema.index({ userId: 1, createdAt: -1 });
+// One copy of each reel per user; urls are normalized before saving.
+reelSchema.index({ userId: 1, url: 1 }, { unique: true });
 
 reelSchema.plugin(mongooseIdPlugin);
 
