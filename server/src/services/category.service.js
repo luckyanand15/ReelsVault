@@ -1,4 +1,5 @@
 const Category = require('../models/Category');
+const Reel = require('../models/Reel');
 const generateId = require('../utils/generateId');
 
 const getAllCategories = async userId => {
@@ -29,8 +30,13 @@ const updateCategory = async (id, updates, userId) => {
   return category;
 };
 
+// A category's reels go with it so none are left orphaned.
 const deleteCategory = async (id, userId) => {
-  return Category.findOneAndDelete({ _id: id, userId });
+  const category = await Category.findOneAndDelete({ _id: id, userId });
+  if (category) {
+    await Reel.deleteMany({ categoryId: id, userId });
+  }
+  return category;
 };
 
 const reorderCategories = async (order, userId) => {

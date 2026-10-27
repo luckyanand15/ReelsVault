@@ -37,6 +37,14 @@ const styles = StyleSheet.create({
     color: theme?.colors?.textMuted,
     textAlign: 'center',
   },
+  reelsContainer: {
+    flex: 1,
+    alignSelf: 'stretch',
+  },
+  reelsList: {
+    gap: theme?.spacing?.sm,
+    paddingBottom: 100, // keeps the last reel clear of the FAB
+  },
 
   // FAB Backdrop
   fabBackdrop: {

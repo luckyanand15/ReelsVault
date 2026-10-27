@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const categoryRoutes = require('./routes/category.routes');
+const reelRoutes = require('./routes/reel.routes');
 const userRoutes = require('./routes/user.routes');
 const otpRoutes = require('./routes/otp.routes');
 const authRoutes = require('./routes/auth.routes');
@@ -19,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/categories', requireAuth, categoryRoutes);
+app.use('/api/reels', requireAuth, reelRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/auth', authRoutes);
