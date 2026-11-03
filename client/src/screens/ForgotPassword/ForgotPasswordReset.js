@@ -19,6 +19,7 @@ import {
 } from '../../context/ForgotPasswordFlowContext';
 import { useLoginFlow } from '../../context/LoginFlowContext';
 import { resetPassword } from '../../api/auth.api';
+import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './ForgotPasswordReset.styles';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -121,7 +122,7 @@ export default function ForgotPasswordReset({ navigation }) {
       resetLoginFlow();
     } catch (err) {
       const { data } = err?.response || {};
-      if (data?.code === 'RESET_TOKEN_INVALID') {
+      if (data?.code === ERROR_CODES.RESET_TOKEN_INVALID) {
         // The verified code expired before the password was set. Go back to
         // the email step to get a new one.
         isLeavingRef.current = true;

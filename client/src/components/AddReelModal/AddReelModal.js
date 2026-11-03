@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AddCategoryModal from '../AddCategoryModal/AddCategoryModal';
+import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './AddReelModal.styles';
 
 const URL_PATTERN = /^https?:\/\/\S+$/i;
@@ -86,10 +87,17 @@ export default function AddReelModal({
       if (onClose) onClose();
     } catch (saveError) {
       setIsSaving(false);
-      setError(
-        saveError?.response?.data?.message ||
-          'Could not save the reel. Please try again.',
-      );
+      const data = saveError?.response?.data;
+      if (data?.code === ERROR_CODES.REEL_DUPLICATE) {
+        const categoryLabel = categories.find(c => c?.id === categoryId)?.label;
+        setError(
+          categoryLabel
+            ? `This reel is already saved in "${categoryLabel}". Pick another category.`
+            : 'This reel is already saved in this category.',
+        );
+        return;
+      }
+      setError(data?.message || 'Could not save the reel. Please try again.');
     }
   };
 
@@ -97,6 +105,7 @@ export default function AddReelModal({
     const created = await onAddCategory?.(payload);
     if (created?.id) {
       setCategoryId(created.id);
+      setError('');
     }
   };
 
@@ -148,7 +157,10 @@ export default function AddReelModal({
                   <TouchableOpacity
                     key={item?.id}
                     style={[styles?.chip, isSelected && styles?.activeChip]}
-                    onPress={() => setCategoryId(item?.id)}
+                    onPress={() => {
+                      setCategoryId(item?.id);
+                      if (error) setError('');
+                    }}
                     activeOpacity={0.7}
                   >
                     <Text style={styles?.chipIcon}>{item?.icon}</Text>

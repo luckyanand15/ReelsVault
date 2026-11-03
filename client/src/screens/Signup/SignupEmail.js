@@ -21,6 +21,7 @@ import {
 } from '../../context/SignupFlowContext';
 import { sendOtp } from '../../api/otp.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
+import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './SignupEmail.styles';
 
 export default function SignupEmail({ navigation }) {
@@ -96,7 +97,7 @@ export default function SignupEmail({ navigation }) {
       const { status, data } = err?.response || {};
       if (status === 409) {
         setError('This email is already registered.');
-      } else if (status === 429 && data?.code === 'OTP_COOLDOWN') {
+      } else if (status === 429 && data?.code === ERROR_CODES.OTP_COOLDOWN) {
         // A code was sent to this address moments ago (e.g. before the app
         // restarted) and is still valid, so carry on rather than block.
         // Backdate otpSentAt so the code screen's resend timer shows the

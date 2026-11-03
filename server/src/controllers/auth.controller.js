@@ -1,4 +1,5 @@
 const asyncHandler = require('../utils/asyncHandler');
+const { ERROR_CODES } = require('../constants/errorCodes');
 const authService = require('../services/auth.service');
 const tokenService = require('../services/token.service');
 const otpService = require('../services/otp.service');
@@ -19,7 +20,7 @@ const login = asyncHandler(async (req, res) => {
       res.set('Retry-After', String(err.retryAfter));
       return res.status(429).json({
         success: false,
-        code: 'LOGIN_LOCKED',
+        code: ERROR_CODES.LOGIN_LOCKED,
         retryAfter: err.retryAfter,
         message: `Too many failed login attempts. Please try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`,
       });
@@ -109,7 +110,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     if (err instanceof authService.InvalidResetTokenError) {
       return res.status(400).json({
         success: false,
-        code: 'RESET_TOKEN_INVALID',
+        code: ERROR_CODES.RESET_TOKEN_INVALID,
         message: 'Your reset code has expired. Please start again.',
       });
     }

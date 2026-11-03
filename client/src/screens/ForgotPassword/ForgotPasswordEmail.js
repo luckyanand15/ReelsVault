@@ -20,6 +20,7 @@ import {
 } from '../../context/SignupFlowContext';
 import { requestPasswordReset } from '../../api/auth.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
+import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './ForgotPasswordEmail.styles';
 
 export default function ForgotPasswordEmail({ navigation, route }) {
@@ -97,7 +98,7 @@ export default function ForgotPasswordEmail({ navigation, route }) {
       navigation.navigate(routes.ForgotPasswordOtp);
     } catch (err) {
       const { status, data } = err?.response || {};
-      if (status === 429 && data?.code === 'OTP_COOLDOWN') {
+      if (status === 429 && data?.code === ERROR_CODES.OTP_COOLDOWN) {
         // A code was sent moments ago and is still valid, so carry on.
         // Backdate otpSentAt so the resend timer shows the server's wait.
         const retryAfter = data.retryAfter ?? OTP_RESEND_COOLDOWN_SECONDS;

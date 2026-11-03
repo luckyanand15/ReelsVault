@@ -1,4 +1,5 @@
 const asyncHandler = require('../utils/asyncHandler');
+const { ERROR_CODES } = require('../constants/errorCodes');
 const reelService = require('../services/reel.service');
 
 const getReels = asyncHandler(async (req, res) => {
@@ -16,7 +17,7 @@ const createReel = asyncHandler(async (req, res) => {
       res.set('Retry-After', String(err.retryAfter));
       return res.status(429).json({
         success: false,
-        code: 'REEL_DAILY_LIMIT',
+        code: ERROR_CODES.REEL_DAILY_LIMIT,
         retryAfter: err.retryAfter,
         message: `You can save up to ${reelService.MAX_DAILY_REELS} reels a day. Please try again in ${hours} hour${hours === 1 ? '' : 's'}.`,
       });
@@ -26,7 +27,7 @@ const createReel = asyncHandler(async (req, res) => {
     if (err.code === 11000 && err.keyPattern?.url) {
       return res.status(409).json({
         success: false,
-        code: 'REEL_DUPLICATE',
+        code: ERROR_CODES.REEL_DUPLICATE,
         message: 'This reel is already saved in this category.',
       });
     }

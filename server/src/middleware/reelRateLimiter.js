@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ERROR_CODES } = require('../constants/errorCodes');
 
 // Per-user burst limit on saving reels. Mounted after requireAuth, so
 // req.userId is always set. The 200/day cap lives in reel.service.js since it
@@ -11,7 +12,7 @@ const reelCreateLimiter = rateLimit({
   keyGenerator: req => req.userId,
   message: {
     success: false,
-    code: 'RATE_LIMITED',
+    code: ERROR_CODES.RATE_LIMITED,
     message: 'You are adding reels too quickly. Please wait a minute.',
   },
 });

@@ -1,9 +1,11 @@
+const { ERROR_CODES } = require('../constants/errorCodes');
+
 const sendDailyLimit = (res, err) => {
   const hours = Math.ceil(err.retryAfter / 3600);
   res.set('Retry-After', String(err.retryAfter));
   return res.status(429).json({
     success: false,
-    code: 'OTP_DAILY_LIMIT',
+    code: ERROR_CODES.OTP_DAILY_LIMIT,
     retryAfter: err.retryAfter,
     message: `Too many verification attempts for this email. Please try again in ${hours} hour${hours === 1 ? '' : 's'}.`,
   });
@@ -16,7 +18,7 @@ const sendCooldown = (res, err) => {
   res.set('Retry-After', String(err.retryAfter));
   return res.status(429).json({
     success: false,
-    code: 'OTP_COOLDOWN',
+    code: ERROR_CODES.OTP_COOLDOWN,
     retryAfter: err.retryAfter,
     message: `An OTP was already sent. You can request a new one in ${err.retryAfter}s.`,
   });
