@@ -48,6 +48,32 @@ const styles = StyleSheet.create({
     color: theme?.colors?.textMuted,
     marginLeft: theme?.spacing?.sm,
   },
+
+  // Grid tile: width comes from the parent (3 per row).
+  gridContainer: {
+    borderRadius: theme?.borderRadius?.lg,
+    backgroundColor: theme?.colors?.surface,
+    borderWidth: 1,
+    borderColor: theme?.colors?.border,
+    overflow: 'hidden',
+  },
+  gridThumbnail: {
+    width: '100%',
+    aspectRatio: 9 / 16,
+    backgroundColor: theme?.colors?.gray200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  gridTextContainer: {
+    paddingHorizontal: theme?.spacing?.sm,
+    paddingVertical: theme?.spacing?.xs + 2,
+  },
+  gridTitle: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    fontWeight: theme?.typography?.fontWeight?.semibold,
+    color: theme?.colors?.textPrimary,
+  },
 });
 
 export default styles;

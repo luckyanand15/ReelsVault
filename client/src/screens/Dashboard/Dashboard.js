@@ -15,7 +15,9 @@ import {
   TouchableWithoutFeedback,
   FlatList,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../../components/Header/Header';
@@ -37,6 +39,30 @@ import theme from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
+const GRID_COLUMNS = 3;
+const VIEW_MODE_KEY = 'dashboardViewMode';
+
+const ListViewIcon = ({ active }) => (
+  <View style={styles?.listIcon}>
+    {[0, 1, 2].map(i => (
+      <View
+        key={i}
+        style={[styles?.listIconBar, active && styles?.viewIconActive]}
+      />
+    ))}
+  </View>
+);
+
+const GridViewIcon = ({ active }) => (
+  <View style={styles?.gridIcon}>
+    {[0, 1, 2, 3].map(i => (
+      <View
+        key={i}
+        style={[styles?.gridIconCell, active && styles?.viewIconActive]}
+      />
+    ))}
+  </View>
+);
 
 export default function Dashboard() {
   const navigation = useNavigation();
@@ -54,6 +80,34 @@ export default function Dashboard() {
   const [isAddReelOpen, setIsAddReelOpen] = useState(false);
   const [reels, setReels] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
+  const isGrid = viewMode === 'grid';
+
+  // Tile width for 3 per row: screen minus the content padding and the
+  // gaps between columns.
+  const { width: windowWidth } = useWindowDimensions();
+  const gridItemWidth =
+    (windowWidth -
+      2 * theme?.spacing?.md -
+      (GRID_COLUMNS - 1) * theme?.spacing?.sm) /
+    GRID_COLUMNS;
+
+  // Remembers the chosen view across launches; storage failures just keep
+  // the default.
+  useEffect(() => {
+    AsyncStorage.getItem(VIEW_MODE_KEY)
+      .then(saved => {
+        if (saved === 'list' || saved === 'grid') {
+          setViewMode(saved);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const changeViewMode = mode => {
+    setViewMode(mode);
+    AsyncStorage.setItem(VIEW_MODE_KEY, mode).catch(() => {});
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -348,6 +402,36 @@ export default function Dashboard() {
         selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategoryFromBar}
       />
+      <View style={styles?.viewToggleRow}>
+        <View style={styles?.viewToggle}>
+          <TouchableOpacity
+            style={[
+              styles?.viewToggleButton,
+              !isGrid && styles?.viewToggleButtonActive,
+            ]}
+            onPress={() => changeViewMode('list')}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="List view"
+            accessibilityState={{ selected: !isGrid }}
+          >
+            <ListViewIcon active={!isGrid} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles?.viewToggleButton,
+              isGrid && styles?.viewToggleButtonActive,
+            ]}
+            onPress={() => changeViewMode('grid')}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Grid view"
+            accessibilityState={{ selected: isGrid }}
+          >
+            <GridViewIcon active={isGrid} />
+          </TouchableOpacity>
+        </View>
+      </View>
       <View style={styles?.content} {...panResponder?.panHandlers}>
         <Animated.View
           style={[
@@ -359,14 +443,21 @@ export default function Dashboard() {
           ]}
         >
           {/* The list renders even when empty so pull-to-refresh works there too. */}
+          {/* numColumns can't change on a mounted FlatList, so the key
+              remounts it when the view switches. */}
           <FlatList
+            key={viewMode}
             data={visibleReels}
             keyExtractor={item => item?.id}
+            numColumns={isGrid ? GRID_COLUMNS : 1}
+            columnWrapperStyle={isGrid ? styles?.gridRow : undefined}
             renderItem={({ item }) => (
               <ReelItem
                 reel={item}
                 icon={reelIcon(item)}
                 onThumbnailMissing={handleThumbnailMissing}
+                variant={viewMode}
+                style={isGrid ? { width: gridItemWidth } : undefined}
               />
             )}
             contentContainerStyle={
