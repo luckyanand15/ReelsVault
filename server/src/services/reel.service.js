@@ -14,8 +14,32 @@ class ReelDailyLimitError extends Error {
   }
 }
 
-const getAllReels = async userId => {
-  return Reel.find({ userId }).sort({ createdAt: -1 });
+// One page, newest first by createdAt, with _id settling reels saved in the
+// same millisecond. createdAt + id are the last reel the client has; the
+// page continues right after it, so a reel added mid-scroll can't shift the
+// next page the way skip() would. nextCursor is the pair to send for the
+// following page, null on the last one.
+const getReels = async (userId, { categoryId, createdAt, id, limit }) => {
+  const filter = { userId };
+  if (categoryId) {
+    filter.categoryIds = categoryId;
+  }
+  if (createdAt) {
+    filter.$or = [
+      { createdAt: { $lt: createdAt } },
+      { createdAt, _id: { $lt: id } },
+    ];
+  }
+
+  // One extra tells whether another page exists.
+  const found = await Reel.find(filter)
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(limit + 1);
+  const reels = found.slice(0, limit);
+  const last = reels[reels.length - 1];
+  const nextCursor =
+    found.length > limit ? { createdAt: last.createdAt, id: last.id } : null;
+  return { reels, nextCursor };
 };
 
 // Rolling 24h window, counted from the reels themselves so it survives
@@ -128,7 +152,7 @@ const refreshThumbnail = async (reelId, userId) => {
 };
 
 module.exports = {
-  getAllReels,
+  getReels,
   createReel,
   refreshThumbnail,
   ReelDailyLimitError,

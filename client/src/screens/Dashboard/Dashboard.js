@@ -15,6 +15,7 @@ import {
   TouchableWithoutFeedback,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,6 +42,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
 const GRID_COLUMNS = 3;
 const VIEW_MODE_KEY = 'dashboardViewMode';
+const PAGE_SIZE = 15;
 
 const ListViewIcon = ({ active }) => (
   <View style={styles?.listIcon}>
@@ -78,7 +80,11 @@ export default function Dashboard() {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddReelOpen, setIsAddReelOpen] = useState(false);
-  const [reels, setReels] = useState([]);
+  // Loaded reels per category ('all' included): { items, nextCursor }. Kept
+  // while switching categories so going back doesn't fetch again.
+  const [reelsByCategory, setReelsByCategory] = useState({});
+  const reelsByCategoryRef = useRef(reelsByCategory);
+  reelsByCategoryRef.current = reelsByCategory;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const isGrid = viewMode === 'grid';
@@ -109,37 +115,79 @@ export default function Dashboard() {
     AsyncStorage.setItem(VIEW_MODE_KEY, mode).catch(() => {});
   };
 
-  useEffect(() => {
-    let isMounted = true;
+  // Categories with a page request in flight, so one can't be asked twice.
+  const loadingRef = useRef(new Set());
+  // Bumped by a reset; pages requested before it are thrown away.
+  const generationRef = useRef(0);
 
-    (async () => {
-      try {
-        const data = await fetchReels();
-        if (isMounted) {
-          setReels(data || []);
-        }
-      } catch (error) {
-        console.error('Failed to load reels:', error?.message);
+  // Loads the next page of a category, or with reset its first page again
+  // (dropping every other category's cache, since a refresh can change any).
+  const loadReels = useCallback(async (categoryId, reset = false) => {
+    const entry = reelsByCategoryRef.current[categoryId];
+    if (
+      !reset &&
+      (loadingRef.current.has(categoryId) || (entry && !entry.nextCursor))
+    ) {
+      return;
+    }
+    if (reset) {
+      generationRef.current += 1;
+      loadingRef.current.clear();
+    }
+    const generation = generationRef.current;
+    loadingRef.current.add(categoryId);
+    try {
+      const page = await fetchReels({
+        categoryId: categoryId === 'all' ? undefined : categoryId,
+        cursor: reset ? undefined : entry?.nextCursor,
+        limit: PAGE_SIZE,
+      });
+      if (generation !== generationRef.current) {
+        return;
       }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
+      setReelsByCategory(prev => {
+        if (reset) {
+          return {
+            [categoryId]: { items: page.reels, nextCursor: page.nextCursor },
+          };
+        }
+        // A reel saved meanwhile was already put on top; skip it here.
+        const items = prev[categoryId]?.items || [];
+        const seen = new Set(items.map(r => r?.id));
+        return {
+          ...prev,
+          [categoryId]: {
+            items: [...items, ...page.reels.filter(r => !seen.has(r?.id))],
+            nextCursor: page.nextCursor,
+          },
+        };
+      });
+    } finally {
+      if (generation === generationRef.current) {
+        loadingRef.current.delete(categoryId);
+      }
+    }
   }, []);
 
-  // Pull-to-refresh: reloads reels and categories together. Each half is
-  // independent, so one failing keeps the other's fresh data and the
-  // current list stays on screen.
+  // First page of a category the first time it's opened.
+  useEffect(() => {
+    if (!reelsByCategory[selectedCategory]) {
+      loadReels(selectedCategory).catch(error =>
+        console.error('Failed to load reels:', error?.message),
+      );
+    }
+  }, [selectedCategory, reelsByCategory, loadReels]);
+
+  // Pull-to-refresh: reloads the open category's first page and the
+  // categories together. Each half is independent, so one failing keeps the
+  // other's fresh data and the current list stays on screen.
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     const [reelsResult, categoriesResult] = await Promise.allSettled([
-      fetchReels(),
+      loadReels(selectedCategoryRef.current, true),
       refreshCategories(),
     ]);
-    if (reelsResult.status === 'fulfilled') {
-      setReels(reelsResult.value || []);
-    } else {
+    if (reelsResult.status === 'rejected') {
       console.error('Failed to refresh reels:', reelsResult.reason?.message);
     }
     if (categoriesResult.status === 'rejected') {
@@ -149,7 +197,19 @@ export default function Dashboard() {
       );
     }
     setIsRefreshing(false);
-  }, [refreshCategories]);
+  }, [loadReels, refreshCategories]);
+
+  // Applies a change to every cached list.
+  const updateCachedLists = useCallback(update => {
+    setReelsByCategory(prev =>
+      Object.fromEntries(
+        Object.entries(prev).map(([catId, entry]) => [
+          catId,
+          { ...entry, items: update(entry.items, catId) },
+        ]),
+      ),
+    );
+  }, []);
 
   // A refreshed list can drop the open category (deleted elsewhere).
   useEffect(() => {
@@ -164,27 +224,33 @@ export default function Dashboard() {
   // One refresh per reel per session: a reel with no findable thumbnail
   // keeps its category icon instead of asking again on every render.
   const thumbnailRequestedRef = useRef(new Set());
-  const handleThumbnailMissing = useCallback(async reel => {
-    const requested = thumbnailRequestedRef.current;
-    if (!reel?.id || requested.has(reel.id)) {
-      return;
-    }
-    requested.add(reel.id);
-    try {
-      const updated = await refreshReelThumbnail(reel.id);
-      if (updated?.thumbnailUrl && updated.thumbnailUrl !== reel.thumbnailUrl) {
-        setReels(prev =>
-          prev.map(r =>
-            r?.id === updated.id
-              ? { ...r, thumbnailUrl: updated.thumbnailUrl }
-              : r,
-          ),
-        );
+  const handleThumbnailMissing = useCallback(
+    async reel => {
+      const requested = thumbnailRequestedRef.current;
+      if (!reel?.id || requested.has(reel.id)) {
+        return;
       }
-    } catch (error) {
-      console.error('Failed to refresh thumbnail:', error?.message);
-    }
-  }, []);
+      requested.add(reel.id);
+      try {
+        const updated = await refreshReelThumbnail(reel.id);
+        if (
+          updated?.thumbnailUrl &&
+          updated.thumbnailUrl !== reel.thumbnailUrl
+        ) {
+          updateCachedLists(items =>
+            items.map(r =>
+              r?.id === updated.id
+                ? { ...r, thumbnailUrl: updated.thumbnailUrl }
+                : r,
+            ),
+          );
+        }
+      } catch (error) {
+        console.error('Failed to refresh thumbnail:', error?.message);
+      }
+    },
+    [updateCachedLists],
+  );
 
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -315,14 +381,18 @@ export default function Dashboard() {
 
   // Errors propagate so the drawer can show them and stay open.
   // A reel already saved elsewhere comes back with the category added, so it
-  // replaces its old entry instead of being listed twice.
+  // replaces its old entry instead of being listed twice. It goes on top of
+  // All and its category; lists not loaded yet will fetch it themselves.
   const handleSaveReel = async payload => {
     const saved = await createReel(payload);
-    setReels(prev =>
-      prev.some(r => r?.id === saved?.id)
-        ? prev.map(r => (r?.id === saved?.id ? saved : r))
-        : [saved, ...prev],
-    );
+    updateCachedLists((items, catId) => {
+      if (items.some(r => r?.id === saved?.id)) {
+        return items.map(r => (r?.id === saved?.id ? saved : r));
+      }
+      return catId === 'all' || catId === payload?.categoryId
+        ? [saved, ...items]
+        : items;
+    });
     if (
       selectedCategory !== 'all' &&
       selectedCategory !== payload?.categoryId
@@ -369,17 +439,36 @@ export default function Dashboard() {
     [categoriesList],
   );
 
-  // Reels left in no existing category are dropped (the server deletes them
-  // when their last category goes).
-  const visibleReels = useMemo(
-    () =>
-      reels.filter(reel =>
-        selectedCategory === 'all'
-          ? reel?.categoryIds?.some(id => iconByCategoryId[id] !== undefined)
-          : reel?.categoryIds?.includes(selectedCategory),
-      ),
-    [reels, selectedCategory, iconByCategoryId],
-  );
+  const currentList = reelsByCategory[selectedCategory];
+
+  // Under All, reels left in no existing category are dropped (the server
+  // deletes them when their last category goes).
+  const visibleReels = useMemo(() => {
+    const items = currentList?.items || [];
+    return selectedCategory === 'all'
+      ? items.filter(reel =>
+          reel?.categoryIds?.some(id => iconByCategoryId[id] !== undefined),
+        )
+      : items;
+  }, [currentList, selectedCategory, iconByCategoryId]);
+
+  // Next page once the second-last row comes into view. FlatList needs one
+  // fixed callback, so it calls through a ref to the current values.
+  const handleViewableRef = useRef(null);
+  handleViewableRef.current = viewableItems => {
+    const columns = isGrid ? GRID_COLUMNS : 1;
+    const secondLastRowStart =
+      (Math.ceil(visibleReels.length / columns) - 2) * columns;
+    const lastVisible = Math.max(-1, ...viewableItems.map(v => v?.index ?? -1));
+    if (currentList?.nextCursor && lastVisible >= secondLastRowStart) {
+      loadReels(selectedCategory).catch(error =>
+        console.error('Failed to load more reels:', error?.message),
+      );
+    }
+  };
+  const onViewableItemsChanged = useRef(({ viewableItems }) =>
+    handleViewableRef.current?.(viewableItems),
+  ).current;
 
   // The open category's icon, or under All the first category still present.
   const reelIcon = reel =>
@@ -463,6 +552,7 @@ export default function Dashboard() {
             contentContainerStyle={
               visibleReels.length > 0 ? styles?.reelsList : styles?.emptyList
             }
+            onViewableItemsChanged={onViewableItemsChanged}
             showsVerticalScrollIndicator={false}
             alwaysBounceVertical
             refreshControl={
@@ -473,16 +563,28 @@ export default function Dashboard() {
                 colors={[theme?.colors?.accent]}
               />
             }
+            ListFooterComponent={
+              visibleReels.length > 0 && currentList?.nextCursor ? (
+                <ActivityIndicator
+                  style={styles?.listFooter}
+                  color={theme?.colors?.textMuted}
+                />
+              ) : null
+            }
             ListEmptyComponent={
-              <View style={styles?.card}>
-                <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
-                <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
-                <Text style={styles?.subtitle}>
-                  No reels yet. Tap + to add one.{'\n'}
-                  Swipe left or right to switch categories{'\n'}
-                  Pull down to refresh
-                </Text>
-              </View>
+              !currentList ? (
+                <ActivityIndicator color={theme?.colors?.textMuted} />
+              ) : (
+                <View style={styles?.card}>
+                  <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
+                  <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
+                  <Text style={styles?.subtitle}>
+                    No reels yet. Tap + to add one.{'\n'}
+                    Swipe left or right to switch categories{'\n'}
+                    Pull down to refresh
+                  </Text>
+                </View>
+              )
             }
           />
         </Animated.View>

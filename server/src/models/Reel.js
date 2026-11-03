@@ -35,10 +35,12 @@ const reelSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-reelSchema.index({ userId: 1, createdAt: -1 });
 // One copy of each reel per user; urls are normalized before saving.
 reelSchema.index({ userId: 1, url: 1 }, { unique: true });
-reelSchema.index({ userId: 1, categoryIds: 1 });
+// Paged reel lists, all reels and per category (newest first). The first
+// also serves the daily-limit count.
+reelSchema.index({ userId: 1, createdAt: -1, _id: -1 });
+reelSchema.index({ userId: 1, categoryIds: 1, createdAt: -1, _id: -1 });
 
 reelSchema.plugin(mongooseIdPlugin);
 

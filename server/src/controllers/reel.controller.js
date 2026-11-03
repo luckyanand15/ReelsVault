@@ -3,8 +3,11 @@ const { ERROR_CODES } = require('../constants/errorCodes');
 const reelService = require('../services/reel.service');
 
 const getReels = asyncHandler(async (req, res) => {
-  const reels = await reelService.getAllReels(req.userId);
-  res.status(200).json({ success: true, data: reels });
+  const { reels, nextCursor } = await reelService.getReels(
+    req.userId,
+    req.query,
+  );
+  res.status(200).json({ success: true, data: reels, nextCursor });
 });
 
 const createReel = asyncHandler(async (req, res) => {

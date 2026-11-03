@@ -1,8 +1,18 @@
 import axiosClient from './axiosClient';
 
-export const fetchReels = async () => {
-  const { data } = await axiosClient.get('/reels');
-  return data?.data;
+// One page, newest first. Leave categoryId out for all reels; for the next
+// page pass the nextCursor ({ createdAt, id }) the previous one returned,
+// which is null on the last page.
+export const fetchReels = async ({ categoryId, cursor, limit } = {}) => {
+  const { data } = await axiosClient.get('/reels', {
+    params: {
+      categoryId,
+      createdAt: cursor?.createdAt,
+      id: cursor?.id,
+      limit,
+    },
+  });
+  return { reels: data?.data || [], nextCursor: data?.nextCursor || null };
 };
 
 export const createReel = async ({ categoryId, title, url }) => {

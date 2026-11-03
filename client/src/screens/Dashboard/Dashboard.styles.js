@@ -48,6 +48,9 @@ const styles = StyleSheet.create({
   gridRow: {
     gap: theme?.spacing?.sm,
   },
+  listFooter: {
+    paddingVertical: theme?.spacing?.md,
+  },
   emptyList: {
     flexGrow: 1,
     justifyContent: 'center',
