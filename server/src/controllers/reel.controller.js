@@ -59,8 +59,26 @@ const refreshThumbnail = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: reel });
 });
 
+// Body { categoryIds } removes the reel from just those categories; without
+// it the reel is deleted outright. deleted says whether the reel is gone
+// (it also is once its last category is removed).
+const deleteReel = asyncHandler(async (req, res) => {
+  const result = await reelService.removeReel(
+    req.params.id,
+    req.userId,
+    req.body?.categoryIds,
+  );
+  if (!result) {
+    return res.status(404).json({ success: false, message: 'Reel not found' });
+  }
+  res
+    .status(200)
+    .json({ success: true, data: result.reel, deleted: result.deleted });
+});
+
 module.exports = {
   getReels,
   createReel,
   refreshThumbnail,
+  deleteReel,
 };

@@ -10,7 +10,15 @@ const getHost = url =>
 // the server for a fresh one.
 // variant 'grid' renders a portrait tile (thumbnail on top, title below)
 // sized by the parent through `style`; 'list' is the full-width row.
-function ReelItem({ reel, icon, onThumbnailMissing, variant = 'list', style }) {
+// onLongPress(reel) opens the parent's reel actions.
+function ReelItem({
+  reel,
+  icon,
+  onThumbnailMissing,
+  onLongPress,
+  variant = 'list',
+  style,
+}) {
   const isGrid = variant === 'grid';
   const thumbnailUrl = reel?.thumbnailUrl;
   // Remembers which URL failed, so a refreshed URL is tried again on its own.
@@ -40,6 +48,7 @@ function ReelItem({ reel, icon, onThumbnailMissing, variant = 'list', style }) {
     <TouchableOpacity
       style={[isGrid ? styles?.gridContainer : styles?.container, style]}
       onPress={handlePress}
+      onLongPress={onLongPress ? () => onLongPress(reel) : undefined}
       activeOpacity={0.7}
     >
       <View style={isGrid ? styles?.gridThumbnail : styles?.thumbnail}>

@@ -26,12 +26,14 @@ import Categories from '../../components/Categories/Categories';
 import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
 import AddReelModal from '../../components/AddReelModal/AddReelModal';
 import ReelItem from '../../components/ReelItem/ReelItem';
+import ReelActionsSheet from '../../components/ReelActionsSheet/ReelActionsSheet';
 import styles from './Dashboard.styles';
 import { createCategory } from '../../api/category.api';
 import {
   fetchReels,
   createReel,
   refreshReelThumbnail,
+  deleteReel,
 } from '../../api/reel.api';
 import { mapCategory } from '../../utils/mapCategory';
 import { useCategories } from '../../context/CategoriesContext';
@@ -80,6 +82,8 @@ export default function Dashboard() {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddReelOpen, setIsAddReelOpen] = useState(false);
+  // The reel whose long-press actions are open.
+  const [actionReel, setActionReel] = useState(null);
   // Loaded reels per category ('all' included): { items, nextCursor }. Kept
   // while switching categories so going back doesn't fetch again.
   const [reelsByCategory, setReelsByCategory] = useState({});
@@ -251,6 +255,40 @@ export default function Dashboard() {
     },
     [updateCachedLists],
   );
+
+  // Removes the reel from the categories it left (every list when it was
+  // deleted) and gives the lists that keep it its new categoryIds.
+  const applyReelRemoval = useCallback(
+    (reelId, { reel, deleted }) =>
+      updateCachedLists((items, catId) => {
+        const keep =
+          !deleted && (catId === 'all' || reel?.categoryIds?.includes(catId));
+        return keep
+          ? items.map(r =>
+              r?.id === reelId ? { ...r, categoryIds: reel.categoryIds } : r,
+            )
+          : items.filter(r => r?.id !== reelId);
+      }),
+    [updateCachedLists],
+  );
+
+  const handleReelLongPress = useCallback(reel => setActionReel(reel), []);
+
+  // categoryIds undefined deletes the reel everywhere. Errors propagate so
+  // the sheet can show them; a reel already gone elsewhere is just dropped.
+  const handleDeleteReel = async categoryIds => {
+    const reelId = actionReel?.id;
+    try {
+      const result = await deleteReel(reelId, categoryIds);
+      applyReelRemoval(reelId, result);
+    } catch (error) {
+      if (error?.response?.status !== 404) {
+        throw error;
+      }
+      applyReelRemoval(reelId, { deleted: true });
+    }
+    setActionReel(null);
+  };
 
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -483,6 +521,13 @@ export default function Dashboard() {
     [categoriesList],
   );
 
+  // Existing categories the long-pressed reel is saved in.
+  const actionReelCategories = useMemo(
+    () =>
+      addableCategories.filter(c => actionReel?.categoryIds?.includes(c?.id)),
+    [addableCategories, actionReel],
+  );
+
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
       <Header onRightPress={() => navigation.navigate(routes.Settings)} />
@@ -545,6 +590,7 @@ export default function Dashboard() {
                 reel={item}
                 icon={reelIcon(item)}
                 onThumbnailMissing={handleThumbnailMissing}
+                onLongPress={handleReelLongPress}
                 variant={viewMode}
                 style={isGrid ? { width: gridItemWidth } : undefined}
               />
@@ -652,6 +698,17 @@ export default function Dashboard() {
         onAddCategory={addCategory}
         categories={addableCategories}
         defaultCategoryId={selectedCategory !== 'all' ? selectedCategory : null}
+      />
+
+      {/* Long-press actions for a reel. Edit is a placeholder for now. */}
+      <ReelActionsSheet
+        visible={!!actionReel}
+        reel={actionReel}
+        reelCategories={actionReelCategories}
+        currentCategory={selectedCategory !== 'all' ? activeCategoryObj : null}
+        onEdit={() => {}}
+        onDelete={handleDeleteReel}
+        onClose={() => setActionReel(null)}
       />
     </SafeAreaView>
   );

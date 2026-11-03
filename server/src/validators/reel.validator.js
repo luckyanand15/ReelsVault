@@ -17,6 +17,11 @@ const reelIdParamSchema = Joi.object({
   id: reelIdSchema.required(),
 });
 
+// Leave categoryIds out to delete the reel from every category.
+const deleteReelSchema = Joi.object({
+  categoryIds: Joi.array().items(categoryIdSchema).min(1).unique(),
+});
+
 const listReelsQuerySchema = Joi.object({
   categoryId: categoryIdSchema,
   // The last reel the client has (from nextCursor); sent together or not at
@@ -29,5 +34,6 @@ const listReelsQuerySchema = Joi.object({
 module.exports = {
   createReelSchema,
   reelIdParamSchema,
+  deleteReelSchema,
   listReelsQuerySchema,
 };

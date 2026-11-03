@@ -25,3 +25,13 @@ export const refreshReelThumbnail = async id => {
   const { data } = await axiosClient.post(`/reels/${id}/thumbnail`);
   return data?.data;
 };
+
+// Removes the reel from the given categories, or deletes it everywhere when
+// categoryIds is left out. Returns { reel, deleted }; deleted is also true
+// when the reel's last category was removed.
+export const deleteReel = async (id, categoryIds) => {
+  const { data } = await axiosClient.delete(`/reels/${id}`, {
+    data: categoryIds ? { categoryIds } : undefined,
+  });
+  return { reel: data?.data, deleted: !!data?.deleted };
+};

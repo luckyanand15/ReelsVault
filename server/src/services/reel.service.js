@@ -151,10 +151,40 @@ const refreshThumbnail = async (reelId, userId) => {
   return reel;
 };
 
+// Takes the reel out of the given categories, or out of all of them when
+// categoryIds is absent; a reel left in no category is deleted, the same rule
+// deleteCategory follows. Returns null when the reel doesn't exist or belongs
+// to another user, otherwise { reel, deleted } with reel as it now stands.
+const removeReel = async (reelId, userId, categoryIds) => {
+  if (!categoryIds) {
+    const reel = await Reel.findOneAndDelete({ _id: reelId, userId });
+    return reel && { reel, deleted: true };
+  }
+
+  // Atomic $pull so a category added at the same moment isn't lost. The
+  // filter only matches when something is actually pulled, so a no-op
+  // doesn't bump updatedAt.
+  const updated = await Reel.findOneAndUpdate(
+    { _id: reelId, userId, categoryIds: { $in: categoryIds } },
+    { $pull: { categoryIds: { $in: categoryIds } } },
+    { returnDocument: 'after' },
+  );
+  const reel = updated || (await Reel.findOne({ _id: reelId, userId }));
+  if (!reel) {
+    return null;
+  }
+  if (reel.categoryIds.length === 0) {
+    await Reel.deleteOne({ _id: reelId, userId, categoryIds: { $size: 0 } });
+    return { reel, deleted: true };
+  }
+  return { reel, deleted: false };
+};
+
 module.exports = {
   getReels,
   createReel,
   refreshThumbnail,
+  removeReel,
   ReelDailyLimitError,
   MAX_DAILY_REELS,
 };

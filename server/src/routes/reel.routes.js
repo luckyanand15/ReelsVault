@@ -7,6 +7,7 @@ const {
 const {
   createReelSchema,
   reelIdParamSchema,
+  deleteReelSchema,
   listReelsQuerySchema,
 } = require('../validators/reel.validator');
 const controller = require('../controllers/reel.controller');
@@ -20,6 +21,13 @@ router.post(
   thumbnailRefreshLimiter,
   validate(reelIdParamSchema, 'params'),
   controller.refreshThumbnail,
+);
+
+router.delete(
+  '/:id',
+  validate(reelIdParamSchema, 'params'),
+  validate(deleteReelSchema),
+  controller.deleteReel,
 );
 
 module.exports = router;
