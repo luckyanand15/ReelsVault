@@ -26,6 +26,16 @@ export const refreshReelThumbnail = async id => {
   return data?.data;
 };
 
+// Updates the title and/or categories (categoryIds is the full new list);
+// returns the updated reel.
+export const updateReel = async (id, { title, categoryIds }) => {
+  const { data } = await axiosClient.patch(`/reels/${id}`, {
+    title,
+    categoryIds,
+  });
+  return data?.data;
+};
+
 // Removes the reel from the given categories, or deletes it everywhere when
 // categoryIds is left out. Returns { reel, deleted }; deleted is also true
 // when the reel's last category was removed.

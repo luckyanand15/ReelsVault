@@ -17,6 +17,12 @@ const reelIdParamSchema = Joi.object({
   id: reelIdSchema.required(),
 });
 
+// Any of the two; categoryIds is the reel's full new list of categories.
+const updateReelSchema = Joi.object({
+  title: Joi.string().trim().min(1).max(100),
+  categoryIds: Joi.array().items(categoryIdSchema).min(1).unique(),
+}).min(1);
+
 // Leave categoryIds out to delete the reel from every category.
 const deleteReelSchema = Joi.object({
   categoryIds: Joi.array().items(categoryIdSchema).min(1).unique(),
@@ -34,6 +40,7 @@ const listReelsQuerySchema = Joi.object({
 module.exports = {
   createReelSchema,
   reelIdParamSchema,
+  updateReelSchema,
   deleteReelSchema,
   listReelsQuerySchema,
 };

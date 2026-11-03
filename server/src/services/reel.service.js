@@ -7,6 +7,8 @@ const resolveThumbnail = require('../utils/resolveThumbnail');
 const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_DAILY_REELS = 200;
 
+class ReelCategoryNotFoundError extends Error {}
+
 class ReelDailyLimitError extends Error {
   constructor(message, retryAfter) {
     super(message);
@@ -151,6 +153,44 @@ const refreshThumbnail = async (reelId, userId) => {
   return reel;
 };
 
+// Changes the title and/or replaces the reel's categories. Returns null when
+// the reel doesn't exist or belongs to another user; throws
+// ReelCategoryNotFoundError when a category isn't the user's. save() so
+// updatedAt only moves on a real change.
+const updateReel = async (reelId, userId, { title, categoryIds }) => {
+  if (categoryIds) {
+    const found = await Category.countDocuments({
+      _id: { $in: categoryIds },
+      userId,
+    });
+    if (found !== categoryIds.length) {
+      throw new ReelCategoryNotFoundError('Category not found');
+    }
+  }
+
+  const reel = await Reel.findOne({ _id: reelId, userId });
+  if (!reel) {
+    return null;
+  }
+
+  if (title !== undefined) {
+    reel.title = title;
+  }
+  // Same categories in another order isn't a change: kept ones stay in
+  // place and new ones go after them.
+  if (categoryIds) {
+    const kept = reel.categoryIds.filter(id => categoryIds.includes(id));
+    const added = categoryIds.filter(id => !reel.categoryIds.includes(id));
+    if (added.length > 0 || kept.length !== reel.categoryIds.length) {
+      reel.categoryIds = [...kept, ...added];
+    }
+  }
+  if (reel.isModified()) {
+    await reel.save();
+  }
+  return reel;
+};
+
 // Takes the reel out of the given categories, or out of all of them when
 // categoryIds is absent; a reel left in no category is deleted, the same rule
 // deleteCategory follows. Returns null when the reel doesn't exist or belongs
@@ -184,7 +224,9 @@ module.exports = {
   getReels,
   createReel,
   refreshThumbnail,
+  updateReel,
   removeReel,
+  ReelCategoryNotFoundError,
   ReelDailyLimitError,
   MAX_DAILY_REELS,
 };

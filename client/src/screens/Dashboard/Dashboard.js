@@ -17,6 +17,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,12 +28,14 @@ import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal
 import AddReelModal from '../../components/AddReelModal/AddReelModal';
 import ReelItem from '../../components/ReelItem/ReelItem';
 import ReelActionsSheet from '../../components/ReelActionsSheet/ReelActionsSheet';
+import EditReelModal from '../../components/EditReelModal/EditReelModal';
 import styles from './Dashboard.styles';
 import { createCategory } from '../../api/category.api';
 import {
   fetchReels,
   createReel,
   refreshReelThumbnail,
+  updateReel,
   deleteReel,
 } from '../../api/reel.api';
 import { mapCategory } from '../../utils/mapCategory';
@@ -84,6 +87,10 @@ export default function Dashboard() {
   const [isAddReelOpen, setIsAddReelOpen] = useState(false);
   // The reel whose long-press actions are open.
   const [actionReel, setActionReel] = useState(null);
+  const [editReel, setEditReel] = useState(null);
+  // iOS can't present a modal while another is still closing, so Edit waits
+  // here until the actions sheet has gone.
+  const pendingEditRef = useRef(null);
   // Loaded reels per category ('all' included): { items, nextCursor }. Kept
   // while switching categories so going back doesn't fetch again.
   const [reelsByCategory, setReelsByCategory] = useState({});
@@ -209,7 +216,7 @@ export default function Dashboard() {
       Object.fromEntries(
         Object.entries(prev).map(([catId, entry]) => [
           catId,
-          { ...entry, items: update(entry.items, catId) },
+          { ...entry, items: update(entry.items, catId, entry) },
         ]),
       ),
     );
@@ -271,6 +278,57 @@ export default function Dashboard() {
       }),
     [updateCachedLists],
   );
+
+  // Puts an edited reel in the lists of its categories (and All) and takes
+  // it out of the rest. A list gaining it slots it in by date, unless it's
+  // older than everything loaded there; the next page brings it then.
+  const applyReelUpdate = useCallback(
+    updated =>
+      updateCachedLists((items, catId, entry) => {
+        const belongs =
+          catId === 'all' || updated?.categoryIds?.includes(catId);
+        const has = items.some(r => r?.id === updated?.id);
+        if (!belongs) {
+          return has ? items.filter(r => r?.id !== updated?.id) : items;
+        }
+        if (has) {
+          return items.map(r =>
+            r?.id === updated?.id ? { ...r, ...updated } : r,
+          );
+        }
+        const isNewer = r =>
+          r?.createdAt < updated?.createdAt ||
+          (r?.createdAt === updated?.createdAt && r?.id < updated?.id);
+        const index = items.findIndex(isNewer);
+        if (index === -1) {
+          return entry?.nextCursor ? items : [...items, updated];
+        }
+        return [...items.slice(0, index), updated, ...items.slice(index)];
+      }),
+    [updateCachedLists],
+  );
+
+  // Errors propagate so the drawer can show them and stay open.
+  const handleSaveEdit = async changes => {
+    const updated = await updateReel(editReel?.id, changes);
+    applyReelUpdate(updated);
+  };
+
+  const handleEditPress = () => {
+    if (Platform.OS === 'ios') {
+      pendingEditRef.current = actionReel;
+    } else {
+      setEditReel(actionReel);
+    }
+    setActionReel(null);
+  };
+
+  const handleActionsDismiss = () => {
+    if (pendingEditRef.current) {
+      setEditReel(pendingEditRef.current);
+      pendingEditRef.current = null;
+    }
+  };
 
   const handleReelLongPress = useCallback(reel => setActionReel(reel), []);
 
@@ -700,15 +758,25 @@ export default function Dashboard() {
         defaultCategoryId={selectedCategory !== 'all' ? selectedCategory : null}
       />
 
-      {/* Long-press actions for a reel. Edit is a placeholder for now. */}
+      {/* Long-press actions for a reel. */}
       <ReelActionsSheet
         visible={!!actionReel}
         reel={actionReel}
         reelCategories={actionReelCategories}
         currentCategory={selectedCategory !== 'all' ? activeCategoryObj : null}
-        onEdit={() => {}}
+        onEdit={handleEditPress}
         onDelete={handleDeleteReel}
         onClose={() => setActionReel(null)}
+        onDismiss={handleActionsDismiss}
+      />
+
+      <EditReelModal
+        visible={!!editReel}
+        reel={editReel}
+        onClose={() => setEditReel(null)}
+        onSave={handleSaveEdit}
+        onAddCategory={addCategory}
+        categories={addableCategories}
       />
     </SafeAreaView>
   );

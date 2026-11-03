@@ -18,6 +18,7 @@ import theme from '../../constants/theme';
 // is the open category, or null under All. onDelete(categoryIds) gets the
 // categories to remove the reel from, or undefined to delete it everywhere;
 // it should throw on failure so the sheet can stay open with an error.
+// onDismiss fires once the sheet has finished closing.
 export default function ReelActionsSheet({
   visible,
   reel,
@@ -26,6 +27,7 @@ export default function ReelActionsSheet({
   onEdit,
   onDelete,
   onClose,
+  onDismiss,
 }) {
   const [step, setStep] = useState('menu');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -210,6 +212,7 @@ export default function ReelActionsSheet({
       transparent
       statusBarTranslucent
       onRequestClose={close}
+      onDismiss={onDismiss}
     >
       <View style={styles?.overlay}>
         <TouchableWithoutFeedback onPress={close}>
