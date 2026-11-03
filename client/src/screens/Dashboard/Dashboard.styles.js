@@ -45,6 +45,11 @@ const styles = StyleSheet.create({
     gap: theme?.spacing?.sm,
     paddingBottom: 100, // keeps the last reel clear of the FAB
   },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   // FAB Backdrop
   fabBackdrop: {

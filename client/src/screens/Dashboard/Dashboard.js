@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   FlatList,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -32,13 +33,15 @@ import {
 import { mapCategory } from '../../utils/mapCategory';
 import { useCategories } from '../../context/CategoriesContext';
 import routes from '../../routes/routes';
+import theme from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
 
 export default function Dashboard() {
   const navigation = useNavigation();
-  const { categoriesList, setCategoriesList } = useCategories();
+  const { categoriesList, setCategoriesList, refreshCategories } =
+    useCategories();
   const categoriesListRef = useRef(categoriesList);
   categoriesListRef.current = categoriesList;
 
@@ -50,6 +53,7 @@ export default function Dashboard() {
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddReelOpen, setIsAddReelOpen] = useState(false);
   const [reels, setReels] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,6 +73,39 @@ export default function Dashboard() {
       isMounted = false;
     };
   }, []);
+
+  // Pull-to-refresh: reloads reels and categories together. Each half is
+  // independent, so one failing keeps the other's fresh data and the
+  // current list stays on screen.
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    const [reelsResult, categoriesResult] = await Promise.allSettled([
+      fetchReels(),
+      refreshCategories(),
+    ]);
+    if (reelsResult.status === 'fulfilled') {
+      setReels(reelsResult.value || []);
+    } else {
+      console.error('Failed to refresh reels:', reelsResult.reason?.message);
+    }
+    if (categoriesResult.status === 'rejected') {
+      console.error(
+        'Failed to refresh categories:',
+        categoriesResult.reason?.message,
+      );
+    }
+    setIsRefreshing(false);
+  }, [refreshCategories]);
+
+  // A refreshed list can drop the open category (deleted elsewhere).
+  useEffect(() => {
+    if (
+      selectedCategory !== 'all' &&
+      !categoriesList.some(c => c?.id === selectedCategory)
+    ) {
+      setSelectedCategory('all');
+    }
+  }, [categoriesList, selectedCategory]);
 
   // One refresh per reel per session: a reel with no findable thumbnail
   // keeps its category icon instead of asking again on every render.
@@ -314,37 +351,49 @@ export default function Dashboard() {
       <View style={styles?.content} {...panResponder?.panHandlers}>
         <Animated.View
           style={[
-            visibleReels.length > 0 ? styles?.reelsContainer : styles?.card,
+            styles?.reelsContainer,
             {
               transform: [{ translateX }],
               opacity,
             },
           ]}
         >
-          {visibleReels.length > 0 ? (
-            <FlatList
-              data={visibleReels}
-              keyExtractor={item => item?.id}
-              renderItem={({ item }) => (
-                <ReelItem
-                  reel={item}
-                  icon={reelIcon(item)}
-                  onThumbnailMissing={handleThumbnailMissing}
-                />
-              )}
-              contentContainerStyle={styles?.reelsList}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <>
-              <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
-              <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
-              <Text style={styles?.subtitle}>
-                No reels yet. Tap + to add one.{'\n'}
-                Swipe left or right to switch categories
-              </Text>
-            </>
-          )}
+          {/* The list renders even when empty so pull-to-refresh works there too. */}
+          <FlatList
+            data={visibleReels}
+            keyExtractor={item => item?.id}
+            renderItem={({ item }) => (
+              <ReelItem
+                reel={item}
+                icon={reelIcon(item)}
+                onThumbnailMissing={handleThumbnailMissing}
+              />
+            )}
+            contentContainerStyle={
+              visibleReels.length > 0 ? styles?.reelsList : styles?.emptyList
+            }
+            showsVerticalScrollIndicator={false}
+            alwaysBounceVertical
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                tintColor={theme?.colors?.textMuted}
+                colors={[theme?.colors?.accent]}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles?.card}>
+                <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
+                <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
+                <Text style={styles?.subtitle}>
+                  No reels yet. Tap + to add one.{'\n'}
+                  Swipe left or right to switch categories{'\n'}
+                  Pull down to refresh
+                </Text>
+              </View>
+            }
+          />
         </Animated.View>
       </View>
 
