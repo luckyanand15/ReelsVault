@@ -188,14 +188,20 @@ export default function Dashboard() {
   };
 
   // Errors propagate so the drawer can show them and stay open.
+  // A reel already saved elsewhere comes back with the category added, so it
+  // replaces its old entry instead of being listed twice.
   const handleSaveReel = async payload => {
-    const created = await createReel(payload);
-    setReels(prev => [created, ...prev]);
+    const saved = await createReel(payload);
+    setReels(prev =>
+      prev.some(r => r?.id === saved?.id)
+        ? prev.map(r => (r?.id === saved?.id ? saved : r))
+        : [saved, ...prev],
+    );
     if (
       selectedCategory !== 'all' &&
-      selectedCategory !== created?.categoryId
+      selectedCategory !== payload?.categoryId
     ) {
-      handleSelectCategoryFromBar(created?.categoryId);
+      handleSelectCategoryFromBar(payload?.categoryId);
     }
   };
 
@@ -237,16 +243,25 @@ export default function Dashboard() {
     [categoriesList],
   );
 
-  // Reels of a category deleted this session are dropped (server deletes them too).
+  // Reels left in no existing category are dropped (the server deletes them
+  // when their last category goes).
   const visibleReels = useMemo(
     () =>
       reels.filter(reel =>
         selectedCategory === 'all'
-          ? iconByCategoryId[reel?.categoryId] !== undefined
-          : reel?.categoryId === selectedCategory,
+          ? reel?.categoryIds?.some(id => iconByCategoryId[id] !== undefined)
+          : reel?.categoryIds?.includes(selectedCategory),
       ),
     [reels, selectedCategory, iconByCategoryId],
   );
+
+  // The open category's icon, or under All the first category still present.
+  const reelIcon = reel =>
+    selectedCategory !== 'all'
+      ? iconByCategoryId[selectedCategory]
+      : iconByCategoryId[
+          reel?.categoryIds?.find(id => iconByCategoryId[id] !== undefined)
+        ];
 
   const addableCategories = useMemo(
     () => categoriesList.filter(c => c?.id !== 'all'),
@@ -278,7 +293,7 @@ export default function Dashboard() {
               renderItem={({ item }) => (
                 <ReelItem
                   reel={item}
-                  icon={iconByCategoryId[item?.categoryId]}
+                  icon={reelIcon(item)}
                 />
               )}
               contentContainerStyle={styles?.reelsList}

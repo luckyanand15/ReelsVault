@@ -30,11 +30,16 @@ const updateCategory = async (id, updates, userId) => {
   return category;
 };
 
-// A category's reels go with it so none are left orphaned.
+// Reels are detached from the category; those left in no category are
+// deleted so none are orphaned.
 const deleteCategory = async (id, userId) => {
   const category = await Category.findOneAndDelete({ _id: id, userId });
   if (category) {
-    await Reel.deleteMany({ categoryId: id, userId });
+    await Reel.updateMany(
+      { userId, categoryIds: id },
+      { $pull: { categoryIds: id } },
+    );
+    await Reel.deleteMany({ userId, categoryIds: { $size: 0 } });
   }
   return category;
 };

@@ -42,8 +42,10 @@ const assertUnderDailyLimit = async userId => {
 };
 
 // Returns null when the category doesn't exist or belongs to another user.
-// Throws ReelDailyLimitError past MAX_DAILY_REELS, and a duplicate key error
-// (code 11000) when the user already saved this URL.
+// Otherwise returns { reel, created }: a URL the user already saved elsewhere
+// gets this category added instead of a second copy. Throws
+// ReelDailyLimitError past MAX_DAILY_REELS, and a duplicate key error
+// (code 11000) when the URL is already in this category.
 const createReel = async ({ categoryId, title, url }, userId) => {
   const categoryExists = await Category.exists({ _id: categoryId, userId });
   if (!categoryExists) {
@@ -52,13 +54,22 @@ const createReel = async ({ categoryId, title, url }, userId) => {
 
   await assertUnderDailyLimit(userId);
 
-  return Reel.create({
-    _id: generateId('REEL'),
-    title,
-    url: normalizeUrl(url),
-    categoryId,
-    userId,
-  });
+  // One atomic upsert covers all three cases. When the URL is already in this
+  // category the filter matches nothing, so the upsert tries to insert and
+  // the unique { userId, url } index rejects it.
+  const result = await Reel.findOneAndUpdate(
+    { userId, url: normalizeUrl(url), categoryIds: { $ne: categoryId } },
+    {
+      $addToSet: { categoryIds: categoryId },
+      $setOnInsert: { _id: generateId('REEL'), title },
+    },
+    { upsert: true, returnDocument: 'after', includeResultMetadata: true },
+  );
+
+  return {
+    reel: result.value,
+    created: !result.lastErrorObject?.updatedExisting,
+  };
 };
 
 module.exports = {

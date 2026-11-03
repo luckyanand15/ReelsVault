@@ -16,8 +16,9 @@ const reelSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    categoryId: {
-      type: String,
+    // A reel saved to several categories is one document listing them all.
+    categoryIds: {
+      type: [String],
       required: true,
     },
     userId: {
@@ -31,6 +32,7 @@ const reelSchema = new mongoose.Schema(
 reelSchema.index({ userId: 1, createdAt: -1 });
 // One copy of each reel per user; urls are normalized before saving.
 reelSchema.index({ userId: 1, url: 1 }, { unique: true });
+reelSchema.index({ userId: 1, categoryIds: 1 });
 
 reelSchema.plugin(mongooseIdPlugin);
 
