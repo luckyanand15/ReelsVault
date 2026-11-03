@@ -11,9 +11,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme?.colors?.border,
   },
+  // Portrait box (reels are 9:16); the category icon sits in the same box
+  // when there is no thumbnail, so rows stay aligned.
+  thumbnail: {
+    width: 54,
+    height: 72,
+    borderRadius: theme?.borderRadius?.md,
+    backgroundColor: theme?.colors?.gray200,
+    marginRight: theme?.spacing?.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
   icon: {
     fontSize: 28,
-    marginRight: theme?.spacing?.md,
   },
   textContainer: {
     flex: 1,

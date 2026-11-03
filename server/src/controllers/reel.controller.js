@@ -46,7 +46,18 @@ const createReel = asyncHandler(async (req, res) => {
     .json({ success: true, data: result.reel });
 });
 
+// Re-resolves an expired or missing thumbnail. Always 200 with the reel, so
+// the client keeps its icon fallback when nothing better was found.
+const refreshThumbnail = asyncHandler(async (req, res) => {
+  const reel = await reelService.refreshThumbnail(req.params.id, req.userId);
+  if (!reel) {
+    return res.status(404).json({ success: false, message: 'Reel not found' });
+  }
+  res.status(200).json({ success: true, data: reel });
+});
+
 module.exports = {
   getReels,
   createReel,
+  refreshThumbnail,
 };

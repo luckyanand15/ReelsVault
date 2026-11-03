@@ -16,6 +16,12 @@ const reelSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // Remote preview image; never the image itself. Instagram/TikTok URLs
+    // are signed and expire, so the client asks for a refresh when one stops
+    // loading. Absent when no thumbnail could be found.
+    thumbnailUrl: {
+      type: String,
+    },
     // A reel saved to several categories is one document listing them all.
     categoryIds: {
       type: [String],

@@ -17,4 +17,19 @@ const reelCreateLimiter = rateLimit({
   },
 });
 
-module.exports = { reelCreateLimiter };
+// Thumbnail refreshes fire from the list as expired images fail to load, so
+// allow a screenful at once but stop a client stuck in a retry loop.
+const thumbnailRefreshLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: {
+    success: false,
+    code: ERROR_CODES.RATE_LIMITED,
+    message: 'Too many thumbnail refreshes. Please wait a minute.',
+  },
+});
+
+module.exports = { reelCreateLimiter, thumbnailRefreshLimiter };

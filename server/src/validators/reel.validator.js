@@ -11,6 +11,11 @@ const createReelSchema = Joi.object({
     .required(),
 });
 
+const reelIdParamSchema = Joi.object({
+  id: Joi.string().pattern(/^REEL\d{14}[0-9A-F]{8}$/).required(),
+});
+
 module.exports = {
   createReelSchema,
+  reelIdParamSchema,
 };

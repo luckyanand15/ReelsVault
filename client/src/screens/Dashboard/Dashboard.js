@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   Text,
   View,
@@ -18,7 +24,11 @@ import AddReelModal from '../../components/AddReelModal/AddReelModal';
 import ReelItem from '../../components/ReelItem/ReelItem';
 import styles from './Dashboard.styles';
 import { createCategory } from '../../api/category.api';
-import { fetchReels, createReel } from '../../api/reel.api';
+import {
+  fetchReels,
+  createReel,
+  refreshReelThumbnail,
+} from '../../api/reel.api';
 import { mapCategory } from '../../utils/mapCategory';
 import { useCategories } from '../../context/CategoriesContext';
 import routes from '../../routes/routes';
@@ -58,6 +68,31 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  // One refresh per reel per session: a reel with no findable thumbnail
+  // keeps its category icon instead of asking again on every render.
+  const thumbnailRequestedRef = useRef(new Set());
+  const handleThumbnailMissing = useCallback(async reel => {
+    const requested = thumbnailRequestedRef.current;
+    if (!reel?.id || requested.has(reel.id)) {
+      return;
+    }
+    requested.add(reel.id);
+    try {
+      const updated = await refreshReelThumbnail(reel.id);
+      if (updated?.thumbnailUrl && updated.thumbnailUrl !== reel.thumbnailUrl) {
+        setReels(prev =>
+          prev.map(r =>
+            r?.id === updated.id
+              ? { ...r, thumbnailUrl: updated.thumbnailUrl }
+              : r,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to refresh thumbnail:', error?.message);
+    }
   }, []);
 
   const translateX = useRef(new Animated.Value(0)).current;
@@ -294,6 +329,7 @@ export default function Dashboard() {
                 <ReelItem
                   reel={item}
                   icon={reelIcon(item)}
+                  onThumbnailMissing={handleThumbnailMissing}
                 />
               )}
               contentContainerStyle={styles?.reelsList}
