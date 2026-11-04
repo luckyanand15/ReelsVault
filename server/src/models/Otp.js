@@ -16,9 +16,10 @@ const otpSchema = new mongoose.Schema(
     },
     // What the code was sent for. Checked on verify and consume, so a code
     // sent for signup can't be used to reset a password, or the other way round.
+    // Keep in sync with OTP_PURPOSE in otp.service.js.
     purpose: {
       type: String,
-      enum: ['signup', 'password_reset'],
+      enum: ['signup', 'password_reset', 'email_change', 'password_change'],
       default: 'signup',
     },
     attempts: {

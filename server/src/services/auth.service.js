@@ -143,8 +143,13 @@ const getUserById = async id => {
   return user ? user.toJSON() : null;
 };
 
+const clearFailedLogins = (email, ip) => LoginAttempt.deleteOne({ email, ip });
+
 module.exports = {
   login,
+  assertNotLocked,
+  recordFailedLogin,
+  clearFailedLogins,
   resetPassword,
   getUserById,
   InvalidCredentialsError,

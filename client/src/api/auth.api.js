@@ -29,3 +29,8 @@ export const resetPassword = async ({ email, resetToken, password, confirmPasswo
   });
   return data;
 };
+
+export const getMe = async () => {
+  const { data } = await axiosClient.get('/auth/me');
+  return data?.data;
+};

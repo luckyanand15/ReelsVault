@@ -12,6 +12,11 @@ import ForgotPasswordOtp from '../screens/ForgotPassword/ForgotPasswordOtp';
 import ForgotPasswordReset from '../screens/ForgotPassword/ForgotPasswordReset';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
+import EditName from '../screens/Account/EditName';
+import AccountPassword from '../screens/Account/AccountPassword';
+import ChangeEmail from '../screens/Account/ChangeEmail';
+import AccountOtp from '../screens/Account/AccountOtp';
+import ChangePassword from '../screens/Account/ChangePassword';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
 import routes from '../routes/routes';
 import { useAuth } from '../context/AuthContext';
@@ -45,6 +50,11 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.Dashboard} component={Dashboard} />
       <Stack.Screen name={routes.Settings} component={Settings} />
       <Stack.Screen name={routes.ManageCategories} component={ManageCategories} />
+      <Stack.Screen name={routes.EditName} component={EditName} />
+      <Stack.Screen name={routes.AccountPassword} component={AccountPassword} />
+      <Stack.Screen name={routes.ChangeEmail} component={ChangeEmail} />
+      <Stack.Screen name={routes.AccountOtp} component={AccountOtp} />
+      <Stack.Screen name={routes.ChangePassword} component={ChangePassword} />
     </Stack.Navigator>
   );
 }

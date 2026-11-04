@@ -43,11 +43,42 @@ const sendPasswordResetEmail = (email, code, ttlMinutes) =>
     `<p>Your ReelsVault password reset code is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p><p>If you didn't ask to reset your password, you can ignore this email. Your password won't change.</p>`,
   );
 
-const sendPasswordChangedEmail = email =>
+// keptCurrentDevice: the change was made from inside the app, which stays
+// logged in; every other device is logged out.
+const sendPasswordChangedEmail = (email, { keptCurrentDevice = false } = {}) =>
   sendEmail(
     email,
     'Your ReelsVault password was changed',
-    `<p>The password for your ReelsVault account was just changed, and you've been logged out on every device.</p><p>If this was you, you don't need to do anything.</p><p>If it wasn't, reset your password right away from the login screen using "Forgot password".</p>`,
+    `<p>The password for your ReelsVault account was just changed, and you've been logged out on ${keptCurrentDevice ? 'your other devices' : 'every device'}.</p><p>If this was you, you don't need to do anything.</p><p>If it wasn't, reset your password right away from the login screen using "Forgot password".</p>`,
   );
 
-module.exports = { sendOtpEmail, sendPasswordResetEmail, sendPasswordChangedEmail };
+const sendPasswordChangeOtpEmail = (email, code, ttlMinutes) =>
+  sendEmail(
+    email,
+    'Confirm your ReelsVault password change',
+    `<p>Your ReelsVault code to change your password is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p><p>If you didn't ask to change your password, someone may know your current one. Reset it from the login screen using "Forgot password".</p>`,
+  );
+
+const sendEmailChangeOtpEmail = (email, code, ttlMinutes) =>
+  sendEmail(
+    email,
+    'Confirm your new ReelsVault email',
+    `<p>Your ReelsVault code to confirm this email address is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p><p>If you didn't ask for this, you can ignore this email.</p>`,
+  );
+
+// Sent to the old address, so its owner notices a change they didn't make.
+const sendEmailChangedEmail = (oldEmail, newEmail) =>
+  sendEmail(
+    oldEmail,
+    'Your ReelsVault email was changed',
+    `<p>The email for your ReelsVault account was just changed to <strong>${newEmail}</strong>. This address will no longer be used to log in.</p><p>If this wasn't you, someone else may have access to your account.</p>`,
+  );
+
+module.exports = {
+  sendOtpEmail,
+  sendPasswordResetEmail,
+  sendPasswordChangedEmail,
+  sendPasswordChangeOtpEmail,
+  sendEmailChangeOtpEmail,
+  sendEmailChangedEmail,
+};

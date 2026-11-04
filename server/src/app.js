@@ -6,6 +6,7 @@ const reelRoutes = require('./routes/reel.routes');
 const userRoutes = require('./routes/user.routes');
 const otpRoutes = require('./routes/otp.routes');
 const authRoutes = require('./routes/auth.routes');
+const accountRoutes = require('./routes/account.routes');
 const requireAuth = require('./middleware/requireAuth.middleware');
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/reels', requireAuth, reelRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/account', requireAuth, accountRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });

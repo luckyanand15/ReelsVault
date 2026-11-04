@@ -19,6 +19,10 @@ if (!OTP_HMAC_SECRET) {
 const OTP_PURPOSE = {
   Signup: 'signup',
   PasswordReset: 'password_reset',
+  // Sent to the new address while a logged-in user changes their email.
+  EmailChange: 'email_change',
+  // Sent to the current address while a logged-in user changes their password.
+  PasswordChange: 'password_change',
 };
 
 class OtpCooldownError extends Error {
