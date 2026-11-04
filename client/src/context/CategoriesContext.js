@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { fetchCategories } from '../api/category.api';
 import { mapCategory } from '../utils/mapCategory';
 import { useAuth } from './AuthContext';
@@ -35,8 +41,16 @@ export function CategoriesProvider({ children }) {
     };
   }, [userId]);
 
+  // Errors propagate so the caller (pull-to-refresh) decides what to do.
+  const refreshCategories = useCallback(async () => {
+    const categories = await fetchCategories();
+    setCategoriesList([ALL_CATEGORY, ...categories.map(mapCategory)]);
+  }, []);
+
   return (
-    <CategoriesContext.Provider value={{ categoriesList, setCategoriesList }}>
+    <CategoriesContext.Provider
+      value={{ categoriesList, setCategoriesList, refreshCategories }}
+    >
       {children}
     </CategoriesContext.Provider>
   );

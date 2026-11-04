@@ -54,6 +54,15 @@ const styles = StyleSheet.create({
     fontWeight: theme?.typography?.fontWeight?.semibold,
     color: theme?.colors?.textMuted,
   },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: theme?.spacing?.xs,
+  },
+  forgotPasswordText: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    fontWeight: theme?.typography?.fontWeight?.semibold,
+    color: theme?.colors?.textPrimary,
+  },
   star: {
     color: '#E53E3E',
     fontWeight: theme?.typography?.fontWeight?.bold,

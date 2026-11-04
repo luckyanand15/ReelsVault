@@ -31,6 +31,19 @@ const styles = StyleSheet.create({
     color: theme?.colors?.textMuted,
     lineHeight: 22,
   },
+  successBanner: {
+    backgroundColor: '#F0FFF4',
+    borderWidth: 1,
+    borderColor: '#9AE6B4',
+    borderRadius: theme?.borderRadius?.lg,
+    padding: theme?.spacing?.md,
+    marginBottom: theme?.spacing?.lg,
+  },
+  successText: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    color: '#276749',
+    lineHeight: 20,
+  },
   form: {
     flex: 1,
     gap: theme?.spacing?.lg,

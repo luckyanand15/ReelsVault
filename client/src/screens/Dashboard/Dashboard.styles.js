@@ -37,6 +37,83 @@ const styles = StyleSheet.create({
     color: theme?.colors?.textMuted,
     textAlign: 'center',
   },
+  reelsContainer: {
+    flex: 1,
+    alignSelf: 'stretch',
+  },
+  reelsList: {
+    gap: theme?.spacing?.sm,
+    paddingBottom: 100, // keeps the last reel clear of the FAB
+  },
+  gridRow: {
+    gap: theme?.spacing?.sm,
+  },
+  listFooter: {
+    paddingVertical: theme?.spacing?.md,
+  },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // List / Grid toggle
+  viewToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: theme?.spacing?.md,
+    paddingTop: theme?.spacing?.sm,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    padding: 2,
+    borderRadius: theme?.borderRadius?.md,
+    backgroundColor: theme?.colors?.gray100,
+    borderWidth: 1,
+    borderColor: theme?.colors?.border,
+  },
+  viewToggleButton: {
+    width: 34,
+    height: 28,
+    borderRadius: theme?.borderRadius?.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewToggleButtonActive: {
+    backgroundColor: theme?.colors?.background,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  listIcon: {
+    width: 14,
+    height: 12,
+    justifyContent: 'space-between',
+  },
+  listIconBar: {
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: theme?.colors?.textMuted,
+  },
+  gridIcon: {
+    width: 12,
+    height: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignContent: 'space-between',
+  },
+  gridIconCell: {
+    width: 5,
+    height: 5,
+    borderRadius: 1,
+    backgroundColor: theme?.colors?.textMuted,
+  },
+  viewIconActive: {
+    backgroundColor: theme?.colors?.textPrimary,
+  },
 
   // FAB Backdrop
   fabBackdrop: {

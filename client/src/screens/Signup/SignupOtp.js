@@ -20,6 +20,7 @@ import {
 } from '../../context/SignupFlowContext';
 import { sendOtp, verifyOtp } from '../../api/otp.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
+import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './SignupOtp.styles';
 
 export default function SignupOtp({ navigation, route }) {
@@ -157,7 +158,7 @@ export default function SignupOtp({ navigation, route }) {
       inputRefs.current[0]?.focus();
     } catch (err) {
       const { status, data } = err?.response || {};
-      if (status === 429 && data?.code === 'OTP_COOLDOWN') {
+      if (status === 429 && data?.code === ERROR_CODES.OTP_COOLDOWN) {
         // Our timer drifted from the server's; resync to its remaining wait.
         // The countdown on the button already tells the user what to do.
         setResendCooldown(data.retryAfter ?? RESEND_COOLDOWN_SECONDS);

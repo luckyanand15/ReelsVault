@@ -15,10 +15,12 @@ import routes from '../../routes/routes';
 import { useLoginFlow } from '../../context/LoginFlowContext';
 import styles from './LoginEmail.styles';
 
-export default function LoginEmail({ navigation }) {
+export default function LoginEmail({ navigation, route }) {
   const { confirmEmail } = useLoginFlow();
+  // Set after a password reset, which lands the user back here.
+  const passwordReset = Boolean(route?.params?.passwordReset);
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(route?.params?.email ?? '');
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
 
@@ -72,6 +74,15 @@ export default function LoginEmail({ navigation }) {
                 Enter your email address to log in.
               </Text>
             </View>
+
+            {passwordReset && (
+              <View style={styles?.successBanner}>
+                <Text style={styles?.successText}>
+                  Your password has been changed and you've been logged out on all devices.
+                  Log in with your new password.
+                </Text>
+              </View>
+            )}
 
             {/* Input Form */}
             <View style={styles?.form}>

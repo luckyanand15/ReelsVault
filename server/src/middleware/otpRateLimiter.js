@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ERROR_CODES } = require('../constants/errorCodes');
 
 // Includes a code and the seconds until the window resets, so the client can
 // tell this apart from the per-email OTP_COOLDOWN and show the real wait.
@@ -10,7 +11,7 @@ const rateLimitHandler = (req, res, next, options) => {
 
   res.status(options.statusCode).json({
     success: false,
-    code: 'RATE_LIMITED',
+    code: ERROR_CODES.RATE_LIMITED,
     retryAfter,
     message: 'Too many requests. Please try again later.',
   });
