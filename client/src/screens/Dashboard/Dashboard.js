@@ -39,6 +39,7 @@ import {
   deleteReel,
 } from '../../api/reel.api';
 import { mapCategory } from '../../utils/mapCategory';
+import { reelTitle } from '../../utils/reelTitle';
 import { useCategories } from '../../context/CategoriesContext';
 import routes from '../../routes/routes';
 import theme from '../../constants/theme';
@@ -264,7 +265,7 @@ export default function Dashboard() {
   );
 
   // Removes the reel from the categories it left (every list when it was
-  // deleted) and gives the lists that keep it its new categoryIds.
+  // deleted) and gives the lists that keep it its new categories.
   const applyReelRemoval = useCallback(
     (reelId, { reel, deleted }) =>
       updateCachedLists((items, catId) => {
@@ -272,7 +273,13 @@ export default function Dashboard() {
           !deleted && (catId === 'all' || reel?.categoryIds?.includes(catId));
         return keep
           ? items.map(r =>
-              r?.id === reelId ? { ...r, categoryIds: reel.categoryIds } : r,
+              r?.id === reelId
+                ? {
+                    ...r,
+                    categories: reel.categories,
+                    categoryIds: reel.categoryIds,
+                  }
+                : r,
             )
           : items.filter(r => r?.id !== reelId);
       }),
@@ -296,9 +303,15 @@ export default function Dashboard() {
             r?.id === updated?.id ? { ...r, ...updated } : r,
           );
         }
+        // All is ordered by when a reel was first saved, a category by when
+        // it was added there.
+        const dateIn = r =>
+          catId === 'all'
+            ? r?.createdAt
+            : r?.categories?.find(c => c?.categoryId === catId)?.createdAt;
         const isNewer = r =>
-          r?.createdAt < updated?.createdAt ||
-          (r?.createdAt === updated?.createdAt && r?.id < updated?.id);
+          dateIn(r) < dateIn(updated) ||
+          (dateIn(r) === dateIn(updated) && r?.id < updated?.id);
         const index = items.findIndex(isNewer);
         if (index === -1) {
           return entry?.nextCursor ? items : [...items, updated];
@@ -308,9 +321,17 @@ export default function Dashboard() {
     [updateCachedLists],
   );
 
+  // The open category (undefined under All): reels show their title there,
+  // and it's the title the edit drawer changes.
+  const openCategoryId =
+    selectedCategory !== 'all' ? selectedCategory : undefined;
+
   // Errors propagate so the drawer can show them and stay open.
   const handleSaveEdit = async changes => {
-    const updated = await updateReel(editReel?.id, changes);
+    const updated = await updateReel(editReel?.id, {
+      ...changes,
+      categoryId: openCategoryId,
+    });
     applyReelUpdate(updated);
   };
 
@@ -646,6 +667,7 @@ export default function Dashboard() {
             renderItem={({ item }) => (
               <ReelItem
                 reel={item}
+                title={reelTitle(item, openCategoryId)}
                 icon={reelIcon(item)}
                 onThumbnailMissing={handleThumbnailMissing}
                 onLongPress={handleReelLongPress}
@@ -773,6 +795,7 @@ export default function Dashboard() {
       <EditReelModal
         visible={!!editReel}
         reel={editReel}
+        categoryId={openCategoryId}
         onClose={() => setEditReel(null)}
         onSave={handleSaveEdit}
         onAddCategory={addCategory}

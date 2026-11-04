@@ -25,9 +25,9 @@ const createReel = asyncHandler(async (req, res) => {
         message: `You can save up to ${reelService.MAX_DAILY_REELS} reels a day. Please try again in ${hours} hour${hours === 1 ? '' : 's'}.`,
       });
     }
-    // Only a { userId, url } collision means "already in this category"; any
-    // other duplicate key is a real server error.
-    if (err.code === 11000 && err.keyPattern?.url) {
+    // Only a { reelId, categoryId } collision means "already in this
+    // category"; any other duplicate key is a real server error.
+    if (err.code === 11000 && err.keyPattern?.categoryId) {
       return res.status(409).json({
         success: false,
         code: ERROR_CODES.REEL_DUPLICATE,

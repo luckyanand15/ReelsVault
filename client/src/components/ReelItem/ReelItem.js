@@ -10,9 +10,11 @@ const getHost = url =>
 // the server for a fresh one.
 // variant 'grid' renders a portrait tile (thumbnail on top, title below)
 // sized by the parent through `style`; 'list' is the full-width row.
-// onLongPress(reel) opens the parent's reel actions.
+// onLongPress(reel) opens the parent's reel actions. title is the reel's
+// title in the category being shown.
 function ReelItem({
   reel,
+  title,
   icon,
   onThumbnailMissing,
   onLongPress,
@@ -68,7 +70,7 @@ function ReelItem({
           style={isGrid ? styles?.gridTitle : styles?.title}
           numberOfLines={isGrid ? 1 : 2}
         >
-          {reel?.title}
+          {title}
         </Text>
         <Text style={styles?.host} numberOfLines={1}>
           {getHost(reel?.url)}

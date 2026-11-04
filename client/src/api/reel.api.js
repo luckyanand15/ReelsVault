@@ -27,11 +27,13 @@ export const refreshReelThumbnail = async id => {
 };
 
 // Updates the title and/or categories (categoryIds is the full new list);
-// returns the updated reel.
-export const updateReel = async (id, { title, categoryIds }) => {
+// returns the updated reel. categoryId is the open category, whose title is
+// the one changed (the first category's when left out).
+export const updateReel = async (id, { title, categoryIds, categoryId }) => {
   const { data } = await axiosClient.patch(`/reels/${id}`, {
     title,
     categoryIds,
+    categoryId,
   });
   return data?.data;
 };

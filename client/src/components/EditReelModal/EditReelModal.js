@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import AddCategoryModal from '../AddCategoryModal/AddCategoryModal';
 import styles from './EditReelModal.styles';
+import { reelTitle } from '../../utils/reelTitle';
 
 const sameIds = (a = [], b = []) =>
   a.length === b.length && a.every(id => b.includes(id));
@@ -20,9 +21,12 @@ const sameIds = (a = [], b = []) =>
 // Edits a reel's title and categories (any number, at least one). The link
 // itself can't change. onSave({ title, categoryIds }) gets only the fields
 // that changed and should throw on failure so the drawer stays open.
+// categoryId is the open category (undefined under All); the title edited is
+// the reel's title there.
 export default function EditReelModal({
   visible,
   reel,
+  categoryId,
   onClose,
   onSave,
   onAddCategory,
@@ -40,9 +44,11 @@ export default function EditReelModal({
     categories.some(c => c?.id === id),
   );
 
+  const initialTitle = reelTitle(reel, categoryId);
+
   useEffect(() => {
     if (visible) {
-      setTitle(reel?.title || '');
+      setTitle(initialTitle);
       setCategoryIds(initialCategoryIds);
       setError('');
       setIsSaving(false);
@@ -71,7 +77,7 @@ export default function EditReelModal({
   }, []);
 
   const trimmedTitle = title.trim();
-  const titleChanged = trimmedTitle !== (reel?.title || '');
+  const titleChanged = trimmedTitle !== initialTitle;
   const categoriesChanged = !sameIds(categoryIds, initialCategoryIds);
   const canSave =
     !!trimmedTitle &&
