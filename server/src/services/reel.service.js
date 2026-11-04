@@ -5,6 +5,8 @@ const generateId = require('../utils/generateId');
 const normalizeUrl = require('../utils/normalizeUrl');
 const resolveThumbnail = require('../utils/resolveThumbnail');
 
+const { resolveTitle } = resolveThumbnail;
+
 const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_DAILY_REELS = 200;
 
@@ -159,6 +161,10 @@ const createReel = async ({ categoryId, title, url }, userId) => {
   return { reel: withSaves, created };
 };
 
+// Suggested title for a link (null when none). Nothing is stored: the title
+// belongs to a save, and the user may pick their own.
+const previewReel = url => resolveTitle(normalizeUrl(url));
+
 // A reel whose lookup just ran isn't looked up again for a while, so a list
 // full of expired images (or a page that never has one) can't hammer the
 // source site. In memory on purpose: losing it on restart only costs one
@@ -298,6 +304,7 @@ const removeReel = async (reelId, userId, categoryIds) => {
 module.exports = {
   getReels,
   createReel,
+  previewReel,
   refreshThumbnail,
   updateReel,
   removeReel,

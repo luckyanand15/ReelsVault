@@ -20,6 +20,19 @@ export const createReel = async ({ categoryId, title, url }) => {
   return data?.data;
 };
 
+// A suggested title for a link about to be saved, or null when none was
+// found (or the lookup failed).
+export const fetchReelTitle = async url => {
+  try {
+    const { data } = await axiosClient.get('/reels/preview', {
+      params: { url },
+    });
+    return data?.data?.title || null;
+  } catch {
+    return null;
+  }
+};
+
 // Asks the server to look the thumbnail up again; returns the updated reel.
 export const refreshReelThumbnail = async id => {
   const { data } = await axiosClient.post(`/reels/${id}/thumbnail`);

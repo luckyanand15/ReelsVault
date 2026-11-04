@@ -49,6 +49,13 @@ const createReel = asyncHandler(async (req, res) => {
     .json({ success: true, data: result.reel });
 });
 
+// A title suggestion for a link about to be saved; title is null when none
+// was found, and the client then shows no suggestion.
+const previewReel = asyncHandler(async (req, res) => {
+  const title = await reelService.previewReel(req.query.url);
+  res.status(200).json({ success: true, data: { title } });
+});
+
 // Re-resolves an expired or missing thumbnail. Always 200 with the reel, so
 // the client keeps its icon fallback when nothing better was found.
 const refreshThumbnail = asyncHandler(async (req, res) => {
@@ -97,6 +104,7 @@ const deleteReel = asyncHandler(async (req, res) => {
 module.exports = {
   getReels,
   createReel,
+  previewReel,
   refreshThumbnail,
   updateReel,
   deleteReel,

@@ -11,6 +11,15 @@ const createReelSchema = Joi.object({
     .required(),
 });
 
+// url is the link the user is about to save, checked like createReelSchema's.
+const reelPreviewQuerySchema = Joi.object({
+  url: Joi.string()
+    .trim()
+    .uri({ scheme: ['http', 'https'] })
+    .max(2048)
+    .required(),
+});
+
 const reelIdSchema = Joi.string().pattern(/^REEL\d{14}[0-9A-F]{8}$/);
 
 const reelIdParamSchema = Joi.object({
@@ -41,6 +50,7 @@ const listReelsQuerySchema = Joi.object({
 
 module.exports = {
   createReelSchema,
+  reelPreviewQuerySchema,
   reelIdParamSchema,
   updateReelSchema,
   deleteReelSchema,

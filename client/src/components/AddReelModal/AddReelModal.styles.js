@@ -42,6 +42,39 @@ const styles = StyleSheet.create({
     color: theme?.colors?.white,
     fontWeight: theme?.typography?.fontWeight?.semibold,
   },
+  // Tappable title suggestion under the Title input.
+  suggestion: {
+    marginTop: -theme?.spacing?.xs,
+    marginBottom: theme?.spacing?.md,
+    paddingHorizontal: theme?.spacing?.md,
+    paddingVertical: theme?.spacing?.sm,
+    borderRadius: theme?.borderRadius?.md,
+    backgroundColor: theme?.colors?.gray100,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme?.colors?.gray400,
+  },
+  suggestionLabel: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    color: theme?.colors?.textSecondary,
+    marginBottom: 2,
+  },
+  suggestionText: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    fontWeight: theme?.typography?.fontWeight?.medium,
+    color: theme?.colors?.textPrimary,
+  },
+  findingTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme?.spacing?.xs,
+    marginTop: -theme?.spacing?.xs,
+    marginBottom: theme?.spacing?.md,
+  },
+  findingTitleText: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    color: theme?.colors?.textSecondary,
+  },
   errorText: {
     fontSize: theme?.typography?.fontSize?.sm,
     color: '#D32F2F',
