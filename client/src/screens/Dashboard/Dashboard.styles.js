@@ -60,9 +60,44 @@ const styles = StyleSheet.create({
   // List / Grid toggle
   viewToggleRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: theme?.spacing?.sm,
     paddingHorizontal: theme?.spacing?.md,
     paddingTop: theme?.spacing?.sm,
+  },
+
+  // Search box (shares the row with the view toggle)
+  searchBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 34,
+    paddingHorizontal: theme?.spacing?.sm,
+    borderRadius: theme?.borderRadius?.md,
+    backgroundColor: theme?.colors?.gray100,
+    borderWidth: 1,
+    borderColor: theme?.colors?.border,
+  },
+  searchIcon: {
+    fontSize: theme?.typography?.fontSize?.md,
+    color: theme?.colors?.textMuted,
+    marginRight: theme?.spacing?.xs,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 0,
+    fontSize: theme?.typography?.fontSize?.sm,
+    color: theme?.colors?.textPrimary,
+  },
+  searchClear: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    color: theme?.colors?.textMuted,
+    paddingLeft: theme?.spacing?.xs,
+  },
+  searchHint: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    color: theme?.colors?.textMuted,
+    marginBottom: theme?.spacing?.xs,
   },
   viewToggle: {
     flexDirection: 'row',

@@ -48,8 +48,17 @@ const listReelsQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(50).default(15),
 }).and('createdAt', 'id');
 
+// q is matched against titles; categoryId limits it to one category.
+const searchReelsQuerySchema = Joi.object({
+  q: Joi.string().trim().min(1).max(100).required(),
+  categoryId: categoryIdSchema,
+  page: Joi.number().integer().min(1).max(1000).default(1),
+  limit: Joi.number().integer().min(1).max(50).default(15),
+});
+
 module.exports = {
   createReelSchema,
+  searchReelsQuerySchema,
   reelPreviewQuerySchema,
   reelIdParamSchema,
   updateReelSchema,

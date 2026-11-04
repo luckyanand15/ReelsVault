@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { ERROR_CODES } = require('../constants/errorCodes');
 const reelService = require('../services/reel.service');
+const searchService = require('../services/search.service');
 
 const getReels = asyncHandler(async (req, res) => {
   const { reels, nextCursor } = await reelService.getReels(
@@ -8,6 +9,14 @@ const getReels = asyncHandler(async (req, res) => {
     req.query,
   );
   res.status(200).json({ success: true, data: reels, nextCursor });
+});
+
+const searchReels = asyncHandler(async (req, res) => {
+  const { reels, nextPage, fuzzy } = await searchService.searchSavedReels(
+    req.userId,
+    req.query,
+  );
+  res.status(200).json({ success: true, data: reels, nextPage, fuzzy });
 });
 
 const createReel = asyncHandler(async (req, res) => {
@@ -103,6 +112,7 @@ const deleteReel = asyncHandler(async (req, res) => {
 
 module.exports = {
   getReels,
+  searchReels,
   createReel,
   previewReel,
   refreshThumbnail,

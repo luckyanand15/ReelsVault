@@ -15,6 +15,22 @@ export const fetchReels = async ({ categoryId, cursor, limit } = {}) => {
   return { reels: data?.data || [], nextCursor: data?.nextCursor || null };
 };
 
+// Reels whose titles match q, within categoryId when given (all otherwise).
+// Each reel also has matchedCategoryId, the category whose title matched;
+// fuzzy is true when only typo matches were found. nextPage is null on the
+// last page. signal (an AbortController's) cancels a search gone stale.
+export const searchReels = async ({ q, categoryId, page, limit, signal }) => {
+  const { data } = await axiosClient.get('/reels/search', {
+    params: { q, categoryId, page, limit },
+    signal,
+  });
+  return {
+    reels: data?.data || [],
+    nextPage: data?.nextPage || null,
+    fuzzy: !!data?.fuzzy,
+  };
+};
+
 export const createReel = async ({ categoryId, title, url }) => {
   const { data } = await axiosClient.post('/reels', { categoryId, title, url });
   return data?.data;

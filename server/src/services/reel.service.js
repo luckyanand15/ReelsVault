@@ -302,6 +302,7 @@ const removeReel = async (reelId, userId, categoryIds) => {
 };
 
 module.exports = {
+  withCategories,
   getReels,
   createReel,
   previewReel,
