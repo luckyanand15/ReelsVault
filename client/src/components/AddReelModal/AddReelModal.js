@@ -28,6 +28,7 @@ export default function AddReelModal({
   onAddCategory,
   categories = [],
   defaultCategoryId = null,
+  defaultUrl = '',
 }) {
   const [categoryId, setCategoryId] = useState(null);
   const [title, setTitle] = useState('');
@@ -45,10 +46,10 @@ export default function AddReelModal({
     if (visible) {
       setCategoryId(defaultCategoryId);
       setTitle('');
-      setUrl('');
+      setUrl(defaultUrl);
       setError('');
     }
-  }, [visible, defaultCategoryId]);
+  }, [visible, defaultCategoryId, defaultUrl]);
 
   useEffect(() => {
     const showEvent =
