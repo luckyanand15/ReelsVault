@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { Text } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
-import HardShadow from '../../components/HardShadow/HardShadow';
+import OtpCodeField from '../../components/OtpCodeField/OtpCodeField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import { useTheme } from '../../context/ThemeContext';
 import routes from '../../routes/routes';
@@ -208,78 +208,21 @@ export default function ForgotPasswordOtp({ navigation, route }) {
           : ", we've sent it a 6-digit code."}
       </AuthHeading>
 
-      <View style={styles?.form}>
-        <View style={styles?.otpContainer}>
-          {otp.map((digit, index) => (
-            <HardShadow
-              key={index}
-              color={colors?.accent}
-              offset={3}
-              borderRadius={14}
-              style={styles?.otpSlot}
-            >
-              <TextInput
-                ref={(ref) => (inputRefs.current[index] = ref)}
-                style={[
-                  styles?.otpBox,
-                  {
-                    backgroundColor: colors?.surf,
-                    color: colors?.fg,
-                    borderColor: error
-                      ? colors?.pinkText
-                      : focusedIndex === index
-                      ? colors?.accent
-                      : colors?.outline,
-                  },
-                ]}
-                value={digit}
-                onChangeText={(text) => handleChangeText(text, index)}
-                onKeyPress={(e) => handleKeyPress(e, index)}
-                onFocus={() => setFocusedIndex(index)}
-                onBlur={() => setFocusedIndex(null)}
-                keyboardType="number-pad"
-                maxLength={6}
-                selectTextOnFocus
-                autoFocus={index === 0}
-                selectionColor={colors?.pink}
-                cursorColor={colors?.fg}
-                accessibilityLabel={`Digit ${index + 1} of 6`}
-              />
-            </HardShadow>
-          ))}
-        </View>
-
-        {error ? (
-          <Text style={[styles?.errorText, { color: colors?.pinkText }]}>{error}</Text>
-        ) : null}
-
-        <TouchableOpacity
-          style={styles?.resendButton}
-          onPress={handleResend}
-          disabled={!canResend}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canResend }}
-        >
-          {canResend ? (
-            <Text style={[styles?.resendText, { color: colors?.mut }]}>
-              Didn't receive the code?{' '}
-              <Text
-                style={[
-                  styles?.resendLink,
-                  { color: colors?.fg, textDecorationColor: colors?.pink },
-                ]}
-              >
-                Resend
-              </Text>
-            </Text>
-          ) : (
-            <Text style={[styles?.resendText, { color: colors?.mut }]}>
-              {isResending ? 'Sending...' : `Resend code in ${resendCooldown}s`}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <OtpCodeField
+        digits={otp}
+        inputRefs={inputRefs}
+        focusedIndex={focusedIndex}
+        onFocusIndex={setFocusedIndex}
+        onChangeDigit={handleChangeText}
+        onKeyPress={handleKeyPress}
+        error={error}
+        resend={{
+          canResend,
+          isResending,
+          cooldown: resendCooldown,
+          onPress: handleResend,
+        }}
+      />
     </AuthLayout>
   );
 }

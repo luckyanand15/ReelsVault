@@ -1,2 +1,91 @@
-// Same layout as the signup code step.
-export { default } from '../Signup/SignupOtp.styles';
+// The old (pre-redesign) form look, kept here when the signup screens moved
+// to the new design. Replace when this screen is redesigned.
+import { StyleSheet } from 'react-native';
+import theme from '../../constants/theme';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: theme?.colors?.background,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: theme?.spacing?.xl,
+    paddingTop: theme?.spacing?.lg,
+    paddingBottom: theme?.spacing?.xl,
+    justifyContent: 'space-between',
+  },
+  headerContent: {
+    marginTop: theme?.spacing?.md,
+    marginBottom: theme?.spacing?.xl,
+  },
+  stepIndicator: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    fontWeight: theme?.typography?.fontWeight?.semibold,
+    color: theme?.colors?.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: theme?.spacing?.xs,
+  },
+  title: {
+    fontSize: theme?.typography?.fontSize?.xxl,
+    fontWeight: theme?.typography?.fontWeight?.bold,
+    color: theme?.colors?.textPrimary,
+    marginBottom: theme?.spacing?.xs,
+  },
+  subtitle: {
+    fontSize: theme?.typography?.fontSize?.md,
+    color: theme?.colors?.textMuted,
+    lineHeight: 22,
+  },
+  emailHighlight: {
+    color: theme?.colors?.textPrimary,
+    fontWeight: theme?.typography?.fontWeight?.semibold,
+  },
+  form: {
+    flex: 1,
+    gap: theme?.spacing?.lg,
+  },
+  otpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: theme?.spacing?.md,
+  },
+  otpBox: {
+    width: 48,
+    height: 56,
+    borderWidth: 1.5,
+    borderColor: theme?.colors?.border,
+    borderRadius: theme?.borderRadius?.lg,
+    textAlign: 'center',
+    fontSize: theme?.typography?.fontSize?.xl,
+    fontWeight: theme?.typography?.fontWeight?.bold,
+    color: theme?.colors?.textPrimary,
+    backgroundColor: theme?.colors?.surface,
+  },
+  otpBoxFocused: {
+    borderColor: theme?.colors?.textPrimary,
+    backgroundColor: theme?.colors?.background,
+  },
+  otpBoxError: {
+    borderColor: '#E53E3E',
+  },
+  hintText: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    color: theme?.colors?.textMuted,
+    textAlign: 'center',
+    marginTop: theme?.spacing?.xs,
+  },
+  errorText: {
+    fontSize: theme?.typography?.fontSize?.xs,
+    color: '#E53E3E',
+    textAlign: 'center',
+    marginTop: theme?.spacing?.xs,
+  },
+});
+
+export default styles;

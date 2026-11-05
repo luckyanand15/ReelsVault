@@ -1,23 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import { Text } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import OtpCodeField from '../../components/OtpCodeField/OtpCodeField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import {
   OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS,
   SignupStep,
   useSignupFlow,
 } from '../../context/SignupFlowContext';
+import { useTheme } from '../../context/ThemeContext';
 import { sendOtp, verifyOtp } from '../../api/otp.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import { ERROR_CODES } from '../../constants/errorCodes';
@@ -29,6 +21,7 @@ export default function SignupOtp({ navigation, route }) {
   const alreadySent = Boolean(route?.params?.alreadySent);
   const { canAccessStep, confirmEmailVerification, markOtpResent, signupData } =
     useSignupFlow();
+  const { colors } = useTheme();
   const { email, otpSentAt } = signupData;
   const canAccessOtpStep = canAccessStep(SignupStep.Otp) && Boolean(email);
 
@@ -172,79 +165,57 @@ export default function SignupOtp({ navigation, route }) {
     }
   };
 
+  // The code verifies itself on the sixth digit; the arrow retries it, or
+  // says what's missing.
+  const handleArrowPress = () => {
+    const code = otp.join('');
+    if (code.length < 6) {
+      setError('Enter the 6-digit code.');
+      return;
+    }
+    handleVerify(code);
+  };
+
   if (!canAccessOtpStep) {
     return null;
   }
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      circleColor={colors?.cyan}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={otp.join('').length === 6}
+          loading={isVerifying}
+          accessibilityLabel="Verify code"
+        />
+      }
+    >
+      <AuthHeading step="Step 3 of 4" title={'Enter verification\ncode'}>
+        {alreadySent ? 'We already sent a 6-digit code to' : 'We sent a 6-digit code to'}{' '}
+        <Text style={[styles?.emailHighlight, { color: colors?.fg }]}>
+          {email || 'your email'}
+        </Text>
+        {alreadySent ? '. It is still valid, so you can use it below.' : ''}
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            {/* Header Content */}
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 3 of 4</Text>
-              <Text style={styles?.title}>Enter verification code</Text>
-              <Text style={styles?.subtitle}>
-                {alreadySent ? 'We already sent a 6-digit code to' : 'We sent a 6-digit code to'}{' '}
-                <Text style={styles?.emailHighlight}>
-                  {email || 'your email'}
-                </Text>
-                {alreadySent ? '. It is still valid, so you can use it below.' : ''}
-              </Text>
-            </View>
-
-            {/* OTP Input Form */}
-            <View style={styles?.form}>
-              <View style={styles?.otpContainer}>
-                {otp.map((digit, index) => (
-                  <TextInput
-                    key={index}
-                    ref={(ref) => (inputRefs.current[index] = ref)}
-                    style={[
-                      styles?.otpBox,
-                      focusedIndex === index && styles?.otpBoxFocused,
-                      !!error && styles?.otpBoxError,
-                    ]}
-                    value={digit}
-                    onChangeText={(text) => handleChangeText(text, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    onFocus={() => setFocusedIndex(index)}
-                    onBlur={() => setFocusedIndex(null)}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    selectTextOnFocus
-                    autoFocus={index === 0}
-                  />
-                ))}
-              </View>
-
-              {isVerifying && <ActivityIndicator />}
-
-              {error ? <Text style={styles?.errorText}>{error}</Text> : null}
-
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={resendCooldown > 0 || isResending}
-                activeOpacity={0.7}
-              >
-                <Text style={styles?.hintText}>
-                  {isResending
-                    ? 'Sending...'
-                    : resendCooldown > 0
-                    ? `Resend code in ${resendCooldown}s`
-                    : "Didn't receive the code? Resend"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <OtpCodeField
+        digits={otp}
+        inputRefs={inputRefs}
+        focusedIndex={focusedIndex}
+        onFocusIndex={setFocusedIndex}
+        onChangeDigit={handleChangeText}
+        onKeyPress={handleKeyPress}
+        error={error}
+        resend={{
+          canResend: resendCooldown <= 0 && !isResending,
+          isResending,
+          cooldown: resendCooldown,
+          onPress: handleResend,
+        }}
+      />
+    </AuthLayout>
   );
 }

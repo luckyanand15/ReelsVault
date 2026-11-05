@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import {
   OTP_RESEND_COOLDOWN_SECONDS,
@@ -19,17 +9,17 @@ import {
   SignupStep,
   useSignupFlow,
 } from '../../context/SignupFlowContext';
+import { useTheme } from '../../context/ThemeContext';
 import { sendOtp } from '../../api/otp.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import { ERROR_CODES } from '../../constants/errorCodes';
-import styles from './SignupEmail.styles';
 
 export default function SignupEmail({ navigation }) {
   const { canAccessStep, continueWithEmail, signupData } = useSignupFlow();
+  const { colors } = useTheme();
   const canAccessEmailStep = canAccessStep(SignupStep.Email);
 
   const [email, setEmail] = useState('');
-  const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -103,8 +93,9 @@ export default function SignupEmail({ navigation }) {
         // Backdate otpSentAt so the code screen's resend timer shows the
         // server's remaining wait.
         const retryAfter = data.retryAfter ?? OTP_RESEND_COOLDOWN_SECONDS;
-        const otpSentAt = Date.now() - (OTP_RESEND_COOLDOWN_SECONDS - retryAfter) * 1000;
-        continueWithEmail({ email: trimmedEmail, otpSentAt });
+        const backdatedSentAt =
+          Date.now() - (OTP_RESEND_COOLDOWN_SECONDS - retryAfter) * 1000;
+        continueWithEmail({ email: trimmedEmail, otpSentAt: backdatedSentAt });
         navigation.navigate(routes.SignupOtp, { alreadySent: true });
       } else if (status === 429) {
         setError(`Too many requests. Please try again ${formatRetryAfter(data?.retryAfter)}.`);
@@ -121,85 +112,36 @@ export default function SignupEmail({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      circleColor={colors?.yellow}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isEmailValid}
+          loading={isSubmitting}
+          accessibilityLabel="Next step"
+        />
+      }
+    >
+      <AuthHeading step="Step 2 of 4" title={'What\'s your\nemail?'}>
+        Enter your email address to continue setting up your account.
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            {/* Header Content */}
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 2 of 4</Text>
-              <Text style={styles?.title}>What's your email?</Text>
-              <Text style={styles?.subtitle}>
-                Enter your email address to continue setting up your account.
-              </Text>
-            </View>
-
-            {/* Input Form */}
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Email Address <Text style={styles?.star}>*</Text>
-                  </Text>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    emailFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  placeholder="Enter your email address"
-                  placeholderTextColor="#A3A3A3"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                  autoFocus
-                />
-                {!!error && <Text style={styles?.errorText}>{error}</Text>}
-              </View>
-            </View>
-
-            {/* Footer with Arrow Button */}
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isEmailValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isEmailValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Next step"
-                accessibilityState={{ disabled: !isEmailValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[
-                      styles?.arrowIcon,
-                      !isEmailValid && styles?.arrowIconDisabled,
-                    ]}
-                  >
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <TextField
+        label="Email Address"
+        required
+        error={error}
+        value={email}
+        onChangeText={handleEmailChange}
+        placeholder="Enter your email address"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="done"
+        onSubmitEditing={handleArrowPress}
+        autoFocus
+      />
+    </AuthLayout>
   );
 }
