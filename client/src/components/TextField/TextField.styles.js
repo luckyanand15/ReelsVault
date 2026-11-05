@@ -23,6 +23,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
   },
+  inputSheet: {
+    height: 56,
+  },
   errorText: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,

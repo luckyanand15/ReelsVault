@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, BackHandler } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddReelModal from '../../components/AddReelModal/AddReelModal';
+import { ThemeProvider } from '../../context/ThemeContext';
 import {
   getRefreshToken,
   setSessionHandlers,
@@ -17,8 +19,19 @@ const URL_IN_TEXT = /https?:\/\/\S+/i;
 const close = () => BackHandler.exitApp();
 
 // Opened from another app's share sheet (Android, see ShareActivity): just
-// the Add Reel drawer, prefilled with the shared link.
-export default function ShareReel({ sharedText }) {
+// the Add Reel drawer, prefilled with the shared link. Registered as its own
+// root (index.js), so it needs its own providers.
+export default function ShareReel(props) {
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <ShareReelDrawer {...props} />
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function ShareReelDrawer({ sharedText }) {
   // null until loaded, so the drawer doesn't open with no categories.
   const [categories, setCategories] = useState(null);
 

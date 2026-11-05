@@ -6,6 +6,8 @@ import Svg, { Path } from 'react-native-svg';
 const PATHS = {
   arrowLeft: 'M19 12H5M11 5l-7 7 7 7',
   arrowRight: 'M5 12h14M13 5l7 7-7 7',
+  close: 'M6 6l12 12M18 6L6 18',
+  plus: 'M12 4v16M4 12h16',
 };
 
 export default function Icon({ name, size = 22, color, strokeWidth = 2.6 }) {

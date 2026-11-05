@@ -4,8 +4,19 @@ import Icon from '../Icon/Icon';
 import { useTheme } from '../../context/ThemeContext';
 import styles from './IconButton.styles';
 
-// 46px round button: surf fill, line border, fg icon. Icon-only, so a label is required.
-export default function IconButton({ icon, onPress, accessibilityLabel, style }) {
+// Round icon button: line border, fg icon. 46px with surf fill by default;
+// sheets use the 44px close button with bg fill (it sits on a surf sheet).
+// Icon-only, so a label is required.
+export default function IconButton({
+  icon,
+  onPress,
+  accessibilityLabel,
+  size = 46,
+  fill = 'surf',
+  iconSize = 22,
+  iconStrokeWidth,
+  style,
+}) {
   const { colors } = useTheme();
 
   return (
@@ -16,12 +27,23 @@ export default function IconButton({ icon, onPress, accessibilityLabel, style })
       hitSlop={4}
       style={({ pressed }) => [
         styles?.button,
-        { backgroundColor: colors?.surf, borderColor: colors?.line },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: colors?.[fill],
+          borderColor: colors?.line,
+        },
         pressed && styles?.pressed,
         style,
       ]}
     >
-      <Icon name={icon} size={22} color={colors?.fg} />
+      <Icon
+        name={icon}
+        size={iconSize}
+        color={colors?.fg}
+        strokeWidth={iconStrokeWidth}
+      />
     </Pressable>
   );
 }
