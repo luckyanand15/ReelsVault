@@ -16,8 +16,14 @@ import styles from './AuthLayout.styles';
 // The login-style step screen: dotted background with a coloured corner
 // circle, back button + wordmark, the form, and a footer (the round arrow)
 // pinned bottom-right that rises with the keyboard. Tapping outside a field
-// closes the keyboard.
-export default function AuthLayout({ circleColor, onBack, children, footer }) {
+// closes the keyboard. formStyle overrides the form's spacing per screen.
+export default function AuthLayout({
+  circleColor,
+  onBack,
+  children,
+  footer,
+  formStyle,
+}) {
   const { colors } = useTheme();
 
   return (
@@ -33,7 +39,7 @@ export default function AuthLayout({ circleColor, onBack, children, footer }) {
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles?.container}>
-              <View style={styles?.form}>{children}</View>
+              <View style={[styles?.form, formStyle]}>{children}</View>
               {!!footer && <View style={styles?.footer}>{footer}</View>}
             </View>
           </TouchableWithoutFeedback>

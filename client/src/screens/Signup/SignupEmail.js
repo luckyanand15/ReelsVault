@@ -114,6 +114,7 @@ export default function SignupEmail({ navigation }) {
   return (
     <AuthLayout
       circleColor={colors?.yellow}
+      formStyle={{ gap: 20 }}
       onBack={() => navigation?.goBack?.()}
       footer={
         <RoundArrowButton
@@ -132,6 +133,7 @@ export default function SignupEmail({ navigation }) {
         label="Email Address"
         required
         error={error}
+        floatingError
         value={email}
         onChangeText={handleEmailChange}
         placeholder="Enter your email address"

@@ -40,7 +40,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '100%',
     left: 0,
-    right: 0,
+    // Wraps before the round arrow (68px + shadow + breathing room) that
+    // sits bottom-right on the auth screens using floatingError.
+    right: 84,
     // Same 14px as the in-flow error (group gap 10 + marginTop 4).
     marginTop: 14,
   },
