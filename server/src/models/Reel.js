@@ -1,15 +1,12 @@
 const mongoose = require('mongoose');
 const mongooseIdPlugin = require('../utils/mongooseIdPlugin');
 
+// The video itself, stored once per user however many categories it's saved
+// in. Each save (category + title) is a SavedReel.
 const reelSchema = new mongoose.Schema(
   {
     _id: {
       type: String,
-    },
-    title: {
-      type: String,
-      required: true,
-      trim: true,
     },
     url: {
       type: String,
@@ -22,11 +19,6 @@ const reelSchema = new mongoose.Schema(
     thumbnailUrl: {
       type: String,
     },
-    // A reel saved to several categories is one document listing them all.
-    categoryIds: {
-      type: [String],
-      required: true,
-    },
     userId: {
       type: String,
       required: true,
@@ -37,10 +29,8 @@ const reelSchema = new mongoose.Schema(
 
 // One copy of each reel per user; urls are normalized before saving.
 reelSchema.index({ userId: 1, url: 1 }, { unique: true });
-// Paged reel lists, all reels and per category (newest first). The first
-// also serves the daily-limit count.
+// Paged list of all reels (newest first); also serves the daily-limit count.
 reelSchema.index({ userId: 1, createdAt: -1, _id: -1 });
-reelSchema.index({ userId: 1, categoryIds: 1, createdAt: -1, _id: -1 });
 
 reelSchema.plugin(mongooseIdPlugin);
 

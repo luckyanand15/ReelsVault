@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -12,10 +12,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AddCategoryModal from '../AddCategoryModal/AddCategoryModal';
+import { fetchReelTitle } from '../../api/reel.api';
 import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './AddReelModal.styles';
 
 const URL_PATTERN = /^https?:\/\/\S+$/i;
+// Wait for the user to stop typing before looking a link up. A paste is
+// looked up at once.
+const TITLE_LOOKUP_DELAY_MS = 400;
 
 export default function AddReelModal({
   visible,
@@ -28,6 +32,10 @@ export default function AddReelModal({
   const [categoryId, setCategoryId] = useState(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
+  const [suggestedTitle, setSuggestedTitle] = useState(null);
+  const [isFindingTitle, setIsFindingTitle] = useState(false);
+  // Set when the link changed by more than one character at once (a paste).
+  const pastedRef = useRef(false);
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
@@ -63,7 +71,37 @@ export default function AddReelModal({
 
   const trimmedTitle = title.trim();
   const trimmedUrl = url.trim();
-  const canSave = !!categoryId && !!trimmedTitle && !!trimmedUrl && !isSaving;
+  // A blank title saves with the suggested one.
+  const finalTitle = trimmedTitle || suggestedTitle;
+  const canSave = !!categoryId && !!finalTitle && !!trimmedUrl && !isSaving;
+
+  // Look up a title for each new link; a reply for a link since changed or
+  // a closed drawer is dropped.
+  useEffect(() => {
+    const pasted = pastedRef.current;
+    pastedRef.current = false;
+    setSuggestedTitle(null);
+    if (!visible || !URL_PATTERN.test(trimmedUrl)) {
+      return undefined;
+    }
+    let cancelled = false;
+    const timer = setTimeout(
+      async () => {
+        setIsFindingTitle(true);
+        const found = await fetchReelTitle(trimmedUrl);
+        if (!cancelled) {
+          setSuggestedTitle(found);
+          setIsFindingTitle(false);
+        }
+      },
+      pasted ? 0 : TITLE_LOOKUP_DELAY_MS,
+    );
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      setIsFindingTitle(false);
+    };
+  }, [visible, trimmedUrl]);
 
   const handleClose = () => {
     if (isSaving) return;
@@ -81,7 +119,7 @@ export default function AddReelModal({
     setError('');
     setIsSaving(true);
     try {
-      await onSave({ categoryId, title: trimmedTitle, url: trimmedUrl });
+      await onSave({ categoryId, title: finalTitle, url: trimmedUrl });
       setIsSaving(false);
       setKeyboardHeight(0);
       if (onClose) onClose();
@@ -184,6 +222,23 @@ export default function AddReelModal({
               </TouchableOpacity>
             </ScrollView>
 
+            <Text style={styles?.label}>Link</Text>
+            <TextInput
+              style={styles?.input}
+              placeholder="Paste the reel / short link"
+              placeholderTextColor="#A3A3A3"
+              value={url}
+              onChangeText={text => {
+                pastedRef.current = text.length - url.length > 1;
+                setUrl(text);
+                if (error) setError('');
+              }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              maxLength={2048}
+            />
+
             <Text style={styles?.label}>Title</Text>
             <TextInput
               style={styles?.input}
@@ -194,21 +249,27 @@ export default function AddReelModal({
               maxLength={100}
             />
 
-            <Text style={styles?.label}>Link</Text>
-            <TextInput
-              style={styles?.input}
-              placeholder="Paste the reel / short link"
-              placeholderTextColor="#A3A3A3"
-              value={url}
-              onChangeText={text => {
-                setUrl(text);
-                if (error) setError('');
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              maxLength={2048}
-            />
+            {suggestedTitle && suggestedTitle !== trimmedTitle ? (
+              <TouchableOpacity
+                style={styles?.suggestion}
+                onPress={() => setTitle(suggestedTitle)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles?.suggestionLabel}>
+                  {trimmedTitle
+                    ? 'Use suggested title'
+                    : 'Suggested (used if left blank)'}
+                </Text>
+                <Text style={styles?.suggestionText} numberOfLines={2}>
+                  {suggestedTitle}
+                </Text>
+              </TouchableOpacity>
+            ) : isFindingTitle ? (
+              <View style={styles?.findingTitle}>
+                <ActivityIndicator size="small" color="#A3A3A3" />
+                <Text style={styles?.findingTitleText}>Finding a title…</Text>
+              </View>
+            ) : null}
 
             {error ? <Text style={styles?.errorText}>{error}</Text> : null}
 

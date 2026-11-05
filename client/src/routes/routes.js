@@ -12,6 +12,11 @@ const routes = {
   Dashboard: 'Dashboard',
   Settings: 'Settings',
   ManageCategories: 'ManageCategories',
+  EditName: 'EditName',
+  AccountPassword: 'AccountPassword',
+  ChangeEmail: 'ChangeEmail',
+  AccountOtp: 'AccountOtp',
+  ChangePassword: 'ChangePassword',
 };
 
 export default routes;

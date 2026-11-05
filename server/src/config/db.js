@@ -1,6 +1,32 @@
 const mongoose = require('mongoose');
 const LoginAttempt = require('../models/LoginAttempt');
 const Reel = require('../models/Reel');
+const SavedReel = require('../models/SavedReel');
+const { normalizeText } = require('../utils/searchText');
+
+// Saves from before search have no titleNormalized, so search can't find
+// them. Normalizing is done in JS, so this fills them in batches through the
+// raw collection, which leaves updatedAt alone; a no-op once all have it.
+const backfillTitleNormalized = async () => {
+  const BATCH = 500;
+  for (;;) {
+    const docs = await SavedReel.collection
+      .find({ titleNormalized: { $exists: false } }, { projection: { title: 1 } })
+      .limit(BATCH)
+      .toArray();
+    if (docs.length === 0) {
+      return;
+    }
+    await SavedReel.collection.bulkWrite(
+      docs.map(d => ({
+        updateOne: {
+          filter: { _id: d._id },
+          update: { $set: { titleNormalized: normalizeText(d.title) } },
+        },
+      })),
+    );
+  }
+};
 
 const connectDB = async () => {
   try {
@@ -19,6 +45,8 @@ const connectDB = async () => {
       { $set: { categoryIds: ['$categoryId'] } },
       { $unset: 'categoryId' },
     ]);
+
+    await backfillTitleNormalized();
   } catch (error) {
     // console.error('MongoDB connection error:', error.message);
     console.error(error);

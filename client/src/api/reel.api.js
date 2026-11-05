@@ -15,9 +15,38 @@ export const fetchReels = async ({ categoryId, cursor, limit } = {}) => {
   return { reels: data?.data || [], nextCursor: data?.nextCursor || null };
 };
 
+// Reels whose titles match q, within categoryId when given (all otherwise).
+// Each reel also has matchedCategoryId, the category whose title matched;
+// fuzzy is true when only typo matches were found. nextPage is null on the
+// last page. signal (an AbortController's) cancels a search gone stale.
+export const searchReels = async ({ q, categoryId, page, limit, signal }) => {
+  const { data } = await axiosClient.get('/reels/search', {
+    params: { q, categoryId, page, limit },
+    signal,
+  });
+  return {
+    reels: data?.data || [],
+    nextPage: data?.nextPage || null,
+    fuzzy: !!data?.fuzzy,
+  };
+};
+
 export const createReel = async ({ categoryId, title, url }) => {
   const { data } = await axiosClient.post('/reels', { categoryId, title, url });
   return data?.data;
+};
+
+// A suggested title for a link about to be saved, or null when none was
+// found (or the lookup failed).
+export const fetchReelTitle = async url => {
+  try {
+    const { data } = await axiosClient.get('/reels/preview', {
+      params: { url },
+    });
+    return data?.data?.title || null;
+  } catch {
+    return null;
+  }
 };
 
 // Asks the server to look the thumbnail up again; returns the updated reel.
@@ -27,11 +56,13 @@ export const refreshReelThumbnail = async id => {
 };
 
 // Updates the title and/or categories (categoryIds is the full new list);
-// returns the updated reel.
-export const updateReel = async (id, { title, categoryIds }) => {
+// returns the updated reel. categoryId is the open category, whose title is
+// the one changed (the first category's when left out).
+export const updateReel = async (id, { title, categoryIds, categoryId }) => {
   const { data } = await axiosClient.patch(`/reels/${id}`, {
     title,
     categoryIds,
+    categoryId,
   });
   return data?.data;
 };

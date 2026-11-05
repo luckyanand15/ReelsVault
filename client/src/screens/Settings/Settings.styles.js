@@ -42,6 +42,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme?.spacing?.md,
     backgroundColor: theme?.colors?.surface,
   },
+  settingItemDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme?.colors?.border,
+  },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme?.spacing?.sm,
+    paddingVertical: theme?.spacing?.sm,
+    paddingHorizontal: theme?.spacing?.md,
+    marginBottom: theme?.spacing?.lg,
+    borderRadius: theme?.borderRadius?.lg,
+    backgroundColor: theme?.colors?.gray100,
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: theme?.typography?.fontSize?.sm,
+    color: theme?.colors?.textPrimary,
+  },
+  noticeDismiss: {
+    fontSize: theme?.typography?.fontSize?.sm,
+    color: theme?.colors?.textMuted,
+  },
   itemLeft: {
     flexDirection: 'row',
     alignItems: 'center',

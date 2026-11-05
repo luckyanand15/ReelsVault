@@ -73,6 +73,14 @@ export function AuthProvider({ children }) {
     applySession(session);
   };
 
+  // Swaps in a new token pair for the same user, e.g. after a password
+  // change revoked the old one.
+  const replaceTokens = async ({ accessToken, refreshToken }) => {
+    const session = { userId: userIdRef.current, accessToken, refreshToken };
+    await secureSession.saveSession(session);
+    applySession(session);
+  };
+
   const logout = async () => {
     const refreshToken = getRefreshToken();
     if (refreshToken) {
@@ -86,7 +94,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ userId, isLoading, authLogin, logout }}>
+    <AuthContext.Provider value={{ userId, isLoading, authLogin, replaceTokens, logout }}>
       {children}
     </AuthContext.Provider>
   );

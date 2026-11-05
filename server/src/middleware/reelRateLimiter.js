@@ -32,4 +32,22 @@ const thumbnailRefreshLimiter = rateLimit({
   },
 });
 
-module.exports = { reelCreateLimiter, thumbnailRefreshLimiter };
+// Title suggestions fire once per pasted link in the Add Reel drawer.
+const reelPreviewLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: req => req.userId,
+  message: {
+    success: false,
+    code: ERROR_CODES.RATE_LIMITED,
+    message: 'Too many link lookups. Please wait a minute.',
+  },
+});
+
+module.exports = {
+  reelCreateLimiter,
+  thumbnailRefreshLimiter,
+  reelPreviewLimiter,
+};

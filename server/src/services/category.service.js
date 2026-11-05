@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 const Reel = require('../models/Reel');
+const SavedReel = require('../models/SavedReel');
 const generateId = require('../utils/generateId');
 
 const getAllCategories = async userId => {
@@ -30,16 +31,23 @@ const updateCategory = async (id, updates, userId) => {
   return category;
 };
 
-// Reels are detached from the category; those left in no category are
-// deleted so none are orphaned.
+// The category's saves go with it; reels left in no category are deleted so
+// none are orphaned.
 const deleteCategory = async (id, userId) => {
   const category = await Category.findOneAndDelete({ _id: id, userId });
   if (category) {
-    await Reel.updateMany(
-      { userId, categoryIds: id },
-      { $pull: { categoryIds: id } },
-    );
-    await Reel.deleteMany({ userId, categoryIds: { $size: 0 } });
+    const reelIds = await SavedReel.distinct('reelId', {
+      userId,
+      categoryId: id,
+    });
+    await SavedReel.deleteMany({ userId, categoryId: id });
+    const stillSaved = await SavedReel.distinct('reelId', {
+      reelId: { $in: reelIds },
+    });
+    await Reel.deleteMany({
+      userId,
+      _id: { $in: reelIds.filter(r => !stillSaved.includes(r)) },
+    });
   }
   return category;
 };

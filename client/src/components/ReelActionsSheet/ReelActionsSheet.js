@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import styles from './ReelActionsSheet.styles';
 import theme from '../../constants/theme';
+import { reelTitle } from '../../utils/reelTitle';
 
 // Long-press menu for a reel. Every step (menu, confirm, category picker)
 // lives in this one sheet so no second modal has to open over a closing one.
@@ -223,7 +224,7 @@ export default function ReelActionsSheet({
             <View style={styles?.dragHandle} />
           </View>
           <Text style={styles?.reelTitle} numberOfLines={2}>
-            {reel?.title}
+            {reelTitle(reel, currentCategory?.id)}
           </Text>
           {step === 'menu' && renderMenu()}
           {step === 'confirm' && renderConfirm()}

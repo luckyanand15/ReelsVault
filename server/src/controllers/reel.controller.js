@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { ERROR_CODES } = require('../constants/errorCodes');
 const reelService = require('../services/reel.service');
+const searchService = require('../services/search.service');
 
 const getReels = asyncHandler(async (req, res) => {
   const { reels, nextCursor } = await reelService.getReels(
@@ -8,6 +9,14 @@ const getReels = asyncHandler(async (req, res) => {
     req.query,
   );
   res.status(200).json({ success: true, data: reels, nextCursor });
+});
+
+const searchReels = asyncHandler(async (req, res) => {
+  const { reels, nextPage, fuzzy } = await searchService.searchSavedReels(
+    req.userId,
+    req.query,
+  );
+  res.status(200).json({ success: true, data: reels, nextPage, fuzzy });
 });
 
 const createReel = asyncHandler(async (req, res) => {
@@ -25,9 +34,9 @@ const createReel = asyncHandler(async (req, res) => {
         message: `You can save up to ${reelService.MAX_DAILY_REELS} reels a day. Please try again in ${hours} hour${hours === 1 ? '' : 's'}.`,
       });
     }
-    // Only a { userId, url } collision means "already in this category"; any
-    // other duplicate key is a real server error.
-    if (err.code === 11000 && err.keyPattern?.url) {
+    // Only a { reelId, categoryId } collision means "already in this
+    // category"; any other duplicate key is a real server error.
+    if (err.code === 11000 && err.keyPattern?.categoryId) {
       return res.status(409).json({
         success: false,
         code: ERROR_CODES.REEL_DUPLICATE,
@@ -47,6 +56,13 @@ const createReel = asyncHandler(async (req, res) => {
   res
     .status(result.created ? 201 : 200)
     .json({ success: true, data: result.reel });
+});
+
+// A title suggestion for a link about to be saved; title is null when none
+// was found, and the client then shows no suggestion.
+const previewReel = asyncHandler(async (req, res) => {
+  const title = await reelService.previewReel(req.query.url);
+  res.status(200).json({ success: true, data: { title } });
 });
 
 // Re-resolves an expired or missing thumbnail. Always 200 with the reel, so
@@ -96,7 +112,9 @@ const deleteReel = asyncHandler(async (req, res) => {
 
 module.exports = {
   getReels,
+  searchReels,
   createReel,
+  previewReel,
   refreshThumbnail,
   updateReel,
   deleteReel,

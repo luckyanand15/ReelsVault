@@ -18,6 +18,8 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   Platform,
+  TextInput,
+  Keyboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,12 +35,14 @@ import styles from './Dashboard.styles';
 import { createCategory } from '../../api/category.api';
 import {
   fetchReels,
+  searchReels,
   createReel,
   refreshReelThumbnail,
   updateReel,
   deleteReel,
 } from '../../api/reel.api';
 import { mapCategory } from '../../utils/mapCategory';
+import { reelTitle } from '../../utils/reelTitle';
 import { useCategories } from '../../context/CategoriesContext';
 import routes from '../../routes/routes';
 import theme from '../../constants/theme';
@@ -48,6 +52,8 @@ const SWIPE_THRESHOLD = 60;
 const GRID_COLUMNS = 3;
 const VIEW_MODE_KEY = 'dashboardViewMode';
 const PAGE_SIZE = 15;
+// Wait this long after the last keystroke before searching.
+const SEARCH_DEBOUNCE_MS = 250;
 
 const ListViewIcon = ({ active }) => (
   <View style={styles?.listIcon}>
@@ -126,6 +132,106 @@ export default function Dashboard() {
     AsyncStorage.setItem(VIEW_MODE_KEY, mode).catch(() => {});
   };
 
+  // Search covers every category, whichever one is open. The text box is
+  // searchText; search holds the results for the query in key, so results
+  // for an older query are never shown as this one's.
+  const [searchText, setSearchText] = useState('');
+  const searchQuery = searchText.trim();
+  const isSearching = searchQuery.length > 0;
+  const [search, setSearch] = useState(null);
+  const searchQueryRef = useRef(searchQuery);
+  searchQueryRef.current = searchQuery;
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  // The request in flight; a newer search (or clearing it) aborts it.
+  const searchAbortRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  // Any touch outside the search box takes focus (and the keyboard) away
+  // from it. Runs in the capture phase and returns false, so the touch still
+  // reaches whatever was tapped: a reel opens, a category switches.
+  const blurSearchOnTouch = {
+    onStartShouldSetResponderCapture: () => {
+      if (searchInputRef.current?.isFocused()) {
+        searchInputRef.current.blur();
+      }
+      return false;
+    },
+  };
+
+  const runSearch = useCallback(async (q, page = 1) => {
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    // A new query starts empty (so the loader shows); a refresh or the next
+    // page keeps what's already listed.
+    setSearch(prev =>
+      prev?.key === q
+        ? { ...prev, loading: true, failed: false }
+        : { key: q, items: [], nextPage: null, loading: true },
+    );
+    try {
+      const result = await searchReels({
+        q,
+        page,
+        limit: PAGE_SIZE,
+        signal: controller.signal,
+      });
+      setSearch(prev => {
+        if (prev?.key !== q) {
+          return prev;
+        }
+        const items = page === 1 ? [] : prev.items;
+        const seen = new Set(items.map(r => r?.id));
+        return {
+          key: q,
+          items: [...items, ...result.reels.filter(r => !seen.has(r?.id))],
+          nextPage: result.nextPage,
+          fuzzy: page === 1 ? result.fuzzy : prev.fuzzy,
+          loading: false,
+        };
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      console.error('Failed to search reels:', error?.message);
+      setSearch(prev =>
+        prev?.key === q ? { ...prev, loading: false, failed: true } : prev,
+      );
+    } finally {
+      if (searchAbortRef.current === controller) {
+        searchAbortRef.current = null;
+      }
+    }
+  }, []);
+
+  // Searches once typing pauses.
+  useEffect(() => {
+    if (!searchQuery) {
+      searchAbortRef.current?.abort();
+      setSearch(null);
+      return undefined;
+    }
+    const timer = setTimeout(() => runSearch(searchQuery), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchQuery, runSearch]);
+
+  // Abandons a search still in flight when the screen goes away.
+  useEffect(() => () => searchAbortRef.current?.abort(), []);
+
+  const loadMoreSearch = () => {
+    const current = searchRef.current;
+    if (current?.key === searchQuery && current.nextPage && !current.loading) {
+      runSearch(searchQuery, current.nextPage);
+    }
+  };
+
+  // Applies a change to the search results shown, if any.
+  const updateSearchItems = useCallback(update => {
+    setSearch(prev => (prev ? { ...prev, items: update(prev.items) } : prev));
+  }, []);
+
   // Categories with a page request in flight, so one can't be asked twice.
   const loadingRef = useRef(new Set());
   // Bumped by a reset; pages requested before it are thrown away.
@@ -194,8 +300,9 @@ export default function Dashboard() {
   // other's fresh data and the current list stays on screen.
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
+    const query = searchQueryRef.current;
     const [reelsResult, categoriesResult] = await Promise.allSettled([
-      loadReels(selectedCategoryRef.current, true),
+      query ? runSearch(query) : loadReels(selectedCategoryRef.current, true),
       refreshCategories(),
     ]);
     if (reelsResult.status === 'rejected') {
@@ -208,7 +315,7 @@ export default function Dashboard() {
       );
     }
     setIsRefreshing(false);
-  }, [loadReels, refreshCategories]);
+  }, [loadReels, refreshCategories, runSearch]);
 
   // Applies a change to every cached list.
   const updateCachedLists = useCallback(update => {
@@ -248,42 +355,64 @@ export default function Dashboard() {
           updated?.thumbnailUrl &&
           updated.thumbnailUrl !== reel.thumbnailUrl
         ) {
-          updateCachedLists(items =>
+          const withThumbnail = items =>
             items.map(r =>
               r?.id === updated.id
                 ? { ...r, thumbnailUrl: updated.thumbnailUrl }
                 : r,
-            ),
-          );
+            );
+          updateCachedLists(withThumbnail);
+          updateSearchItems(withThumbnail);
         }
       } catch (error) {
         console.error('Failed to refresh thumbnail:', error?.message);
       }
     },
-    [updateCachedLists],
+    [updateCachedLists, updateSearchItems],
+  );
+
+  // Search results span every category, so a reel leaves them only when
+  // it's deleted; otherwise it gets its new data.
+  const applyToSearch = useCallback(
+    (reelId, reel, deleted) =>
+      updateSearchItems(items =>
+        deleted
+          ? items.filter(r => r?.id !== reelId)
+          : items.map(r => (r?.id === reelId ? { ...r, ...reel } : r)),
+      ),
+    [updateSearchItems],
   );
 
   // Removes the reel from the categories it left (every list when it was
-  // deleted) and gives the lists that keep it its new categoryIds.
+  // deleted) and gives the lists that keep it its new categories.
   const applyReelRemoval = useCallback(
-    (reelId, { reel, deleted }) =>
+    (reelId, { reel, deleted }) => {
+      applyToSearch(reelId, reel, deleted);
       updateCachedLists((items, catId) => {
         const keep =
           !deleted && (catId === 'all' || reel?.categoryIds?.includes(catId));
         return keep
           ? items.map(r =>
-              r?.id === reelId ? { ...r, categoryIds: reel.categoryIds } : r,
+              r?.id === reelId
+                ? {
+                    ...r,
+                    categories: reel.categories,
+                    categoryIds: reel.categoryIds,
+                  }
+                : r,
             )
           : items.filter(r => r?.id !== reelId);
-      }),
-    [updateCachedLists],
+      });
+    },
+    [updateCachedLists, applyToSearch],
   );
 
   // Puts an edited reel in the lists of its categories (and All) and takes
   // it out of the rest. A list gaining it slots it in by date, unless it's
   // older than everything loaded there; the next page brings it then.
   const applyReelUpdate = useCallback(
-    updated =>
+    updated => {
+      applyToSearch(updated?.id, updated, false);
       updateCachedLists((items, catId, entry) => {
         const belongs =
           catId === 'all' || updated?.categoryIds?.includes(catId);
@@ -296,21 +425,40 @@ export default function Dashboard() {
             r?.id === updated?.id ? { ...r, ...updated } : r,
           );
         }
+        // All is ordered by when a reel was first saved, a category by when
+        // it was added there.
+        const dateIn = r =>
+          catId === 'all'
+            ? r?.createdAt
+            : r?.categories?.find(c => c?.categoryId === catId)?.createdAt;
         const isNewer = r =>
-          r?.createdAt < updated?.createdAt ||
-          (r?.createdAt === updated?.createdAt && r?.id < updated?.id);
+          dateIn(r) < dateIn(updated) ||
+          (dateIn(r) === dateIn(updated) && r?.id < updated?.id);
         const index = items.findIndex(isNewer);
         if (index === -1) {
           return entry?.nextCursor ? items : [...items, updated];
         }
         return [...items.slice(0, index), updated, ...items.slice(index)];
-      }),
-    [updateCachedLists],
+      });
+    },
+    [updateCachedLists, applyToSearch],
   );
+
+  // The open category (undefined under All): reels show their title there,
+  // and it's the title the edit drawer changes.
+  const openCategoryId =
+    selectedCategory !== 'all' ? selectedCategory : undefined;
+  // The category whose title a reel shows (and edits): while searching, the
+  // one whose title matched, since results come from every category.
+  const titleCategoryFor = reel =>
+    isSearching ? reel?.matchedCategoryId : openCategoryId;
 
   // Errors propagate so the drawer can show them and stay open.
   const handleSaveEdit = async changes => {
-    const updated = await updateReel(editReel?.id, changes);
+    const updated = await updateReel(editReel?.id, {
+      ...changes,
+      categoryId: titleCategoryFor(editReel),
+    });
     applyReelUpdate(updated);
   };
 
@@ -352,7 +500,15 @@ export default function Dashboard() {
   const opacity = useRef(new Animated.Value(1)).current;
   const isSwipingRef = useRef(false);
 
+  // Opening a category (by tap or swipe) ends the search, so the list shows
+  // that category's reels.
+  const clearSearch = () => {
+    setSearchText('');
+    searchInputRef.current?.blur();
+  };
+
   const changeCategoryWithAnimation = (direction, newCategory) => {
+    clearSearch();
     isSwipingRef.current = true;
     const exitX =
       direction === 'left' ? -SCREEN_WIDTH * 0.8 : SCREEN_WIDTH * 0.8;
@@ -438,8 +594,13 @@ export default function Dashboard() {
   };
 
   const handleSelectCategoryFromBar = catId => {
-    if (catId === selectedCategory) return;
+    if (catId === selectedCategory) {
+      // Tapping the open category while searching goes back to its reels.
+      clearSearch();
+      return;
+    }
     if (isSwipingRef?.current) {
+      clearSearch();
       setSelectedCategory(catId);
       return;
     }
@@ -548,19 +709,64 @@ export default function Dashboard() {
       : items;
   }, [currentList, selectedCategory, iconByCategoryId]);
 
+  // While searching, the list shows only the results for exactly what's
+  // typed; until they arrive it's empty, so the loader shows.
+  const currentSearch = search?.key === searchQuery ? search : null;
+  const isSearchFresh = !!currentSearch && !currentSearch.loading;
+  const shownReels = isSearching ? currentSearch?.items || [] : visibleReels;
+  const hasMore = isSearching
+    ? !!currentSearch?.nextPage
+    : !!currentList?.nextCursor;
+
   // Next page once the second-last row comes into view. FlatList needs one
   // fixed callback, so it calls through a ref to the current values.
   const handleViewableRef = useRef(null);
   handleViewableRef.current = viewableItems => {
     const columns = isGrid ? GRID_COLUMNS : 1;
     const secondLastRowStart =
-      (Math.ceil(visibleReels.length / columns) - 2) * columns;
+      (Math.ceil(shownReels.length / columns) - 2) * columns;
     const lastVisible = Math.max(-1, ...viewableItems.map(v => v?.index ?? -1));
-    if (currentList?.nextCursor && lastVisible >= secondLastRowStart) {
+    if (!hasMore || lastVisible < secondLastRowStart) {
+      return;
+    }
+    if (isSearching) {
+      loadMoreSearch();
+    } else {
       loadReels(selectedCategory).catch(error =>
         console.error('Failed to load more reels:', error?.message),
       );
     }
+  };
+
+  const renderEmpty = () => {
+    if (isSearching) {
+      if (!isSearchFresh) {
+        return <ActivityIndicator color={theme?.colors?.textMuted} />;
+      }
+      return (
+        <View style={styles?.card}>
+          <Text style={styles?.title}>No reels found</Text>
+          {currentSearch.failed && (
+            <Text style={styles?.subtitle}>
+              Couldn't search right now. Pull down to try again.
+            </Text>
+          )}
+        </View>
+      );
+    }
+    return !currentList ? (
+      <ActivityIndicator color={theme?.colors?.textMuted} />
+    ) : (
+      <View style={styles?.card}>
+        <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
+        <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
+        <Text style={styles?.subtitle}>
+          No reels yet. Tap + to add one.{'\n'}
+          Swipe left or right to switch categories{'\n'}
+          Pull down to refresh
+        </Text>
+      </View>
+    );
   };
   const onViewableItemsChanged = useRef(({ viewableItems }) =>
     handleViewableRef.current?.(viewableItems),
@@ -568,7 +774,9 @@ export default function Dashboard() {
 
   // The open category's icon, or under All the first category still present.
   const reelIcon = reel =>
-    selectedCategory !== 'all'
+    isSearching && iconByCategoryId[reel?.matchedCategoryId] !== undefined
+      ? iconByCategoryId[reel.matchedCategoryId]
+      : selectedCategory !== 'all'
       ? iconByCategoryId[selectedCategory]
       : iconByCategoryId[
           reel?.categoryIds?.find(id => iconByCategoryId[id] !== undefined)
@@ -588,14 +796,46 @@ export default function Dashboard() {
 
   return (
     <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onRightPress={() => navigation.navigate(routes.Settings)} />
-      <Categories
-        categories={categoriesList}
-        selectedCategory={selectedCategory}
-        onSelectCategory={handleSelectCategoryFromBar}
-      />
+      <View {...blurSearchOnTouch}>
+        <Header onRightPress={() => navigation.navigate(routes.Settings)} />
+        <Categories
+          categories={categoriesList}
+          selectedCategory={selectedCategory}
+          onSelectCategory={handleSelectCategoryFromBar}
+        />
+      </View>
       <View style={styles?.viewToggleRow}>
-        <View style={styles?.viewToggle}>
+        <View style={styles?.searchBox}>
+          <Text style={styles?.searchIcon}>⌕</Text>
+          <TextInput
+            ref={searchInputRef}
+            style={styles?.searchInput}
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder="Search all reels"
+            placeholderTextColor={theme?.colors?.textMuted}
+            returnKeyType="search"
+            onSubmitEditing={Keyboard.dismiss}
+            autoCorrect={false}
+            autoCapitalize="none"
+            maxLength={100}
+            accessibilityLabel="Search reels by title"
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setSearchText('');
+                searchInputRef.current?.blur();
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
+              <Text style={styles?.searchClear}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles?.viewToggle} {...blurSearchOnTouch}>
           <TouchableOpacity
             style={[
               styles?.viewToggleButton,
@@ -624,7 +864,11 @@ export default function Dashboard() {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={styles?.content} {...panResponder?.panHandlers}>
+      <View
+        style={styles?.content}
+        {...panResponder?.panHandlers}
+        {...blurSearchOnTouch}
+      >
         <Animated.View
           style={[
             styles?.reelsContainer,
@@ -639,13 +883,14 @@ export default function Dashboard() {
               remounts it when the view switches. */}
           <FlatList
             key={viewMode}
-            data={visibleReels}
+            data={shownReels}
             keyExtractor={item => item?.id}
             numColumns={isGrid ? GRID_COLUMNS : 1}
             columnWrapperStyle={isGrid ? styles?.gridRow : undefined}
             renderItem={({ item }) => (
               <ReelItem
                 reel={item}
+                title={reelTitle(item, titleCategoryFor(item))}
                 icon={reelIcon(item)}
                 onThumbnailMissing={handleThumbnailMissing}
                 onLongPress={handleReelLongPress}
@@ -654,7 +899,16 @@ export default function Dashboard() {
               />
             )}
             contentContainerStyle={
-              visibleReels.length > 0 ? styles?.reelsList : styles?.emptyList
+              shownReels.length > 0 ? styles?.reelsList : styles?.emptyList
+            }
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            ListHeaderComponent={
+              isSearching && currentSearch?.fuzzy ? (
+                <Text style={styles?.searchHint}>
+                  No exact matches. Showing similar titles.
+                </Text>
+              ) : null
             }
             onViewableItemsChanged={onViewableItemsChanged}
             showsVerticalScrollIndicator={false}
@@ -668,28 +922,14 @@ export default function Dashboard() {
               />
             }
             ListFooterComponent={
-              visibleReels.length > 0 && currentList?.nextCursor ? (
+              shownReels.length > 0 && hasMore ? (
                 <ActivityIndicator
                   style={styles?.listFooter}
                   color={theme?.colors?.textMuted}
                 />
               ) : null
             }
-            ListEmptyComponent={
-              !currentList ? (
-                <ActivityIndicator color={theme?.colors?.textMuted} />
-              ) : (
-                <View style={styles?.card}>
-                  <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
-                  <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
-                  <Text style={styles?.subtitle}>
-                    No reels yet. Tap + to add one.{'\n'}
-                    Swipe left or right to switch categories{'\n'}
-                    Pull down to refresh
-                  </Text>
-                </View>
-              )
-            }
+            ListEmptyComponent={renderEmpty()}
           />
         </Animated.View>
       </View>
@@ -702,7 +942,7 @@ export default function Dashboard() {
       )}
 
       {/* Floating Action Button (FAB) & Menu */}
-      <View style={styles?.fabContainer}>
+      <View style={styles?.fabContainer} {...blurSearchOnTouch}>
         {isFabOpen && (
           <View style={styles?.menuContainer}>
             {/* Add Categories Option (Enabled) */}
@@ -763,7 +1003,11 @@ export default function Dashboard() {
         visible={!!actionReel}
         reel={actionReel}
         reelCategories={actionReelCategories}
-        currentCategory={selectedCategory !== 'all' ? activeCategoryObj : null}
+        // Search results come from every category, so the sheet treats them
+        // like All: delete asks which categories to remove the reel from.
+        currentCategory={
+          selectedCategory !== 'all' && !isSearching ? activeCategoryObj : null
+        }
         onEdit={handleEditPress}
         onDelete={handleDeleteReel}
         onClose={() => setActionReel(null)}
@@ -773,6 +1017,7 @@ export default function Dashboard() {
       <EditReelModal
         visible={!!editReel}
         reel={editReel}
+        categoryId={titleCategoryFor(editReel)}
         onClose={() => setEditReel(null)}
         onSave={handleSaveEdit}
         onAddCategory={addCategory}
