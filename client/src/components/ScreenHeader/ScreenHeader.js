@@ -6,8 +6,9 @@ import { useTheme } from '../../context/ThemeContext';
 import styles from './ScreenHeader.styles';
 
 // Top bar for inner screens: round back button, then the screen title
-// (Settings) or, without one, the wordmark (Login).
-export default function ScreenHeader({ onBack, title }) {
+// (Settings) or, without one, the wordmark (Login). Long titles use a
+// smaller titleSize (Manage Categories: 20).
+export default function ScreenHeader({ onBack, title, titleSize = 22 }) {
   const { colors } = useTheme();
 
   return (
@@ -15,7 +16,7 @@ export default function ScreenHeader({ onBack, title }) {
       <IconButton icon="arrowLeft" onPress={onBack} accessibilityLabel="Back" />
       {title ? (
         <Text
-          style={[styles?.title, { color: colors?.fg }]}
+          style={[styles?.title, { color: colors?.fg, fontSize: titleSize }]}
           accessibilityRole="header"
           numberOfLines={1}
         >

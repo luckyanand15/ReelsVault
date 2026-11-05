@@ -9,6 +9,8 @@ const ICONS = {
   arrowRight: 'M5 12h14M13 5l7 7-7 7',
   chevronRight: 'M9 5l7 7-7 7',
   close: 'M6 6l12 12M18 6L6 18',
+  menu: 'M4 7h16M4 12h16M4 17h16',
+  pencil: 'M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z',
   plus: 'M12 4v16M4 12h16',
   user: [
     { type: 'circle', cx: 12, cy: 8, r: 4 },

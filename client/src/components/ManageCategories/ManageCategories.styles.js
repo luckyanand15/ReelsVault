@@ -1,110 +1,111 @@
 import { StyleSheet } from 'react-native';
-import theme from '../../constants/theme';
+import { fonts } from '../../constants/theme';
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: theme?.colors?.background,
   },
   container: {
     flex: 1,
-    backgroundColor: theme?.colors?.background,
   },
   content: {
-    paddingHorizontal: theme?.spacing?.md,
-    paddingTop: theme?.spacing?.md,
-    paddingBottom: theme?.spacing?.xl,
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 40,
+    gap: 22,
   },
-  headerSubtitle: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: theme?.colors?.textMuted,
-    marginBottom: theme?.spacing?.md,
-    paddingHorizontal: theme?.spacing?.xs,
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 2,
+  },
+  errorText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 14,
     lineHeight: 20,
   },
-  categoryListCard: {
-    backgroundColor: theme?.colors?.surface,
-    borderRadius: theme?.borderRadius?.lg,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-    overflow: 'hidden',
+  helperText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 21,
   },
+  categoryListCard: {
+    borderRadius: 24,
+    borderWidth: 2,
+  },
+  // Every row keeps a 2px border so lighting it up while dragging doesn't
+  // shift the layout; at rest only the bottom one shows, as the divider.
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme?.spacing?.md,
-    paddingHorizontal: theme?.spacing?.md,
-    backgroundColor: theme?.colors?.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme?.colors?.border,
-  },
-  categoryRowLast: {
-    borderBottomWidth: 0,
+    gap: 10,
+    paddingVertical: 10,
+    paddingLeft: 6,
+    paddingRight: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    borderRadius: 0,
   },
   draggingRow: {
-    backgroundColor: theme?.colors?.background,
-    borderColor: theme?.colors?.gray300,
-    borderWidth: 1,
-    borderRadius: theme?.borderRadius?.md,
+    borderRadius: 20,
     zIndex: 999,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-  },
-  rowContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme?.spacing?.md,
-    flex: 1,
-  },
-  categoryIcon: {
-    fontSize: 20,
-    width: 28,
-    textAlign: 'center',
-  },
-  categoryLabel: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.medium,
-    color: theme?.colors?.textPrimary,
-    flex: 1,
   },
   dragHandleTouch: {
-    padding: theme?.spacing?.xs,
-    paddingRight: theme?.spacing?.sm,
+    width: 40,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dragHandleIcon: {
-    fontSize: 20,
-    color: theme?.colors?.gray500,
-    letterSpacing: -1,
-    fontWeight: '700',
-  },
-  dragHandleIconActive: {
-    color: theme?.colors?.textPrimary,
-  },
-  actionButtons: {
-    flexDirection: 'row',
+  iconTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     alignItems: 'center',
-    gap: theme?.spacing?.xs || 4,
-    marginLeft: 'auto',
+    justifyContent: 'center',
+  },
+  categoryIcon: {
+    fontSize: 24,
+  },
+  categoryLabel: {
+    flex: 1,
+    minWidth: 0,
+    fontFamily: fonts.bodyBold,
+    fontSize: 17,
   },
   actionButton: {
-    padding: theme?.spacing?.xs || 6,
-    borderRadius: theme?.borderRadius?.sm || 4,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  editIcon: {
-    fontSize: 16,
+  emptyCard: {
+    paddingVertical: 36,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    gap: 8,
   },
-  deleteIcon: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme?.colors?.gray500 || '#737373',
+  emptyTitle: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
 

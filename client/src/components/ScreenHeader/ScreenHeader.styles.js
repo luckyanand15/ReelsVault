@@ -12,7 +12,6 @@ const styles = StyleSheet.create({
   title: {
     flexShrink: 1,
     fontFamily: fonts.display,
-    fontSize: 22,
     letterSpacing: -0.4,
   },
 });
