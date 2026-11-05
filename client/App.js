@@ -11,32 +11,45 @@ import { SignupFlowProvider } from './src/context/SignupFlowContext';
 import { LoginFlowProvider } from './src/context/LoginFlowContext';
 import { ForgotPasswordFlowProvider } from './src/context/ForgotPasswordFlowContext';
 import { AccountFlowProvider } from './src/context/AccountFlowContext';
-import { ThemeProvider } from './src/context/ThemeContext';
-import theme from './src/constants/theme';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+
+// Every screen uses the theme, so the status bar and the backdrop shown during
+// screen transitions follow it here instead of per screen.
+function ThemedApp() {
+  const { colors, isDark } = useTheme();
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.bg}
+        translucent={false}
+      />
+      <NavigationContainer ref={navigationRef}>
+        <AuthProvider>
+          <CategoriesProvider>
+            <SignupFlowProvider>
+              <LoginFlowProvider>
+                <ForgotPasswordFlowProvider>
+                  <AccountFlowProvider>
+                    <AppNavigator />
+                  </AccountFlowProvider>
+                </ForgotPasswordFlowProvider>
+              </LoginFlowProvider>
+            </SignupFlowProvider>
+          </CategoriesProvider>
+        </AuthProvider>
+      </NavigationContainer>
+    </View>
+  );
+}
 
 export default function App() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={false} />
-            <NavigationContainer ref={navigationRef}>
-              <AuthProvider>
-                <CategoriesProvider>
-                  <SignupFlowProvider>
-                    <LoginFlowProvider>
-                      <ForgotPasswordFlowProvider>
-                        <AccountFlowProvider>
-                          <AppNavigator />
-                        </AccountFlowProvider>
-                      </ForgotPasswordFlowProvider>
-                    </LoginFlowProvider>
-                  </SignupFlowProvider>
-                </CategoriesProvider>
-              </AuthProvider>
-            </NavigationContainer>
-          </View>
+          <ThemedApp />
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -46,6 +59,5 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
 });

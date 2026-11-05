@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import { Text, TouchableOpacity } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { AccountFlow, useAccountFlow } from '../../context/AccountFlowContext';
 import { OTP_RESEND_COOLDOWN_SECONDS } from '../../context/SignupFlowContext';
+import { useTheme } from '../../context/ThemeContext';
 import { reauthenticate, sendPasswordChangeOtp } from '../../api/account.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import { ERROR_CODES } from '../../constants/errorCodes';
@@ -25,9 +17,9 @@ export default function AccountPassword({ navigation, route }) {
   const flow = route?.params?.flow === AccountFlow.Password ? AccountFlow.Password : AccountFlow.Email;
   const isPasswordFlow = flow === AccountFlow.Password;
   const { startAccountFlow, markOtpSent } = useAccountFlow();
+  const { colors } = useTheme();
 
   const [password, setPassword] = useState('');
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,88 +98,56 @@ export default function AccountPassword({ navigation, route }) {
     }
   };
 
+  const showHideToggle = (
+    <TouchableOpacity
+      style={styles?.toggleButton}
+      onPress={() => setShowPassword((prev) => !prev)}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+    >
+      <Text style={[styles?.toggleText, { color: colors?.fg }]}>
+        {showPassword ? 'Hide' : 'Show'}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      // Matches the Settings row: password yellow, email cyan.
+      circleColor={isPasswordFlow ? colors?.yellow : colors?.cyan}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isFormValid}
+          loading={isSubmitting}
+          accessibilityLabel="Continue"
+        />
+      }
+    >
+      <AuthHeading step="Step 1 of 3" title={'Enter your\npassword'}>
+        {isPasswordFlow
+          ? "Confirm your current password. We'll then email you a code."
+          : 'Confirm your current password before changing your email.'}
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 1 of 3</Text>
-              <Text style={styles?.title}>Enter your password</Text>
-              <Text style={styles?.subtitle}>
-                {isPasswordFlow
-                  ? "Confirm your current password. We'll then email you a code."
-                  : 'Confirm your current password before changing your email.'}
-              </Text>
-            </View>
-
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Current Password <Text style={styles?.star}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((prev) => !prev)}
-                    activeOpacity={0.7}
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    <Text style={styles?.toggleText}>{showPassword ? 'Hide' : 'Show'}</Text>
-                  </TouchableOpacity>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    passwordFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  placeholder="Enter your current password"
-                  placeholderTextColor="#A3A3A3"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                  autoFocus
-                />
-                {!!error && <Text style={styles?.errorText}>{error}</Text>}
-              </View>
-            </View>
-
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isFormValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isFormValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Continue"
-                accessibilityState={{ disabled: !isFormValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text style={[styles?.arrowIcon, !isFormValid && styles?.arrowIconDisabled]}>
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <TextField
+        label="Current Password"
+        required
+        error={error}
+        labelAccessory={showHideToggle}
+        value={password}
+        onChangeText={handlePasswordChange}
+        placeholder="Enter your current password"
+        secureTextEntry={!showPassword}
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="password"
+        returnKeyType="done"
+        onSubmitEditing={handleArrowPress}
+        autoFocus
+      />
+    </AuthLayout>
   );
 }

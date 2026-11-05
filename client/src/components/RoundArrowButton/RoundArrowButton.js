@@ -7,10 +7,12 @@ import styles from './RoundArrowButton.styles';
 
 // 68px "next" button for the login steps. `active` only changes the look:
 // the button stays pressable so the screen can explain what's missing.
+// icon: 'arrowRight' (next step) or 'check' (a final save, e.g. Edit Name).
 export default function RoundArrowButton({
   onPress,
   active,
   loading = false,
+  icon = 'arrowRight',
   accessibilityLabel,
 }) {
   const { colors } = useTheme();
@@ -34,7 +36,7 @@ export default function RoundArrowButton({
         <ActivityIndicator color={colors?.ink} />
       ) : (
         <Icon
-          name="arrowRight"
+          name={icon}
           size={28}
           strokeWidth={3}
           color={lit ? colors?.ink : colors?.mut}

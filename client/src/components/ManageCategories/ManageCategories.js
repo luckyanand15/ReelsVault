@@ -23,7 +23,6 @@ import {
 import { mapCategory } from '../../utils/mapCategory';
 import { useCategories } from '../../context/CategoriesContext';
 import { useTheme } from '../../context/ThemeContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 
 const serverMessage = (error, fallback) =>
   error?.response?.data?.message || fallback;
@@ -32,7 +31,6 @@ export default function ManageCategories({ navigation }) {
   const { categoriesList: categories, setCategoriesList: onUpdateCategories } =
     useCategories();
   const { colors } = useTheme();
-  useThemedStatusBar();
 
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [rowHeight, setRowHeight] = useState(56);

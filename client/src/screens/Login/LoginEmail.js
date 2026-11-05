@@ -15,13 +15,11 @@ import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton
 import routes from '../../routes/routes';
 import { useLoginFlow } from '../../context/LoginFlowContext';
 import { useTheme } from '../../context/ThemeContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import styles from './LoginEmail.styles';
 
 export default function LoginEmail({ navigation, route }) {
   const { confirmEmail } = useLoginFlow();
   const { colors } = useTheme();
-  useThemedStatusBar();
   // Set after a password reset, which lands the user back here.
   const passwordReset = Boolean(route?.params?.passwordReset);
 

@@ -11,7 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../ScreenHeader/ScreenHeader';
 import ScreenBackground from '../ScreenBackground/ScreenBackground';
 import { useTheme } from '../../context/ThemeContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import styles from './AuthLayout.styles';
 
 // The login-style step screen: dotted background with a coloured corner
@@ -20,7 +19,6 @@ import styles from './AuthLayout.styles';
 // closes the keyboard.
 export default function AuthLayout({ circleColor, onBack, children, footer }) {
   const { colors } = useTheme();
-  useThemedStatusBar();
 
   return (
     <View style={[styles?.root, { backgroundColor: colors?.bg }]}>

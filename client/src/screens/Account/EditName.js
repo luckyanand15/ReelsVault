@@ -1,27 +1,18 @@
 import React, { useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import { View } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
+import { useTheme } from '../../context/ThemeContext';
 import { updateName } from '../../api/account.api';
 import styles from './EditName.styles';
 
 // Saves straight away: changing your name needs no password or code.
 export default function EditName({ navigation, route }) {
+  const { colors } = useTheme();
   const [firstName, setFirstName] = useState(route?.params?.firstName ?? '');
   const [lastName, setLastName] = useState(route?.params?.lastName ?? '');
-  const [firstNameFocused, setFirstNameFocused] = useState(false);
-  const [lastNameFocused, setLastNameFocused] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastNameRef = useRef(null);
@@ -59,98 +50,53 @@ export default function EditName({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      circleColor={colors?.accent}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          icon="check"
+          onPress={handleSave}
+          active={isFirstNameValid}
+          loading={isSubmitting}
+          accessibilityLabel="Save name"
+        />
+      }
+    >
+      <AuthHeading title={'Your\nname'}>
+        This is how your name appears in ReelsVault.
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            <View style={styles?.headerContent}>
-              <Text style={styles?.title}>Your name</Text>
-              <Text style={styles?.subtitle}>This is how your name appears in ReelsVault.</Text>
-            </View>
+      <View style={styles?.fields}>
+        <TextField
+          label="First Name"
+          required
+          error={error}
+          value={firstName}
+          onChangeText={handleFirstNameChange}
+          placeholder="Enter your first name"
+          autoCapitalize="words"
+          autoCorrect={false}
+          maxLength={50}
+          returnKeyType="next"
+          autoFocus
+          onSubmitEditing={() => lastNameRef.current?.focus()}
+          submitBehavior="submit"
+        />
 
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    First Name <Text style={styles?.star}>*</Text>
-                  </Text>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    firstNameFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={firstName}
-                  onChangeText={handleFirstNameChange}
-                  onFocus={() => setFirstNameFocused(true)}
-                  onBlur={() => setFirstNameFocused(false)}
-                  placeholder="Enter your first name"
-                  placeholderTextColor="#A3A3A3"
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  maxLength={50}
-                  returnKeyType="next"
-                  autoFocus
-                  onSubmitEditing={() => lastNameRef.current?.focus()}
-                  submitBehavior="submit"
-                />
-                {!!error && <Text style={styles?.errorText}>{error}</Text>}
-              </View>
-
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>Last Name</Text>
-                </View>
-                <TextInput
-                  ref={lastNameRef}
-                  style={[styles?.input, lastNameFocused && styles?.inputFocused]}
-                  value={lastName}
-                  onChangeText={setLastName}
-                  onFocus={() => setLastNameFocused(true)}
-                  onBlur={() => setLastNameFocused(false)}
-                  placeholder="Enter your last name"
-                  placeholderTextColor="#A3A3A3"
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  maxLength={50}
-                  returnKeyType="done"
-                  onSubmitEditing={handleSave}
-                />
-              </View>
-            </View>
-
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isFirstNameValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleSave}
-                disabled={!isFirstNameValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Save name"
-                accessibilityState={{ disabled: !isFirstNameValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[styles?.arrowIcon, !isFirstNameValid && styles?.arrowIconDisabled]}
-                  >
-                    ✓
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <TextField
+          inputRef={lastNameRef}
+          label="Last Name"
+          value={lastName}
+          onChangeText={setLastName}
+          placeholder="Enter your last name"
+          autoCapitalize="words"
+          autoCorrect={false}
+          maxLength={50}
+          returnKeyType="done"
+          onSubmitEditing={handleSave}
+        />
+      </View>
+    </AuthLayout>
   );
 }

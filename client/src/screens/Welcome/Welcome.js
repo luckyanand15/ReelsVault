@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import routes from '../../routes/routes';
 import { useTheme } from '../../context/ThemeContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
 import BrandMark from '../../components/BrandMark/BrandMark';
 import PrimaryButton from '../../components/PrimaryButton/PrimaryButton';
@@ -14,7 +13,6 @@ import styles from './Welcome.styles';
 export default function Welcome() {
   const navigation = useNavigation();
   const { colors } = useTheme();
-  useThemedStatusBar();
 
   const handleNavigateToSignup = () => {
     navigation?.navigate?.(routes?.Signup);

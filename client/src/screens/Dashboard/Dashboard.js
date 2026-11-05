@@ -52,7 +52,6 @@ import { mapCategory } from '../../utils/mapCategory';
 import { reelTitle } from '../../utils/reelTitle';
 import { useCategories } from '../../context/CategoriesContext';
 import { useTheme } from '../../context/ThemeContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import routes from '../../routes/routes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -77,7 +76,6 @@ export default function Dashboard() {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  useThemedStatusBar();
   const { categoriesList, setCategoriesList, refreshCategories } =
     useCategories();
   const categoriesListRef = useRef(categoriesList);

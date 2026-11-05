@@ -17,7 +17,6 @@ import routes from '../../routes/routes';
 import { LoginStep, useLoginFlow } from '../../context/LoginFlowContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import { login } from '../../api/auth.api';
 import styles from './LoginPassword.styles';
 
@@ -25,7 +24,6 @@ export default function LoginPassword({ navigation }) {
   const { canAccessStep, loginData } = useLoginFlow();
   const { authLogin } = useAuth();
   const { colors } = useTheme();
-  useThemedStatusBar();
   const { email } = loginData;
   const canAccessPasswordStep = canAccessStep(LoginStep.Password) && Boolean(email);
 

@@ -11,13 +11,11 @@ import routes from '../../routes/routes';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { AccountFlow } from '../../context/AccountFlowContext';
-import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import { getMe } from '../../api/auth.api';
 
 export default function Settings({ navigation, route }) {
   const { logout } = useAuth();
   const { colors } = useTheme();
-  useThemedStatusBar();
   const [user, setUser] = useState(null);
 
   // Set by the profile screens when they come back here after a change.
