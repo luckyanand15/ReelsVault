@@ -156,7 +156,7 @@ export default function SignupPassword({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 4 of 4" title={'Create a\npassword'}>
+      <AuthHeading step="Step 5 of 5" title={'Create a\npassword'}>
         You'll use this password to log into Reels Vault.
       </AuthHeading>
 

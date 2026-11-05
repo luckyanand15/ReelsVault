@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import TextField from '../../components/TextField/TextField';
@@ -8,12 +8,9 @@ import { useSignupFlow } from '../../context/SignupFlowContext';
 import styles from './Signup.styles';
 
 export default function Signup({ navigation }) {
-  const { continueWithName } = useSignupFlow();
+  const { continueWithFirstName } = useSignupFlow();
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [error, setError] = useState('');
-  const lastNameRef = useRef(null);
 
   const isFirstNameValid = firstName.trim().length > 0;
 
@@ -30,16 +27,8 @@ export default function Signup({ navigation }) {
       return;
     }
 
-    if (firstNameFocused) {
-      lastNameRef.current?.focus();
-      return;
-    }
-
-    continueWithName({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-    });
-    navigation.navigate(routes.SignupEmail);
+    continueWithFirstName({ firstName: firstName.trim() });
+    navigation.navigate(routes.SignupLastName);
   };
 
   return (
@@ -53,39 +42,24 @@ export default function Signup({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 1 of 4" title={'What\'s your\nname?'}>
-        Enter your first and last name to get started.
+      <AuthHeading step="Step 1 of 5" title={'What\'s your\nfirst name?'}>
+        Enter your first name to get started.
       </AuthHeading>
 
       <View style={styles?.fields}>
-        {/* First Name (Mandatory) */}
         <TextField
           label="First Name"
           required
           error={error}
           value={firstName}
           onChangeText={handleFirstNameChange}
-          onFocus={() => setFirstNameFocused(true)}
-          onBlur={() => setFirstNameFocused(false)}
           placeholder="Enter your first name"
           autoCapitalize="words"
           autoCorrect={false}
           returnKeyType="next"
           autoFocus
-          onSubmitEditing={() => lastNameRef.current?.focus()}
+          onSubmitEditing={handleArrowPress}
           submitBehavior="submit"
-        />
-
-        {/* Last Name (Optional) */}
-        <TextField
-          inputRef={lastNameRef}
-          label="Last Name"
-          value={lastName}
-          onChangeText={setLastName}
-          placeholder="Enter your last name"
-          autoCapitalize="words"
-          autoCorrect={false}
-          returnKeyType="done"
         />
       </View>
     </AuthLayout>
