@@ -17,10 +17,13 @@ export function Sparkle({ size, color, style }) {
   );
 }
 
-// Decorative screen backdrop. `calm` (Dashboard) keeps only the pink circle;
-// the default adds the dot pattern and sparkles (Welcome, Login, Settings).
-export default function ScreenBackground({ calm = false }) {
+// Decorative screen backdrop.
+// variant: 'welcome' (dots, big circle, two sparkles), 'auth' (login screens:
+// dots, smaller circle, one sparkle), 'calm' (Dashboard: circle only).
+// circleColor defaults to pink.
+export default function ScreenBackground({ variant = 'welcome', circleColor }) {
   const { colors } = useTheme();
+  const showDots = variant !== 'calm';
 
   return (
     <View
@@ -29,7 +32,7 @@ export default function ScreenBackground({ calm = false }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {!calm && (
+      {showDots && (
         <Svg width="100%" height="100%" style={styles?.dots}>
           <Defs>
             <Pattern
@@ -45,13 +48,22 @@ export default function ScreenBackground({ calm = false }) {
         </Svg>
       )}
 
-      <View style={[styles?.circle, { backgroundColor: colors?.pink }]} />
+      <View
+        style={[
+          variant === 'auth' ? styles?.circleSmall : styles?.circle,
+          { backgroundColor: circleColor ?? colors?.pink },
+        ]}
+      />
 
-      {!calm && (
+      {variant === 'welcome' && (
         <>
           <Sparkle size={40} color={colors?.yellow} style={styles?.sparkleLarge} />
           <Sparkle size={26} color={colors?.cyan} style={styles?.sparkleSmall} />
         </>
+      )}
+
+      {variant === 'auth' && (
+        <Sparkle size={34} color={colors?.yellow} style={styles?.sparkleAuth} />
       )}
     </View>
   );

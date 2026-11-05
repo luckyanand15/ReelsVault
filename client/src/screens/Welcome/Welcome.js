@@ -1,9 +1,10 @@
-import React, { useCallback } from 'react';
-import { View, Text, StatusBar } from 'react-native';
+import React from 'react';
+import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import routes from '../../routes/routes';
 import { useTheme } from '../../context/ThemeContext';
+import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
 import BrandMark from '../../components/BrandMark/BrandMark';
 import PrimaryButton from '../../components/PrimaryButton/PrimaryButton';
@@ -12,19 +13,8 @@ import styles from './Welcome.styles';
 
 export default function Welcome() {
   const navigation = useNavigation();
-  const { colors, isDark } = useTheme();
-
-  // App.js sets a light status bar for the not-yet-redesigned screens; override
-  // it only while Welcome is focused (it stays mounted under Login in the stack)
-  useFocusEffect(
-    useCallback(() => {
-      const entry = StatusBar.pushStackEntry({
-        barStyle: isDark ? 'light-content' : 'dark-content',
-        backgroundColor: colors?.bg,
-      });
-      return () => StatusBar.popStackEntry(entry);
-    }, [isDark, colors?.bg]),
-  );
+  const { colors } = useTheme();
+  useThemedStatusBar();
 
   const handleNavigateToSignup = () => {
     navigation?.navigate?.(routes?.Signup);

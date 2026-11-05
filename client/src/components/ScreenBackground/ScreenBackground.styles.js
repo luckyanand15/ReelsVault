@@ -17,6 +17,15 @@ const styles = StyleSheet.create({
     borderRadius: 115,
     opacity: 0.22,
   },
+  circleSmall: {
+    position: 'absolute',
+    top: -80,
+    right: -70,
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    opacity: 0.22,
+  },
   sparkleLarge: {
     position: 'absolute',
     top: 330,
@@ -28,6 +37,12 @@ const styles = StyleSheet.create({
     top: 110,
     right: 26,
     transform: [{ rotate: '14deg' }],
+  },
+  sparkleAuth: {
+    position: 'absolute',
+    top: 250,
+    right: 34,
+    transform: [{ rotate: '12deg' }],
   },
 });
 
