@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme?.spacing?.lg,
   },
   backdropTouch: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   dialogContainer: {
     width: '100%',

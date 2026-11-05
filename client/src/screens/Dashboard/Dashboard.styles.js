@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
 
   // FAB Backdrop
   fabBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     zIndex: 90,
     elevation: 90,
