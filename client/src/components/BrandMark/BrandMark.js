@@ -7,7 +7,8 @@ import styles from './BrandMark.styles';
 
 // Logo badge + "ReelsVault" wordmark. Wordmark is 18 on Welcome/inner screens,
 // 21 on the Dashboard header. Inner screens (Login) show the wordmark only.
-export default function BrandMark({ size = 18, showBadge = true }) {
+// tagline is the small line under the wordmark ("Your reel stash").
+export default function BrandMark({ size = 18, showBadge = true, tagline }) {
   const { colors } = useTheme();
 
   return (
@@ -38,9 +39,14 @@ export default function BrandMark({ size = 18, showBadge = true }) {
         </HardShadow>
       )}
 
-      <Text style={[styles?.wordmark, { fontSize: size, color: colors?.fg }]}>
-        Reels<Text style={{ color: colors?.pinkText }}>Vault</Text>
-      </Text>
+      <View style={styles?.textBlock}>
+        <Text style={[styles?.wordmark, { fontSize: size, color: colors?.fg }]}>
+          Reels<Text style={{ color: colors?.pinkText }}>Vault</Text>
+        </Text>
+        {!!tagline && (
+          <Text style={[styles?.tagline, { color: colors?.mut }]}>{tagline}</Text>
+        )}
+      </View>
     </View>
   );
 }

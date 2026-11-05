@@ -19,6 +19,8 @@ const controller = require('../controllers/reel.controller');
 const router = express.Router();
 
 router.get('/', validate(listReelsQuerySchema, 'query'), controller.getReels);
+// Reel totals for All and each category (dashboard headings).
+router.get('/counts', controller.getReelCounts);
 router.get(
   '/search',
   validate(searchReelsQuerySchema, 'query'),

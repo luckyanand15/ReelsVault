@@ -15,6 +15,16 @@ export const fetchReels = async ({ categoryId, cursor, limit } = {}) => {
   return { reels: data?.data || [], nextCursor: data?.nextCursor || null };
 };
 
+// { all, categories: { [categoryId]: count } }: every reel once under all; a
+// reel in two categories counts in both. A category with none is absent.
+export const fetchReelCounts = async () => {
+  const { data } = await axiosClient.get('/reels/counts');
+  return {
+    all: data?.data?.all ?? 0,
+    categories: data?.data?.categories || {},
+  };
+};
+
 // Reels whose titles match q, within categoryId when given (all otherwise).
 // Each reel also has matchedCategoryId, the category whose title matched;
 // fuzzy is true when only typo matches were found. nextPage is null on the

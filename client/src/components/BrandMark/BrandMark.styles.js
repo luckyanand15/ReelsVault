@@ -18,9 +18,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  textBlock: {
+    gap: 1,
+  },
   wordmark: {
     fontFamily: fonts.display,
     letterSpacing: -0.4,
+  },
+  tagline: {
+    fontFamily: fonts.body,
+    fontSize: 13,
   },
 });
 

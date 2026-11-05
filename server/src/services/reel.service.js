@@ -78,6 +78,24 @@ const getReels = async (userId, { categoryId, createdAt, id, limit }) => {
   return { reels: await withCategories(ordered), nextCursor };
 };
 
+// How many reels the user has: all is every reel once (however many
+// categories it's in), categories[id] is the reels saved in that category,
+// so a reel in two categories counts once in each. A category with no reels
+// is absent from categories.
+const getReelCounts = async userId => {
+  const [all, perCategory] = await Promise.all([
+    Reel.countDocuments({ userId }),
+    SavedReel.aggregate([
+      { $match: { userId } },
+      { $group: { _id: '$categoryId', count: { $sum: 1 } } },
+    ]),
+  ]);
+  return {
+    all,
+    categories: Object.fromEntries(perCategory.map(c => [c._id, c.count])),
+  };
+};
+
 // Rolling 24h window, counted from the reels themselves so it survives
 // restarts. retryAfter is when the oldest reel in the window ages out.
 const assertUnderDailyLimit = async userId => {
@@ -304,6 +322,7 @@ const removeReel = async (reelId, userId, categoryIds) => {
 module.exports = {
   withCategories,
   getReels,
+  getReelCounts,
   createReel,
   previewReel,
   refreshThumbnail,

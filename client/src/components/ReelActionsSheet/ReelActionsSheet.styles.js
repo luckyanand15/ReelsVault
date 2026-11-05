@@ -1,161 +1,96 @@
-import { StyleSheet, Platform } from 'react-native';
-import theme from '../../constants/theme';
+import { StyleSheet } from 'react-native';
+import { fonts } from '../../constants/theme';
 
-const DESTRUCTIVE = '#DC2626';
-
+// Sheet frame lives in BottomSheet; these are the menu and delete steps.
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  backdropTouch: {
-    flex: 1,
-  },
-  drawerContainer: {
-    backgroundColor: theme?.colors?.background,
-    borderTopLeftRadius: theme?.borderRadius?.xl,
-    borderTopRightRadius: theme?.borderRadius?.xl,
-    paddingHorizontal: theme?.spacing?.lg,
-    paddingBottom:
-      Platform.OS === 'ios' ? theme?.spacing?.xl : theme?.spacing?.md,
-    borderTopWidth: 1,
-    borderColor: theme?.colors?.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 20,
-  },
-  dragHandleContainer: {
-    alignItems: 'center',
-    paddingVertical: theme?.spacing?.sm,
-  },
-  dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme?.colors?.gray300,
-  },
-  reelTitle: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.textPrimary,
-    marginBottom: theme?.spacing?.sm,
-  },
-
   // Menu
+  options: {
+    gap: 10,
+  },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme?.spacing?.md,
-    borderTopWidth: 1,
-    borderTopColor: theme?.colors?.border,
-  },
-  optionIcon: {
-    fontSize: 18,
-    width: 32,
+    gap: 14,
+    height: 56,
+    paddingHorizontal: 18,
+    borderRadius: 18,
+    borderWidth: 2,
   },
   optionText: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
-    color: theme?.colors?.textPrimary,
-  },
-  destructiveText: {
-    color: DESTRUCTIVE,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
   },
 
-  // Confirm / category picker
+  // Confirm / categories
   message: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: theme?.colors?.textSecondary,
-    lineHeight: 20,
-    marginBottom: theme?.spacing?.md,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 22,
   },
   categoryList: {
-    maxHeight: 260,
+    maxHeight: 220,
   },
   checkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme?.spacing?.sm + 2,
+    gap: 12,
+    minHeight: 48,
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: theme?.borderRadius?.sm,
-    borderWidth: 1.5,
-    borderColor: theme?.colors?.gray400,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme?.spacing?.md,
-  },
-  checkboxOn: {
-    backgroundColor: theme?.colors?.textPrimary,
-    borderColor: theme?.colors?.textPrimary,
-  },
-  checkMark: {
-    color: theme?.colors?.background,
-    fontSize: 14,
-    fontWeight: theme?.typography?.fontWeight?.bold,
   },
   checkIcon: {
     fontSize: 18,
-    marginRight: theme?.spacing?.sm,
   },
   checkLabel: {
     flex: 1,
-    fontSize: theme?.typography?.fontSize?.md,
-    color: theme?.colors?.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: 16,
   },
   checkLabelBold: {
-    fontWeight: theme?.typography?.fontWeight?.semibold,
+    fontFamily: fonts.bodyBold,
   },
   hint: {
-    fontSize: theme?.typography?.fontSize?.xs,
-    color: DESTRUCTIVE,
-    marginTop: theme?.spacing?.xs,
+    fontFamily: fonts.body,
+    fontSize: 13,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: theme?.spacing?.sm,
-    marginTop: theme?.spacing?.md,
+    alignItems: 'center',
+    gap: 12,
+  },
+  button: {
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButton: {
     flex: 1,
-    height: 48,
-    borderRadius: theme?.borderRadius?.md,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-    backgroundColor: theme?.colors?.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  cancelButtonText: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
-    color: theme?.colors?.textPrimary,
-  },
-  deleteButton: {
+  flex: {
     flex: 1,
-    height: 48,
-    borderRadius: theme?.borderRadius?.md,
-    backgroundColor: DESTRUCTIVE,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  deleteButtonDisabled: {
-    opacity: 0.4,
-  },
-  deleteButtonText: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.background,
+  buttonText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
   },
   error: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: DESTRUCTIVE,
-    marginTop: theme?.spacing?.sm,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+  },
+  pressedPush: {
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+  },
+  pressedFade: {
+    opacity: 0.7,
   },
 });
 

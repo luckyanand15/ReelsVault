@@ -12,7 +12,7 @@ import {
   Animated,
   Dimensions,
   TouchableOpacity,
-  TouchableWithoutFeedback,
+  Pressable,
   FlatList,
   RefreshControl,
   ActivityIndicator,
@@ -22,9 +22,15 @@ import {
   Keyboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import Header from '../../components/Header/Header';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import DashboardHeader from '../../components/DashboardHeader/DashboardHeader';
+import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
+import HardShadow from '../../components/HardShadow/HardShadow';
+import Icon from '../../components/Icon/Icon';
 import Categories from '../../components/Categories/Categories';
 import AddCategoryModal from '../../components/AddCategoryModal/AddCategoryModal';
 import AddReelModal from '../../components/AddReelModal/AddReelModal';
@@ -35,6 +41,7 @@ import styles from './Dashboard.styles';
 import { createCategory } from '../../api/category.api';
 import {
   fetchReels,
+  fetchReelCounts,
   searchReels,
   createReel,
   refreshReelThumbnail,
@@ -44,41 +51,33 @@ import {
 import { mapCategory } from '../../utils/mapCategory';
 import { reelTitle } from '../../utils/reelTitle';
 import { useCategories } from '../../context/CategoriesContext';
+import { useTheme } from '../../context/ThemeContext';
+import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import routes from '../../routes/routes';
-import theme from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 60;
 const GRID_COLUMNS = 3;
+// Screen side padding and the gap between grid columns (DESIGN.md).
+const SIDE_PADDING = 20;
+const GRID_COLUMN_GAP = 12;
+const FAB_SIZE = 66;
+const FAB_BOTTOM = 30;
 const VIEW_MODE_KEY = 'dashboardViewMode';
 const PAGE_SIZE = 15;
 // Wait this long after the last keystroke before searching.
 const SEARCH_DEBOUNCE_MS = 250;
 
-const ListViewIcon = ({ active }) => (
-  <View style={styles?.listIcon}>
-    {[0, 1, 2].map(i => (
-      <View
-        key={i}
-        style={[styles?.listIconBar, active && styles?.viewIconActive]}
-      />
-    ))}
-  </View>
-);
-
-const GridViewIcon = ({ active }) => (
-  <View style={styles?.gridIcon}>
-    {[0, 1, 2, 3].map(i => (
-      <View
-        key={i}
-        style={[styles?.gridIconCell, active && styles?.viewIconActive]}
-      />
-    ))}
-  </View>
-);
+// "1 reel", "6 reels", "15+ results": `more` adds the + while further pages
+// exist and the exact total isn't known.
+const countText = (count, noun, more = false) =>
+  `${count}${more ? '+' : ''} ${noun}${count === 1 && !more ? '' : 's'}`;
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  useThemedStatusBar();
   const { categoriesList, setCategoriesList, refreshCategories } =
     useCategories();
   const categoriesListRef = useRef(categoriesList);
@@ -103,17 +102,36 @@ export default function Dashboard() {
   const reelsByCategoryRef = useRef(reelsByCategory);
   reelsByCategoryRef.current = reelsByCategory;
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState('list');
+  // New users start on the grid; a saved choice replaces it below.
+  const [viewMode, setViewMode] = useState('grid');
   const isGrid = viewMode === 'grid';
 
   // Tile width for 3 per row: screen minus the content padding and the
   // gaps between columns.
   const { width: windowWidth } = useWindowDimensions();
   const gridItemWidth =
-    (windowWidth -
-      2 * theme?.spacing?.md -
-      (GRID_COLUMNS - 1) * theme?.spacing?.sm) /
+    (windowWidth - 2 * SIDE_PADDING - (GRID_COLUMNS - 1) * GRID_COLUMN_GAP) /
     GRID_COLUMNS;
+
+  // Server totals for the section heading: { all, categories: { id: n } }.
+  // Lists load a page at a time, so these are the only exact counts. Fetched
+  // again after every change and whenever the Dashboard comes back into view
+  // (Manage Categories may have deleted a category meanwhile).
+  const [reelCounts, setReelCounts] = useState(null);
+  const refreshCounts = useCallback(
+    () =>
+      fetchReelCounts()
+        .then(setReelCounts)
+        .catch(error =>
+          console.error('Failed to load reel counts:', error?.message),
+        ),
+    [],
+  );
+  useFocusEffect(
+    useCallback(() => {
+      refreshCounts();
+    }, [refreshCounts]),
+  );
 
   // Remembers the chosen view across launches; storage failures just keep
   // the default.
@@ -304,6 +322,7 @@ export default function Dashboard() {
     const [reelsResult, categoriesResult] = await Promise.allSettled([
       query ? runSearch(query) : loadReels(selectedCategoryRef.current, true),
       refreshCategories(),
+      refreshCounts(),
     ]);
     if (reelsResult.status === 'rejected') {
       console.error('Failed to refresh reels:', reelsResult.reason?.message);
@@ -315,7 +334,7 @@ export default function Dashboard() {
       );
     }
     setIsRefreshing(false);
-  }, [loadReels, refreshCategories, runSearch]);
+  }, [loadReels, refreshCategories, runSearch, refreshCounts]);
 
   // Applies a change to every cached list.
   const updateCachedLists = useCallback(update => {
@@ -460,6 +479,10 @@ export default function Dashboard() {
       categoryId: titleCategoryFor(editReel),
     });
     applyReelUpdate(updated);
+    // Moving a reel between categories changes their counts.
+    if (changes?.categoryIds) {
+      refreshCounts();
+    }
   };
 
   const handleEditPress = () => {
@@ -494,6 +517,7 @@ export default function Dashboard() {
       applyReelRemoval(reelId, { deleted: true });
     }
     setActionReel(null);
+    refreshCounts();
   };
 
   const translateX = useRef(new Animated.Value(0)).current;
@@ -650,6 +674,7 @@ export default function Dashboard() {
         ? [saved, ...items]
         : items;
     });
+    refreshCounts();
     if (
       selectedCategory !== 'all' &&
       selectedCategory !== payload?.categoryId
@@ -695,6 +720,10 @@ export default function Dashboard() {
     () => Object.fromEntries(categoriesList.map(c => [c?.id, c?.icon])),
     [categoriesList],
   );
+  const categoryById = useMemo(
+    () => Object.fromEntries(categoriesList.map(c => [c?.id, c])),
+    [categoriesList],
+  );
 
   const currentList = reelsByCategory[selectedCategory];
 
@@ -738,49 +767,70 @@ export default function Dashboard() {
     }
   };
 
+  const renderEmptyCard = hint => (
+    <View style={[styles?.emptyCard, { borderColor: colors?.line }]}>
+      <Text style={[styles?.emptyTitle, { color: colors?.fg }]}>
+        Nothing here yet
+      </Text>
+      <Text style={[styles?.emptyText, { color: colors?.mut }]}>{hint}</Text>
+    </View>
+  );
+
   const renderEmpty = () => {
     if (isSearching) {
       if (!isSearchFresh) {
-        return <ActivityIndicator color={theme?.colors?.textMuted} />;
+        return <ActivityIndicator style={styles?.loader} color={colors?.mut} />;
       }
-      return (
-        <View style={styles?.card}>
-          <Text style={styles?.title}>No reels found</Text>
-          {currentSearch.failed && (
-            <Text style={styles?.subtitle}>
-              Couldn't search right now. Pull down to try again.
-            </Text>
-          )}
-        </View>
+      return renderEmptyCard(
+        currentSearch.failed
+          ? "Couldn't search right now. Pull down to try again."
+          : 'Try another word, or pick a different category.',
       );
     }
     return !currentList ? (
-      <ActivityIndicator color={theme?.colors?.textMuted} />
+      <ActivityIndicator style={styles?.loader} color={colors?.mut} />
     ) : (
-      <View style={styles?.card}>
-        <Text style={styles?.icon}>{activeCategoryObj?.icon}</Text>
-        <Text style={styles?.title}>{activeCategoryObj?.label}</Text>
-        <Text style={styles?.subtitle}>
-          No reels yet. Tap + to add one.{'\n'}
-          Swipe left or right to switch categories{'\n'}
-          Pull down to refresh
-        </Text>
-      </View>
+      renderEmptyCard(
+        'Tap + to add one. Swipe left or right to switch categories, or pull down to refresh.',
+      )
     );
   };
   const onViewableItemsChanged = useRef(({ viewableItems }) =>
     handleViewableRef.current?.(viewableItems),
   ).current;
 
-  // The open category's icon, or under All the first category still present.
-  const reelIcon = reel =>
-    isSearching && iconByCategoryId[reel?.matchedCategoryId] !== undefined
-      ? iconByCategoryId[reel.matchedCategoryId]
+  // The category a reel is shown under (its icon and name on the card): the
+  // one whose title matched while searching, the open one in a category, or
+  // under All the first category still present.
+  const reelCategory = reel =>
+    isSearching && categoryById[reel?.matchedCategoryId]
+      ? categoryById[reel.matchedCategoryId]
       : selectedCategory !== 'all'
-      ? iconByCategoryId[selectedCategory]
-      : iconByCategoryId[
-          reel?.categoryIds?.find(id => iconByCategoryId[id] !== undefined)
-        ];
+      ? categoryById[selectedCategory]
+      : categoryById[reel?.categoryIds?.find(id => categoryById[id])];
+
+  // Section heading: the open category (or All / search) and its count.
+  // The server count is exact; until it arrives, what's loaded is shown
+  // with a + while more pages remain.
+  const sectionTitle = isSearching
+    ? 'Search results'
+    : selectedCategory === 'all'
+    ? 'All reels'
+    : activeCategoryObj?.label;
+  const serverCount =
+    reelCounts &&
+    (selectedCategory === 'all'
+      ? reelCounts.all
+      : reelCounts.categories?.[selectedCategory] ?? 0);
+  const sectionCount = isSearching
+    ? isSearchFresh
+      ? countText(shownReels.length, 'result', hasMore)
+      : ''
+    : serverCount != null
+    ? countText(serverCount, 'reel')
+    : currentList
+    ? countText(shownReels.length, 'reel', hasMore)
+    : '';
 
   const addableCategories = useMemo(
     () => categoriesList.filter(c => c?.id !== 'all'),
@@ -794,191 +844,290 @@ export default function Dashboard() {
     [addableCategories, actionReel],
   );
 
-  return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <View {...blurSearchOnTouch}>
-        <Header onRightPress={() => navigation.navigate(routes.Settings)} />
-        <Categories
-          categories={categoriesList}
-          selectedCategory={selectedCategory}
-          onSelectCategory={handleSelectCategoryFromBar}
-        />
-      </View>
-      <View style={styles?.viewToggleRow}>
-        <View style={styles?.searchBox}>
-          <Text style={styles?.searchIcon}>⌕</Text>
-          <TextInput
-            ref={searchInputRef}
-            style={styles?.searchInput}
-            value={searchText}
-            onChangeText={setSearchText}
-            placeholder="Search all reels"
-            placeholderTextColor={theme?.colors?.textMuted}
-            returnKeyType="search"
-            onSubmitEditing={Keyboard.dismiss}
-            autoCorrect={false}
-            autoCapitalize="none"
-            maxLength={100}
-            accessibilityLabel="Search reels by title"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity
-              onPress={() => {
-                setSearchText('');
-                searchInputRef.current?.blur();
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel="Clear search"
-            >
-              <Text style={styles?.searchClear}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles?.viewToggle} {...blurSearchOnTouch}>
-          <TouchableOpacity
-            style={[
-              styles?.viewToggleButton,
-              !isGrid && styles?.viewToggleButtonActive,
-            ]}
-            onPress={() => changeViewMode('list')}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="List view"
-            accessibilityState={{ selected: !isGrid }}
-          >
-            <ListViewIcon active={!isGrid} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles?.viewToggleButton,
-              isGrid && styles?.viewToggleButtonActive,
-            ]}
-            onPress={() => changeViewMode('grid')}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Grid view"
-            accessibilityState={{ selected: isGrid }}
-          >
-            <GridViewIcon active={isGrid} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View
-        style={styles?.content}
-        {...panResponder?.panHandlers}
-        {...blurSearchOnTouch}
-      >
-        <Animated.View
-          style={[
-            styles?.reelsContainer,
-            {
-              transform: [{ translateX }],
-              opacity,
-            },
-          ]}
+  const listHeader = (
+    <View style={styles?.listHeader}>
+      <View style={styles?.sectionRow}>
+        <Text
+          style={[styles?.sectionTitle, { color: colors?.fg }]}
+          numberOfLines={1}
+          accessibilityRole="header"
         >
-          {/* The list renders even when empty so pull-to-refresh works there too. */}
-          {/* numColumns can't change on a mounted FlatList, so the key
-              remounts it when the view switches. */}
-          <FlatList
-            key={viewMode}
-            data={shownReels}
-            keyExtractor={item => item?.id}
-            numColumns={isGrid ? GRID_COLUMNS : 1}
-            columnWrapperStyle={isGrid ? styles?.gridRow : undefined}
-            renderItem={({ item }) => (
-              <ReelItem
-                reel={item}
-                title={reelTitle(item, titleCategoryFor(item))}
-                icon={reelIcon(item)}
-                onThumbnailMissing={handleThumbnailMissing}
-                onLongPress={handleReelLongPress}
-                variant={viewMode}
-                style={isGrid ? { width: gridItemWidth } : undefined}
-              />
-            )}
-            contentContainerStyle={
-              shownReels.length > 0 ? styles?.reelsList : styles?.emptyList
-            }
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            ListHeaderComponent={
-              isSearching && currentSearch?.fuzzy ? (
-                <Text style={styles?.searchHint}>
-                  No exact matches. Showing similar titles.
-                </Text>
-              ) : null
-            }
-            onViewableItemsChanged={onViewableItemsChanged}
-            showsVerticalScrollIndicator={false}
-            alwaysBounceVertical
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={handleRefresh}
-                tintColor={theme?.colors?.textMuted}
-                colors={[theme?.colors?.accent]}
-              />
-            }
-            ListFooterComponent={
-              shownReels.length > 0 && hasMore ? (
-                <ActivityIndicator
-                  style={styles?.listFooter}
-                  color={theme?.colors?.textMuted}
-                />
-              ) : null
-            }
-            ListEmptyComponent={renderEmpty()}
-          />
-        </Animated.View>
+          {sectionTitle}
+        </Text>
+        {!!sectionCount && (
+          <Text style={[styles?.sectionCount, { color: colors?.mut }]}>
+            {sectionCount}
+          </Text>
+        )}
       </View>
+      {isSearching && currentSearch?.fuzzy ? (
+        <Text style={[styles?.searchHint, { color: colors?.mut }]}>
+          No exact matches. Showing similar titles.
+        </Text>
+      ) : null}
+    </View>
+  );
 
-      {/* FAB Backdrop */}
+  const renderMenuItem = ({ label, fill, icon, iconSize, onPress }) => (
+    <HardShadow key={label} color={colors?.pink} offset={4} borderRadius={28}>
+      <Pressable
+        style={({ pressed }) => [
+          styles?.menuItem,
+          { backgroundColor: fill, borderColor: colors?.outline },
+          pressed && styles?.pressedPush,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+      >
+        <View style={[styles?.menuItemIcon, { backgroundColor: colors?.ink }]}>
+          <Icon name={icon} size={iconSize} strokeWidth={2.6} color={fill} />
+        </View>
+        <Text style={[styles?.menuItemText, { color: colors?.ink }]}>
+          {label}
+        </Text>
+      </Pressable>
+    </HardShadow>
+  );
+
+  const viewModes = [
+    { mode: 'grid', icon: 'grid', label: 'Grid view' },
+    { mode: 'list', icon: 'list', label: 'List view' },
+  ];
+
+  return (
+    <View style={[styles?.root, { backgroundColor: colors?.bg }]}>
+      <ScreenBackground variant="calm" />
+
+      <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
+        <View {...blurSearchOnTouch}>
+          <DashboardHeader
+            onSettingsPress={() => navigation.navigate(routes.Settings)}
+          />
+        </View>
+        <View style={styles?.searchRow}>
+          <View
+            style={[
+              styles?.searchBox,
+              { backgroundColor: colors?.surf, borderColor: colors?.line },
+            ]}
+          >
+            <Icon name="search" size={20} color={colors?.mut} />
+            <TextInput
+              ref={searchInputRef}
+              style={[styles?.searchInput, { color: colors?.fg }]}
+              value={searchText}
+              onChangeText={setSearchText}
+              placeholder="Search all reels"
+              placeholderTextColor={colors?.mut}
+              selectionColor={colors?.pink}
+              cursorColor={colors?.fg}
+              returnKeyType="search"
+              onSubmitEditing={Keyboard.dismiss}
+              autoCorrect={false}
+              autoCapitalize="none"
+              maxLength={100}
+              accessibilityLabel="Search reels by title"
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchText('');
+                  searchInputRef.current?.blur();
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
+                <Icon
+                  name="close"
+                  size={18}
+                  strokeWidth={2.8}
+                  color={colors?.mut}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+          <View
+            style={[
+              styles?.viewToggle,
+              { backgroundColor: colors?.surf, borderColor: colors?.line },
+            ]}
+            {...blurSearchOnTouch}
+          >
+            {viewModes.map(({ mode, icon, label }) => {
+              const active = viewMode === mode;
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles?.viewToggleButton,
+                    active && { backgroundColor: colors?.accent },
+                  ]}
+                  onPress={() => changeViewMode(mode)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                  accessibilityState={{ selected: active }}
+                >
+                  <Icon
+                    name={icon}
+                    size={20}
+                    strokeWidth={2.8}
+                    color={active ? colors?.ink : colors?.fg}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+        <View {...blurSearchOnTouch}>
+          <Categories
+            categories={categoriesList}
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleSelectCategoryFromBar}
+          />
+        </View>
+        <View
+          style={styles?.content}
+          {...panResponder?.panHandlers}
+          {...blurSearchOnTouch}
+        >
+          <Animated.View
+            style={[
+              styles?.reelsContainer,
+              {
+                transform: [{ translateX }],
+                opacity,
+              },
+            ]}
+          >
+            {/* The list renders even when empty so pull-to-refresh works there too. */}
+            {/* numColumns can't change on a mounted FlatList, so the key
+              remounts it when the view switches. */}
+            <FlatList
+              key={viewMode}
+              data={shownReels}
+              keyExtractor={item => item?.id}
+              numColumns={isGrid ? GRID_COLUMNS : 1}
+              columnWrapperStyle={isGrid ? styles?.gridRow : undefined}
+              renderItem={({ item }) => {
+                const category = reelCategory(item);
+                return (
+                  <ReelItem
+                    reel={item}
+                    title={reelTitle(item, titleCategoryFor(item))}
+                    icon={category?.icon}
+                    categoryLabel={category?.label}
+                    onThumbnailMissing={handleThumbnailMissing}
+                    onLongPress={handleReelLongPress}
+                    variant={viewMode}
+                    style={isGrid ? { width: gridItemWidth } : undefined}
+                  />
+                );
+              }}
+              contentContainerStyle={[
+                styles?.reelsList,
+                isGrid ? styles?.reelsGrid : styles?.reelsRows,
+                { paddingBottom: 130 + insets.bottom },
+                shownReels.length === 0 && styles?.emptyList,
+              ]}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              ListHeaderComponent={listHeader}
+              onViewableItemsChanged={onViewableItemsChanged}
+              showsVerticalScrollIndicator={false}
+              alwaysBounceVertical
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={colors?.mut}
+                  colors={[colors?.ink]}
+                  progressBackgroundColor={colors?.accent}
+                />
+              }
+              ListFooterComponent={
+                shownReels.length > 0 && hasMore ? (
+                  <ActivityIndicator
+                    style={styles?.listFooter}
+                    color={colors?.mut}
+                  />
+                ) : null
+              }
+              ListEmptyComponent={renderEmpty()}
+            />
+          </Animated.View>
+        </View>
+      </SafeAreaView>
+
+      {/* + menu: scrim over the whole screen, two pills above the button */}
       {isFabOpen && (
-        <TouchableWithoutFeedback onPress={() => setIsFabOpen(false)}>
-          <View style={styles?.fabBackdrop} />
-        </TouchableWithoutFeedback>
+        <Pressable
+          style={[styles?.fabBackdrop, { backgroundColor: colors?.scrim }]}
+          onPress={() => setIsFabOpen(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Close menu"
+        />
       )}
 
-      {/* Floating Action Button (FAB) & Menu */}
-      <View style={styles?.fabContainer} {...blurSearchOnTouch}>
-        {isFabOpen && (
-          <View style={styles?.menuContainer}>
-            {/* Add Categories Option (Enabled) */}
-            <TouchableOpacity
-              style={styles?.menuItem}
-              onPress={() => {
-                setIsFabOpen(false);
-                setIsAddCategoryOpen(true);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles?.menuItemText}>Add Categories</Text>
-            </TouchableOpacity>
-
-            {/* Add Reels Option */}
-            <TouchableOpacity
-              style={styles?.menuItem}
-              onPress={() => {
-                setIsFabOpen(false);
-                setIsAddReelOpen(true);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles?.menuItemText}>Add Reels</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Plus / Close Floating Button */}
-        <TouchableOpacity
-          style={[styles?.fabButton, isFabOpen && styles?.fabButtonActive]}
-          onPress={() => setIsFabOpen(prev => !prev)}
-          activeOpacity={0.85}
+      {isFabOpen && (
+        <View
+          style={[
+            styles?.menuContainer,
+            { bottom: FAB_BOTTOM + insets.bottom + FAB_SIZE + 16 },
+          ]}
+          {...blurSearchOnTouch}
         >
-          <Text style={styles?.fabIconText}>+</Text>
-        </TouchableOpacity>
+          {renderMenuItem({
+            label: 'Add Category',
+            fill: colors?.yellow,
+            icon: 'folder',
+            iconSize: 18,
+            onPress: () => {
+              setIsFabOpen(false);
+              setIsAddCategoryOpen(true);
+            },
+          })}
+          {renderMenuItem({
+            label: 'Add Reel',
+            fill: colors?.accent,
+            icon: 'play',
+            iconSize: 16,
+            onPress: () => {
+              setIsFabOpen(false);
+              setIsAddReelOpen(true);
+            },
+          })}
+        </View>
+      )}
+
+      {/* + button; turns into an x (45°) while the menu is open */}
+      <View
+        style={[styles?.fabContainer, { bottom: FAB_BOTTOM + insets.bottom }]}
+        {...blurSearchOnTouch}
+      >
+        <HardShadow
+          color={colors?.accent}
+          offset={5}
+          borderRadius={FAB_SIZE / 2}
+          style={isFabOpen && styles?.fabOpen}
+        >
+          <Pressable
+            style={({ pressed }) => [
+              styles?.fabButton,
+              { backgroundColor: colors?.pink, borderColor: colors?.outline },
+              pressed && styles?.pressedPush,
+            ]}
+            onPress={() => setIsFabOpen(prev => !prev)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isFabOpen ? 'Close add menu' : 'Add reel or category'
+            }
+            accessibilityState={{ expanded: isFabOpen }}
+          >
+            <Icon name="plus" size={30} strokeWidth={3.2} color={colors?.ink} />
+          </Pressable>
+        </HardShadow>
       </View>
 
       {/* Add Category Bottom Drawer Modal */}
@@ -1023,6 +1172,6 @@ export default function Dashboard() {
         onAddCategory={addCategory}
         categories={addableCategories}
       />
-    </SafeAreaView>
+    </View>
   );
 }

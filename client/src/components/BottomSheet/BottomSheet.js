@@ -10,10 +10,14 @@ import styles from './BottomSheet.styles';
 // a coloured hard bar along its top edge, drag handle, title and close button.
 // Children are the sheet's sections (22px apart). `nested` renders inside the
 // same Modal, after the sheet, so iOS can stack a second drawer on top.
+// onDismiss fires once the sheet has finished closing (iOS). titleLines lets a
+// long title (a reel's) wrap.
 export default function BottomSheet({
   visible,
   onClose,
+  onDismiss,
   title,
+  titleLines = 1,
   barColor,
   children,
   nested,
@@ -32,6 +36,7 @@ export default function BottomSheet({
       transparent={true}
       statusBarTranslucent={true}
       onRequestClose={onClose}
+      onDismiss={onDismiss}
     >
       <View style={[styles?.overlay, { backgroundColor: colors?.scrim }]}>
         <TouchableWithoutFeedback onPress={onClose}>
@@ -60,7 +65,7 @@ export default function BottomSheet({
               <Text
                 style={[styles?.title, { color: colors?.fg }]}
                 accessibilityRole="header"
-                numberOfLines={1}
+                numberOfLines={titleLines}
               >
                 {title}
               </Text>

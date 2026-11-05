@@ -15,6 +15,7 @@ export default function IconButton({
   fill = 'surf',
   iconSize = 22,
   iconStrokeWidth,
+  iconColor,
   style,
 }) {
   const { colors } = useTheme();
@@ -41,7 +42,7 @@ export default function IconButton({
       <Icon
         name={icon}
         size={iconSize}
-        color={colors?.fg}
+        color={iconColor ?? colors?.fg}
         strokeWidth={iconStrokeWidth}
       />
     </Pressable>
