@@ -19,7 +19,8 @@ export function Sparkle({ size, color, style }) {
 
 // Decorative screen backdrop.
 // variant: 'welcome' (dots, big circle, two sparkles), 'auth' (login screens:
-// dots, smaller circle, one sparkle), 'calm' (Dashboard: circle only).
+// dots, smaller circle, one sparkle), 'inner' (Settings and other inner
+// screens: dots, smaller circle), 'calm' (Dashboard: circle only).
 // circleColor defaults to pink.
 export default function ScreenBackground({ variant = 'welcome', circleColor }) {
   const { colors } = useTheme();
@@ -50,7 +51,9 @@ export default function ScreenBackground({ variant = 'welcome', circleColor }) {
 
       <View
         style={[
-          variant === 'auth' ? styles?.circleSmall : styles?.circle,
+          variant === 'auth' || variant === 'inner'
+            ? styles?.circleSmall
+            : styles?.circle,
           { backgroundColor: circleColor ?? colors?.pink },
         ]}
       />

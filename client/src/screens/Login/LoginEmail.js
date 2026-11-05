@@ -8,7 +8,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AuthHeader from '../../components/AuthHeader/AuthHeader';
+import ScreenHeader from '../../components/ScreenHeader/ScreenHeader';
 import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
 import TextField from '../../components/TextField/TextField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
@@ -66,7 +66,7 @@ export default function LoginEmail({ navigation, route }) {
       <ScreenBackground variant="auth" />
 
       <SafeAreaView style={styles?.safeArea}>
-        <AuthHeader onBack={() => navigation?.goBack?.()} />
+        <ScreenHeader onBack={() => navigation?.goBack?.()} />
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

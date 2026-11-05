@@ -2,40 +2,22 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import Header from '../../components/Header/Header';
+import ScreenHeader from '../../components/ScreenHeader/ScreenHeader';
+import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
+import SettingsGroup, { SettingsRow } from '../../components/SettingsGroup/SettingsGroup';
+import Icon from '../../components/Icon/Icon';
 import styles from './Settings.styles';
 import routes from '../../routes/routes';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { AccountFlow } from '../../context/AccountFlowContext';
+import useThemedStatusBar from '../../hooks/useThemedStatusBar';
 import { getMe } from '../../api/auth.api';
-
-function SettingRow({ emoji, title, subtitle, onPress, isLast = false }) {
-  return (
-    <TouchableOpacity
-      style={[styles?.settingItem, !isLast && styles?.settingItemDivider]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles?.itemLeft}>
-        <View style={styles?.itemIconContainer}>
-          <Text style={styles?.itemIconEmoji}>{emoji}</Text>
-        </View>
-        <View style={styles?.itemTextContainer}>
-          <Text style={styles?.itemTitle}>{title}</Text>
-          {!!subtitle && (
-            <Text style={styles?.itemSubtitle} numberOfLines={1}>
-              {subtitle}
-            </Text>
-          )}
-        </View>
-      </View>
-      <Text style={styles?.chevron}>›</Text>
-    </TouchableOpacity>
-  );
-}
 
 export default function Settings({ navigation, route }) {
   const { logout } = useAuth();
+  const { colors } = useTheme();
+  useThemedStatusBar();
   const [user, setUser] = useState(null);
 
   // Set by the profile screens when they come back here after a change.
@@ -69,28 +51,37 @@ export default function Settings({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header title="Settings" onLeftPress={() => navigation.goBack()} />
+    <View style={[styles?.root, { backgroundColor: colors?.bg }]}>
+      <ScreenBackground variant="inner" circleColor={colors?.yellow} />
 
-      <ScrollView style={styles?.container} contentContainerStyle={styles?.content}>
-        {!!notice && (
-          <TouchableOpacity
-            style={styles?.notice}
-            onPress={() => navigation.setParams({ notice: undefined })}
-            activeOpacity={0.7}
-            accessibilityLabel="Dismiss message"
-          >
-            <Text style={styles?.noticeText}>{notice}</Text>
-            <Text style={styles?.noticeDismiss}>✕</Text>
-          </TouchableOpacity>
-        )}
+      <SafeAreaView style={styles?.safeArea}>
+        <ScreenHeader title="Settings" onBack={() => navigation.goBack()} />
 
-        <View style={styles?.section}>
-          <Text style={styles?.sectionTitle}>Profile</Text>
+        <ScrollView
+          style={styles?.container}
+          contentContainerStyle={styles?.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {!!notice && (
+            <TouchableOpacity
+              style={[
+                styles?.notice,
+                { backgroundColor: colors?.surf, borderColor: colors?.accent },
+              ]}
+              onPress={() => navigation.setParams({ notice: undefined })}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`${notice}. Dismiss message`}
+            >
+              <Text style={[styles?.noticeText, { color: colors?.fg }]}>{notice}</Text>
+              <Icon name="close" size={18} strokeWidth={2.8} color={colors?.mut} />
+            </TouchableOpacity>
+          )}
 
-          <View style={styles?.sectionCard}>
-            <SettingRow
-              emoji="👤"
+          <SettingsGroup label="Profile" shadowColor={colors?.accent}>
+            <SettingsRow
+              icon="user"
+              tileColor={colors?.accent}
               title="Name"
               subtitle={fullName || ' '}
               onPress={() =>
@@ -100,68 +91,47 @@ export default function Settings({ navigation, route }) {
                 })
               }
             />
-            <SettingRow
-              emoji="✉️"
+            <SettingsRow
+              icon="mail"
+              tileColor={colors?.cyan}
               title="Email"
               subtitle={user?.email || ' '}
               onPress={() => navigation.navigate(routes.AccountPassword, { flow: AccountFlow.Email })}
             />
-            <SettingRow
-              emoji="🔒"
+            <SettingsRow
+              icon="lock"
+              tileColor={colors?.yellow}
               title="Password"
               subtitle="Change your password"
               onPress={() =>
                 navigation.navigate(routes.AccountPassword, { flow: AccountFlow.Password })
               }
-              isLast
             />
-          </View>
-        </View>
+          </SettingsGroup>
 
-        <View style={styles?.section}>
-          <Text style={styles?.sectionTitle}>Categories</Text>
-
-          <View style={styles?.sectionCard}>
-            <TouchableOpacity
-              style={styles?.settingItem}
+          <SettingsGroup label="Categories" shadowColor={colors?.cyan}>
+            <SettingsRow
+              icon="tag"
+              tileColor={colors?.pink}
+              title="Manage Category"
+              subtitle="View and organize your categories"
               onPress={() => navigation.navigate(routes.ManageCategories)}
-              activeOpacity={0.7}
-            >
-              <View style={styles?.itemLeft}>
-                <View style={styles?.itemIconContainer}>
-                  <Text style={styles?.itemIconEmoji}>🏷️</Text>
-                </View>
-                <View style={styles?.itemTextContainer}>
-                  <Text style={styles?.itemTitle}>Manage Category</Text>
-                  <Text style={styles?.itemSubtitle}>View and organize your categories</Text>
-                </View>
-              </View>
-              <Text style={styles?.chevron}>›</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+            />
+          </SettingsGroup>
 
-        <View style={styles?.section}>
-          <Text style={styles?.sectionTitle}>Account</Text>
-
-          <View style={styles?.sectionCard}>
-            <TouchableOpacity
-              style={styles?.settingItem}
+          <SettingsGroup label="Account" shadowColor={colors?.pink}>
+            <SettingsRow
+              icon="logout"
+              tileColor={colors?.fg}
+              iconColor={colors?.bg}
+              title="Log out"
+              titleColor={colors?.pinkText}
+              showChevron={false}
               onPress={handleLogout}
-              activeOpacity={0.7}
-            >
-              <View style={styles?.itemLeft}>
-                <View style={styles?.itemIconContainer}>
-                  <Text style={styles?.itemIconEmoji}>🚪</Text>
-                </View>
-                <View style={styles?.itemTextContainer}>
-                  <Text style={styles?.itemTitle}>Log out</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            />
+          </SettingsGroup>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
