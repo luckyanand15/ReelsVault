@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   },
   sparkleAuth: {
     position: 'absolute',
-    top: 250,
+    top: 200,
     right: 34,
     transform: [{ rotate: '12deg' }],
   },
