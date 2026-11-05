@@ -1,2 +1,22 @@
-// Same layout as the signup password step.
-export { default } from '../Signup/SignupPassword.styles';
+import { StyleSheet } from 'react-native';
+import { fonts } from '../../constants/theme';
+
+// Own styles now (it used to share the signup password step's, which still
+// has the old look). Frame and heading come from AuthLayout.
+const styles = StyleSheet.create({
+  fields: {
+    gap: 22,
+  },
+  // Label row is 44 tall here (toggle tap target); TextField centres the label
+  toggleButton: {
+    height: 44,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+  },
+  toggleText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+  },
+});
+
+export default styles;

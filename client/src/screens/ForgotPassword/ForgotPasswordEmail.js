@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { useForgotPasswordFlow } from '../../context/ForgotPasswordFlowContext';
 import {
@@ -21,14 +11,12 @@ import {
 import { requestPasswordReset } from '../../api/auth.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import { ERROR_CODES } from '../../constants/errorCodes';
-import styles from './ForgotPasswordEmail.styles';
 
 export default function ForgotPasswordEmail({ navigation, route }) {
   const { continueWithEmail, forgotPasswordData } = useForgotPasswordFlow();
 
   // Prefilled with the address from the login screen, if there was one.
   const [email, setEmail] = useState(route?.params?.email ?? '');
-  const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -116,85 +104,35 @@ export default function ForgotPasswordEmail({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isEmailValid}
+          loading={isSubmitting}
+          accessibilityLabel="Send reset code"
+        />
+      }
+    >
+      <AuthHeading step="Step 1 of 3" title={'Forgot your\npassword?'}>
+        Enter the email address for your account and we'll send you a code to reset it.
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            {/* Header Content */}
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 1 of 3</Text>
-              <Text style={styles?.title}>Forgot your password?</Text>
-              <Text style={styles?.subtitle}>
-                Enter the email address for your account and we'll send you a code to reset it.
-              </Text>
-            </View>
-
-            {/* Input Form */}
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Email Address <Text style={styles?.star}>*</Text>
-                  </Text>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    emailFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  placeholder="Enter your email address"
-                  placeholderTextColor="#A3A3A3"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                  autoFocus
-                />
-                {!!error && <Text style={styles?.errorText}>{error}</Text>}
-              </View>
-            </View>
-
-            {/* Footer with Arrow Button */}
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isEmailValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isEmailValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Send reset code"
-                accessibilityState={{ disabled: !isEmailValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[
-                      styles?.arrowIcon,
-                      !isEmailValid && styles?.arrowIconDisabled,
-                    ]}
-                  >
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <TextField
+        label="Email Address"
+        required
+        error={error}
+        value={email}
+        onChangeText={handleEmailChange}
+        placeholder="Enter your email address"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="done"
+        onSubmitEditing={handleArrowPress}
+        autoFocus
+      />
+    </AuthLayout>
   );
 }

@@ -1,0 +1,69 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenHeader from '../ScreenHeader/ScreenHeader';
+import ScreenBackground from '../ScreenBackground/ScreenBackground';
+import { useTheme } from '../../context/ThemeContext';
+import useThemedStatusBar from '../../hooks/useThemedStatusBar';
+import styles from './AuthLayout.styles';
+
+// The login-style step screen: dotted background with a coloured corner
+// circle, back button + wordmark, the form, and a footer (the round arrow)
+// pinned bottom-right that rises with the keyboard. Tapping outside a field
+// closes the keyboard.
+export default function AuthLayout({ circleColor, onBack, children, footer }) {
+  const { colors } = useTheme();
+  useThemedStatusBar();
+
+  return (
+    <View style={[styles?.root, { backgroundColor: colors?.bg }]}>
+      <ScreenBackground variant="auth" circleColor={circleColor} />
+
+      <SafeAreaView style={styles?.safeArea}>
+        <ScreenHeader onBack={onBack} />
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles?.keyboardAvoidingView}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles?.container}>
+              <View style={styles?.form}>{children}</View>
+              {!!footer && <View style={styles?.footer}>{footer}</View>}
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+// Step label ("STEP 1 OF 3"), hero title and subtitle. The subtitle is
+// children so it can hold nested Text (e.g. a highlighted email).
+export function AuthHeading({ step, title, children }) {
+  const { colors } = useTheme();
+
+  return (
+    <View style={styles?.heading}>
+      {!!step && (
+        <Text style={[styles?.step, { color: colors?.mut }]}>{step}</Text>
+      )}
+      <Text
+        style={[styles?.title, { color: colors?.fg }]}
+        accessibilityRole="header"
+      >
+        {title}
+      </Text>
+      {!!children && (
+        <Text style={[styles?.subtitle, { color: colors?.mut }]}>{children}</Text>
+      )}
+    </View>
+  );
+}

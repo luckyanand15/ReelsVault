@@ -26,6 +26,11 @@ const styles = StyleSheet.create({
   inputSheet: {
     height: 56,
   },
+  hintText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: 4,
+  },
   errorText: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,

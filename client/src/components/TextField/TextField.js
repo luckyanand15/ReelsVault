@@ -5,7 +5,9 @@ import { useTheme } from '../../context/ThemeContext';
 import styles from './TextField.styles';
 
 // Label + input + error text. `labelAccessory` sits at the right of the label
-// row (e.g. Show/Hide). Other props go to TextInput.
+// row (e.g. Show/Hide). `hint` shows under the input while there's no error.
+// `inputRef` reaches the TextInput (e.g. to focus the next field). Other
+// props go to TextInput.
 // variant: 'login' (outline border, surf fill, accent hard shadow) or
 // 'sheet' (quiet line border, bg fill, no shadow: used inside bottom sheets).
 export default function TextField({
@@ -13,6 +15,8 @@ export default function TextField({
   required = false,
   error,
   labelAccessory,
+  hint,
+  inputRef,
   variant = 'login',
   ...inputProps
 }) {
@@ -21,6 +25,7 @@ export default function TextField({
 
   const input = (
     <TextInput
+      ref={inputRef}
       style={[
         styles?.input,
         isSheet && styles?.inputSheet,
@@ -59,11 +64,13 @@ export default function TextField({
         </HardShadow>
       )}
 
-      {!!error && (
+      {error ? (
         <Text style={[styles?.errorText, { color: colors?.pinkText }]}>
           {error}
         </Text>
-      )}
+      ) : hint ? (
+        <Text style={[styles?.hintText, { color: colors?.mut }]}>{hint}</Text>
+      ) : null}
     </View>
   );
 }
