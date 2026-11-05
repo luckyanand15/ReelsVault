@@ -14,7 +14,7 @@ const THEME_STORAGE_KEY = 'themeMode';
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [mode, setMode] = useState('dark');
+  const [mode, setMode] = useState('light');
 
   useEffect(() => {
     (async () => {
@@ -24,7 +24,7 @@ export function ThemeProvider({ children }) {
           setMode(stored);
         }
       } catch (error) {
-        // Fall back to the default dark theme
+        // Fall back to the default light theme
       }
     })();
   }, []);
