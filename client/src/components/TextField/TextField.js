@@ -10,10 +10,13 @@ import styles from './TextField.styles';
 // props go to TextInput.
 // variant: 'login' (outline border, surf fill, accent hard shadow) or
 // 'sheet' (quiet line border, bg fill, no shadow: used inside bottom sheets).
+// floatingError: the error sits in the space below the field without adding
+// to its height, so nothing under the field moves when it appears.
 export default function TextField({
   label,
   required = false,
   error,
+  floatingError = false,
   labelAccessory,
   hint,
   inputRef,
@@ -65,7 +68,13 @@ export default function TextField({
       )}
 
       {error ? (
-        <Text style={[styles?.errorText, { color: colors?.pinkText }]}>
+        <Text
+          style={[
+            styles?.errorText,
+            floatingError && styles?.errorTextFloating,
+            { color: colors?.pinkText },
+          ]}
+        >
           {error}
         </Text>
       ) : hint ? (

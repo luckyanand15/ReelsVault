@@ -36,6 +36,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
   },
+  errorTextFloating: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    // Same 14px as the in-flow error (group gap 10 + marginTop 4).
+    marginTop: 14,
+  },
 });
 
 export default styles;

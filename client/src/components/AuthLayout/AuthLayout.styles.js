@@ -17,6 +17,9 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 40,
     justifyContent: 'space-between',
+    // Minimum space between the form and the arrow once the keyboard
+    // squeezes the screen.
+    gap: 24,
   },
   form: {
     gap: 36,

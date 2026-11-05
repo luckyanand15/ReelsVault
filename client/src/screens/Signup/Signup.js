@@ -51,6 +51,7 @@ export default function Signup({ navigation }) {
           label="First Name"
           required
           error={error}
+          floatingError
           value={firstName}
           onChangeText={handleFirstNameChange}
           placeholder="Enter your first name"
