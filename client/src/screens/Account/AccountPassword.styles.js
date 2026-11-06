@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
   },
   // Label row is 44 tall here (toggle tap target); TextField centres the label
   toggleButton: {
-    height: 44,
+    // height: 44,
     paddingHorizontal: 4,
     justifyContent: 'center',
   },

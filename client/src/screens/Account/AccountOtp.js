@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import OtpCodeField from '../../components/OtpCodeField/OtpCodeField';
-import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+// import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { AccountFlow, useAccountFlow } from '../../context/AccountFlowContext';
 import { OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS } from '../../context/SignupFlowContext';
@@ -193,14 +193,14 @@ export default function AccountOtp({ navigation, route }) {
 
   // The code verifies itself on the sixth digit; the arrow retries it, or
   // says what's missing.
-  const handleArrowPress = () => {
-    const code = otp.join('');
-    if (code.length < 6) {
-      setError('Enter the 6-digit code.');
-      return;
-    }
-    handleVerify(code);
-  };
+  // const handleArrowPress = () => {
+    // const code = otp.join('');
+    // if (code.length < 6) {
+      // setError('Enter the 6-digit code.');
+      // return;
+    // }
+    // handleVerify(code);
+  // };
 
   if (!canAccessStep) {
     return null;
@@ -213,14 +213,16 @@ export default function AccountOtp({ navigation, route }) {
       // Matches the Settings row: email cyan, password yellow.
       circleColor={isEmailFlow ? colors?.cyan : colors?.yellow}
       onBack={() => navigation?.goBack?.()}
-      footer={
-        <RoundArrowButton
-          onPress={handleArrowPress}
-          active={otp.join('').length === 6}
-          loading={isVerifying}
-          accessibilityLabel="Verify code"
-        />
-      }
+      // Arrow hidden: the code verifies and moves on by itself on the 6th
+      // digit. Uncomment (with handleArrowPress and the import) to bring it back.
+      // footer={
+        // <RoundArrowButton
+          // onPress={handleArrowPress}
+          // active={otp.join('').length === 6}
+          // loading={isVerifying}
+          // accessibilityLabel="Verify code"
+        // />
+      // }
     >
       <AuthHeading
         step={isEmailFlow ? 'Step 3 of 3' : 'Step 2 of 3'}
@@ -239,6 +241,7 @@ export default function AccountOtp({ navigation, route }) {
         onChangeDigit={handleChangeText}
         onKeyPress={handleKeyPress}
         error={error}
+        verifying={isVerifying}
         resend={{
           canResend: resendCooldown <= 0 && !isResending,
           isResending,

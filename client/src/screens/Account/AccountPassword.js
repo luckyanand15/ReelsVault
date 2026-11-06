@@ -136,6 +136,7 @@ export default function AccountPassword({ navigation, route }) {
         label="Current Password"
         required
         error={error}
+        floatingError
         labelAccessory={showHideToggle}
         value={password}
         onChangeText={handlePasswordChange}
