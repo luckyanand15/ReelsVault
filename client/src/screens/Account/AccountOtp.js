@@ -225,7 +225,7 @@ export default function AccountOtp({ navigation, route }) {
       // }
     >
       <AuthHeading
-        step={isEmailFlow ? 'Step 3 of 3' : 'Step 2 of 3'}
+        step={isEmailFlow ? 'Step 3 of 3' : 'Step 2 of 4'}
         title={'Enter the\ncode'}
       >
         {alreadySent ? 'We already sent a 6-digit code to' : "We've sent a 6-digit code to"}{' '}

@@ -126,7 +126,7 @@ export default function AccountPassword({ navigation, route }) {
         />
       }
     >
-      <AuthHeading step="Step 1 of 3" title={'Enter your\npassword'}>
+      <AuthHeading step={isPasswordFlow ? 'Step 1 of 4' : 'Step 1 of 3'} title={'Enter your\npassword'}>
         {isPasswordFlow
           ? "Confirm your current password. We'll then email you a code."
           : 'Confirm your current password before changing your email.'}

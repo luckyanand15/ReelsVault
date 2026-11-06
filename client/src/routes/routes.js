@@ -21,6 +21,7 @@ const routes = {
   ChangeEmail: 'ChangeEmail',
   AccountOtp: 'AccountOtp',
   ChangePassword: 'ChangePassword',
+  ChangePasswordConfirm: 'ChangePasswordConfirm',
 };
 
 export default routes;

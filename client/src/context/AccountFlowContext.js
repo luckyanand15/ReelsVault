@@ -16,6 +16,9 @@ const initialAccountData = {
   otpSentAt: null,
   // Password flow: from the verified code, spent when the password is set.
   changeToken: '',
+  // Password flow: held between the new-password and confirm screens; sent
+  // to the server only from the confirm screen.
+  newPassword: '',
 };
 
 const AccountFlowContext = createContext(null);
@@ -39,6 +42,9 @@ export function AccountFlowProvider({ children }) {
       },
       confirmPasswordOtp: ({ changeToken }) => {
         setAccountData((currentData) => ({ ...currentData, changeToken }));
+      },
+      setNewPassword: ({ newPassword }) => {
+        setAccountData((currentData) => ({ ...currentData, newPassword }));
       },
       resetAccountFlow: () => setAccountData(initialAccountData),
     }),

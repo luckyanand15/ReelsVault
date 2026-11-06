@@ -21,6 +21,7 @@ import AccountPassword from '../screens/Account/AccountPassword';
 import ChangeEmail from '../screens/Account/ChangeEmail';
 import AccountOtp from '../screens/Account/AccountOtp';
 import ChangePassword from '../screens/Account/ChangePassword';
+import ChangePasswordConfirm from '../screens/Account/ChangePasswordConfirm';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
 import routes from '../routes/routes';
 import { useAuth } from '../context/AuthContext';
@@ -66,6 +67,7 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.ChangeEmail} component={ChangeEmail} />
       <Stack.Screen name={routes.AccountOtp} component={AccountOtp} />
       <Stack.Screen name={routes.ChangePassword} component={ChangePassword} />
+      <Stack.Screen name={routes.ChangePasswordConfirm} component={ChangePasswordConfirm} />
     </Stack.Navigator>
   );
 }
