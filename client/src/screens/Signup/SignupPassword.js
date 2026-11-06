@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import TextField from '../../components/TextField/TextField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+import CancelSignupSheet from '../../components/CancelSignupSheet/CancelSignupSheet';
+import useCancelSignupGuard from '../../hooks/useCancelSignupGuard';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -15,6 +17,7 @@ export const MAX_PASSWORD_BYTES = 72;
 export default function SignupPassword({ navigation }) {
   const { canAccessStep, continueWithPassword, signupData } = useSignupFlow();
   const { colors } = useTheme();
+  const cancelGuard = useCancelSignupGuard(navigation);
   const { userId, email, isEmailVerified, verificationToken } = signupData;
   // Once the confirm screen creates the account it clears the token; this
   // screen is still in the stack then and must not bounce back to the start.
@@ -94,7 +97,7 @@ export default function SignupPassword({ navigation }) {
   return (
     <AuthLayout
       circleColor={colors?.accent}
-      onBack={() => navigation?.goBack?.()}
+      onBack={cancelGuard.onBack}
       footer={
         <RoundArrowButton
           onPress={handleArrowPress}
@@ -128,6 +131,8 @@ export default function SignupPassword({ navigation }) {
           submitBehavior="submit"
         />
       </View>
+
+      <CancelSignupSheet {...cancelGuard.sheetProps} />
     </AuthLayout>
   );
 }

@@ -98,6 +98,11 @@ export function SignupFlowProvider({ children }) {
           password: '',
         }));
       },
+      // Drops everything entered so far, e.g. when the user cancels signup.
+      resetSignup: () => {
+        setSignupData(initialSignupData);
+        setCurrentStep(SignupStep.FirstName);
+      },
     }),
     [currentStep, signupData],
   );
