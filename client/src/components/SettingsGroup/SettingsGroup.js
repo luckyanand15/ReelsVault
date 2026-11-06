@@ -46,6 +46,7 @@ export function SettingsRow({
   title,
   titleColor,
   subtitle,
+  wrapSubtitle = false,
   showChevron = true,
   onPress,
 }) {
@@ -73,7 +74,7 @@ export function SettingsRow({
         {!!subtitle && (
           <Text
             style={[styles?.subtitle, { color: colors?.mut }]}
-            numberOfLines={1}
+            numberOfLines={wrapSubtitle ? 0 : 1}
             ellipsizeMode="tail"
           >
             {subtitle}

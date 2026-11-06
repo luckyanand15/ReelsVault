@@ -133,6 +133,7 @@ export default function Settings({ navigation, route }) {
               title="Delete account"
               titleColor={colors?.pinkText}
               subtitle="Delete your account and all your reels"
+              wrapSubtitle
               onPress={() =>
                 navigation.navigate(routes.DeleteAccount, { email: user?.email ?? '' })
               }
