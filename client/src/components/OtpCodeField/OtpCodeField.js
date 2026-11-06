@@ -71,6 +71,13 @@ export default function OtpCodeField({
 
       {error ? (
         <Text style={[styles?.errorText, { color: colors?.pinkText }]}>{error}</Text>
+      ) : verifying ? (
+        <Text
+          style={[styles?.errorText, { color: colors?.mut }]}
+          accessibilityLiveRegion="polite"
+        >
+          Verifying...
+        </Text>
       ) : null}
 
       <TouchableOpacity
