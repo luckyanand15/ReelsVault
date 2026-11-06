@@ -7,18 +7,27 @@ import styles from './CancelSignupSheet.styles';
 
 // Asked when going back from a signup screen past the verified email: going
 // back there would mean verifying again, so the choice is to stay or start over.
-export default function CancelSignupSheet({ visible, onKeepGoing, onCancelSignup }) {
+// The forgot password flow reuses it with its own wording.
+export default function CancelSignupSheet({
+  visible,
+  onKeepGoing,
+  onCancelSignup,
+  title = 'Cancel sign up?',
+  message = "Your progress will be lost and you'll need to start again.",
+  keepGoingAccessibilityLabel = 'No, continue signing up',
+  cancelAccessibilityLabel = 'Yes, cancel sign up',
+}) {
   const { colors } = useTheme();
 
   return (
     <BottomSheet
       visible={visible}
       onClose={onKeepGoing}
-      title="Cancel sign up?"
+      title={title}
       barColor={colors?.pink}
     >
       <Text style={[styles?.message, { color: colors?.mut }]}>
-        Your progress will be lost and you'll need to start again.
+        {message}
       </Text>
 
       <View style={styles?.buttons}>
@@ -27,13 +36,13 @@ export default function CancelSignupSheet({ visible, onKeepGoing, onCancelSignup
           variant="secondary"
           onPress={onKeepGoing}
           style={styles?.button}
-          accessibilityLabel="No, continue signing up"
+          accessibilityLabel={keepGoingAccessibilityLabel}
         />
         <PrimaryButton
           title="Yes, cancel"
           onPress={onCancelSignup}
           style={styles?.button}
-          accessibilityLabel="Yes, cancel sign up"
+          accessibilityLabel={cancelAccessibilityLabel}
         />
       </View>
     </BottomSheet>

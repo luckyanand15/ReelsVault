@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import TextField from '../../components/TextField/TextField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+import CancelSignupSheet from '../../components/CancelSignupSheet/CancelSignupSheet';
+import useCancelForgotPasswordGuard from '../../hooks/useCancelForgotPasswordGuard';
 import { useTheme } from '../../context/ThemeContext';
 import routes from '../../routes/routes';
 import {
@@ -19,6 +21,7 @@ export default function ForgotPasswordReset({ navigation }) {
   const { canAccessStep, continueWithPassword, forgotPasswordData } =
     useForgotPasswordFlow();
   const { colors } = useTheme();
+  const cancelGuard = useCancelForgotPasswordGuard(navigation);
   const { email, resetToken } = forgotPasswordData;
   const canAccessResetStep =
     canAccessStep(ForgotPasswordStep.Reset) && Boolean(email) && Boolean(resetToken);
@@ -94,7 +97,7 @@ export default function ForgotPasswordReset({ navigation }) {
   return (
     <AuthLayout
       circleColor={colors?.cyan}
-      onBack={() => navigation?.goBack?.()}
+      onBack={cancelGuard.onBack}
       footer={
         <RoundArrowButton
           onPress={handleArrowPress}
@@ -128,6 +131,8 @@ export default function ForgotPasswordReset({ navigation }) {
           submitBehavior="submit"
         />
       </View>
+
+      <CancelSignupSheet {...cancelGuard.sheetProps} />
     </AuthLayout>
   );
 }
