@@ -41,14 +41,13 @@ export function SignupFlowProvider({ children }) {
     () => ({
       signupData,
       canAccessStep: (step) => currentStep >= step,
-      // Starts the flow afresh but keeps any last name already typed, so
-      // going back to fix the first name doesn't wipe it.
+      // Starts the flow afresh. Anything entered on later screens is dropped,
+      // since going back past a screen clears what was typed there.
       continueWithFirstName: ({ firstName }) => {
-        setSignupData((currentData) => ({
+        setSignupData({
           ...initialSignupData,
           firstName,
-          lastName: currentData.lastName,
-        }));
+        });
         setCurrentStep(SignupStep.LastName);
       },
       continueWithLastName: ({ lastName }) => {
