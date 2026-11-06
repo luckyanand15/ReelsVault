@@ -19,8 +19,6 @@ import styles from './LoginEmail.styles';
 export default function LoginEmail({ navigation, route }) {
   const { confirmEmail } = useLoginFlow();
   const { colors } = useTheme();
-  // Set after a password reset, which lands the user back here.
-  const passwordReset = Boolean(route?.params?.passwordReset);
   // Set when signup created the account but couldn't log the user in.
   const accountCreated = Boolean(route?.params?.accountCreated);
 
@@ -83,20 +81,6 @@ export default function LoginEmail({ navigation, route }) {
                     Enter your email address to log in.
                   </Text>
                 </View>
-
-                {passwordReset && (
-                  <View
-                    style={[
-                      styles?.successBanner,
-                      { backgroundColor: colors?.surf, borderColor: colors?.accent },
-                    ]}
-                  >
-                    <Text style={[styles?.successText, { color: colors?.fg }]}>
-                      Your password has been changed and you've been logged out on all devices.
-                      Log in with your new password.
-                    </Text>
-                  </View>
-                )}
 
                 {accountCreated && (
                   <View

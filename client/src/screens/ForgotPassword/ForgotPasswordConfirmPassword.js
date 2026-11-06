@@ -70,13 +70,13 @@ export default function ForgotPasswordConfirmPassword({ navigation }) {
     try {
       await resetPassword({ email, resetToken, password, confirmPassword });
       isLeavingRef.current = true;
-      // The server has ended every session for this account, so start the
-      // login flow from scratch: email first, then the new password.
+      // The server has ended every session for this account. The success
+      // screen says so, then starts the login flow from scratch.
       navigation.reset({
         index: 1,
         routes: [
           { name: routes.Welcome },
-          { name: routes.LoginEmail, params: { email, passwordReset: true } },
+          { name: routes.ForgotPasswordSuccess, params: { email } },
         ],
       });
       resetForgotPasswordFlow();

@@ -13,6 +13,7 @@ import ForgotPasswordEmail from '../screens/ForgotPassword/ForgotPasswordEmail';
 import ForgotPasswordOtp from '../screens/ForgotPassword/ForgotPasswordOtp';
 import ForgotPasswordReset from '../screens/ForgotPassword/ForgotPasswordReset';
 import ForgotPasswordConfirmPassword from '../screens/ForgotPassword/ForgotPasswordConfirmPassword';
+import ForgotPasswordSuccess from '../screens/ForgotPassword/ForgotPasswordSuccess';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
 import EditName from '../screens/Account/EditName';
@@ -56,6 +57,7 @@ export default function AppNavigator() {
         name={routes.ForgotPasswordConfirmPassword}
         component={ForgotPasswordConfirmPassword}
       />
+      <Stack.Screen name={routes.ForgotPasswordSuccess} component={ForgotPasswordSuccess} />
       <Stack.Screen name={routes.Dashboard} component={Dashboard} />
       <Stack.Screen name={routes.Settings} component={Settings} />
       <Stack.Screen name={routes.ManageCategories} component={ManageCategories} />
