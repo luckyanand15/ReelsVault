@@ -22,6 +22,10 @@ import ChangeEmail from '../screens/Account/ChangeEmail';
 import AccountOtp from '../screens/Account/AccountOtp';
 import ChangePassword from '../screens/Account/ChangePassword';
 import ChangePasswordConfirm from '../screens/Account/ChangePasswordConfirm';
+import DeleteAccount from '../screens/Account/DeleteAccount';
+import DeleteAccountConfirm from '../screens/Account/DeleteAccountConfirm';
+import DeleteAccountPassword from '../screens/Account/DeleteAccountPassword';
+import DeleteAccountSuccess from '../screens/Account/DeleteAccountSuccess';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
 import routes from '../routes/routes';
 import { useAuth } from '../context/AuthContext';
@@ -68,6 +72,10 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.AccountOtp} component={AccountOtp} />
       <Stack.Screen name={routes.ChangePassword} component={ChangePassword} />
       <Stack.Screen name={routes.ChangePasswordConfirm} component={ChangePasswordConfirm} />
+      <Stack.Screen name={routes.DeleteAccount} component={DeleteAccount} />
+      <Stack.Screen name={routes.DeleteAccountConfirm} component={DeleteAccountConfirm} />
+      <Stack.Screen name={routes.DeleteAccountPassword} component={DeleteAccountPassword} />
+      <Stack.Screen name={routes.DeleteAccountSuccess} component={DeleteAccountSuccess} />
     </Stack.Navigator>
   );
 }

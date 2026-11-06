@@ -50,3 +50,21 @@ export const changePassword = async ({ reauthToken, changeToken, password, confi
   });
   return data?.data;
 };
+
+// Delete account. The code goes to the account's current email.
+export const sendDeleteAccountOtp = async () => {
+  const { data } = await axiosClient.post('/account/delete/otp');
+  return data;
+};
+
+// Returns the deleteToken that deleteAccount spends.
+export const verifyDeleteAccountOtp = async ({ code }) => {
+  const { data } = await axiosClient.post('/account/delete/verify', { code });
+  return data?.data?.deleteToken;
+};
+
+// Deletes the account and everything in it. Every session is revoked.
+export const deleteAccount = async ({ deleteToken, password }) => {
+  const { data } = await axiosClient.post('/account/delete', { deleteToken, password });
+  return data;
+};

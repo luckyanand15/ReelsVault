@@ -9,8 +9,10 @@ import { OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS } from '../../co
 import { useTheme } from '../../context/ThemeContext';
 import {
   confirmEmailChange,
+  sendDeleteAccountOtp,
   sendEmailChangeOtp,
   sendPasswordChangeOtp,
+  verifyDeleteAccountOtp,
   verifyPasswordChangeOtp,
 } from '../../api/account.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
@@ -20,19 +22,28 @@ import styles from './AccountOtp.styles';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
 
-// The code step of both flows. Email: the code went to the new address and
-// confirming it switches the email. Password: the code went to the current
-// address and confirming it leads on to the new password.
+// The code step of every account flow. Email: the code went to the new
+// address and confirming it switches the email. Password: the code went to
+// the current address and confirming it leads on to the new password.
+// Delete: the code went to the current address and confirming it leads on
+// to the final "are you sure" screen.
 export default function AccountOtp({ navigation, route }) {
   // Set when we came here without sending a new code, because one sent
   // earlier is still valid.
   const alreadySent = Boolean(route?.params?.alreadySent);
-  const { accountData, confirmPasswordOtp, markOtpSent, resetAccountFlow } = useAccountFlow();
+  // Delete flow: the account's email, passed along from Settings to show here.
+  const accountEmail = route?.params?.email ?? '';
+  const { accountData, confirmPasswordOtp, confirmDeleteOtp, markOtpSent, resetAccountFlow } =
+    useAccountFlow();
   const { colors } = useTheme();
   const { flow, reauthToken, newEmail, otpSentAt } = accountData;
   const isEmailFlow = flow === AccountFlow.Email;
+  // No password step before the code here; the password comes last.
+  const isDeleteFlow = flow === AccountFlow.Delete;
   const canAccessStep =
-    Boolean(reauthToken) && (flow === AccountFlow.Password || (isEmailFlow && Boolean(newEmail)));
+    isDeleteFlow ||
+    (Boolean(reauthToken) &&
+      (flow === AccountFlow.Password || (isEmailFlow && Boolean(newEmail))));
 
   const [otp, setOtp] = useState(EMPTY_OTP);
   const [focusedIndex, setFocusedIndex] = useState(null);
@@ -89,6 +100,10 @@ export default function AccountOtp({ navigation, route }) {
       if (isEmailFlow) {
         const user = await confirmEmailChange({ reauthToken, newEmail, code });
         leave(`Your email has been changed to ${user?.email ?? newEmail}.`);
+      } else if (isDeleteFlow) {
+        const deleteToken = await verifyDeleteAccountOtp({ code });
+        confirmDeleteOtp({ deleteToken });
+        navigation.navigate(routes.DeleteAccountConfirm);
       } else {
         const changeToken = await verifyPasswordChangeOtp({ reauthToken, code });
         confirmPasswordOtp({ changeToken });
@@ -164,6 +179,8 @@ export default function AccountOtp({ navigation, route }) {
     try {
       if (isEmailFlow) {
         await sendEmailChangeOtp({ reauthToken, newEmail });
+      } else if (isDeleteFlow) {
+        await sendDeleteAccountOtp();
       } else {
         await sendPasswordChangeOtp({ reauthToken });
       }
@@ -206,12 +223,12 @@ export default function AccountOtp({ navigation, route }) {
     return null;
   }
 
-  const sentTo = isEmailFlow ? newEmail : 'your current email';
+  const sentTo = isEmailFlow ? newEmail : (isDeleteFlow && accountEmail) || 'your current email';
 
   return (
     <AuthLayout
-      // Matches the Settings row: email cyan, password yellow.
-      circleColor={isEmailFlow ? colors?.cyan : colors?.yellow}
+      // Matches the Settings row: email cyan, password yellow, delete pink.
+      circleColor={isEmailFlow ? colors?.cyan : isDeleteFlow ? colors?.pink : colors?.yellow}
       onBack={() => navigation?.goBack?.()}
       // Arrow hidden: the code verifies and moves on by itself on the 6th
       // digit. Uncomment (with handleArrowPress and the import) to bring it back.

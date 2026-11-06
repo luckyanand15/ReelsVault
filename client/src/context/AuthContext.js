@@ -95,8 +95,14 @@ export function AuthProvider({ children }) {
     await clearSession();
   };
 
+  // Forgets the session on this device only, for when the server has already
+  // ended it (e.g. the account was deleted), so there's nothing to revoke.
+  const endLocalSession = () => clearSession();
+
   return (
-    <AuthContext.Provider value={{ userId, isLoading, authLogin, replaceTokens, logout }}>
+    <AuthContext.Provider
+      value={{ userId, isLoading, authLogin, replaceTokens, logout, endLocalSession }}
+    >
       {children}
     </AuthContext.Provider>
   );

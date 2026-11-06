@@ -23,6 +23,8 @@ const OTP_PURPOSE = {
   EmailChange: 'email_change',
   // Sent to the current address while a logged-in user changes their password.
   PasswordChange: 'password_change',
+  // Sent to the current address while a logged-in user deletes their account.
+  AccountDelete: 'account_delete',
 };
 
 class OtpCooldownError extends Error {

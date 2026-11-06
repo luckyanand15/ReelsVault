@@ -127,6 +127,16 @@ export default function Settings({ navigation, route }) {
               showChevron={false}
               onPress={handleLogout}
             />
+            <SettingsRow
+              icon="trash"
+              tileColor={colors?.pink}
+              title="Delete account"
+              titleColor={colors?.pinkText}
+              subtitle="Delete your account and all your reels"
+              onPress={() =>
+                navigation.navigate(routes.DeleteAccount, { email: user?.email ?? '' })
+              }
+            />
           </SettingsGroup>
         </ScrollView>
       </SafeAreaView>

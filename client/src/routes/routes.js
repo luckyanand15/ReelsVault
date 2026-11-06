@@ -22,6 +22,10 @@ const routes = {
   AccountOtp: 'AccountOtp',
   ChangePassword: 'ChangePassword',
   ChangePasswordConfirm: 'ChangePasswordConfirm',
+  DeleteAccount: 'DeleteAccount',
+  DeleteAccountConfirm: 'DeleteAccountConfirm',
+  DeleteAccountPassword: 'DeleteAccountPassword',
+  DeleteAccountSuccess: 'DeleteAccountSuccess',
 };
 
 export default routes;

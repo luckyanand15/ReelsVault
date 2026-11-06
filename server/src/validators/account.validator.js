@@ -44,6 +44,16 @@ const changePasswordSchema = Joi.object({
   confirmPassword: confirmPasswordSchema,
 });
 
+const verifyDeleteOtpSchema = Joi.object({
+  code: codeSchema,
+});
+
+const deleteAccountSchema = Joi.object({
+  // 32 random bytes as hex, issued by /account/delete/verify.
+  deleteToken: Joi.string().hex().length(64).required(),
+  password: Joi.string().max(1024).required(),
+});
+
 module.exports = {
   updateNameSchema,
   reauthSchema,
@@ -52,4 +62,6 @@ module.exports = {
   passwordOtpSchema,
   verifyPasswordOtpSchema,
   changePasswordSchema,
+  verifyDeleteOtpSchema,
+  deleteAccountSchema,
 };

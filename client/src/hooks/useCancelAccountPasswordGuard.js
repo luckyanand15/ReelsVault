@@ -10,7 +10,15 @@ const BACK_ACTIONS = ['GO_BACK', 'POP', 'POP_TO_TOP'];
 // OTP): any back (header arrow, Android back, iOS swipe) opens the cancel
 // drawer instead of leaving the screen. Same idea as useCancelSignupGuard.
 // Render <CancelSignupSheet {...sheetProps} /> and pass onBack to the layout.
-export default function useCancelAccountPasswordGuard(navigation) {
+// `copy` overrides the drawer's wording, e.g. for the delete account flow.
+// `cancel` leaves the flow straight away, for a screen's own Cancel button.
+const PASSWORD_COPY = {
+  message: "This will cancel changing your password. Your progress will be lost and you'll need to start again.",
+  keepGoingAccessibilityLabel: 'No, continue changing password',
+  cancelAccessibilityLabel: 'Yes, cancel password change',
+};
+
+export default function useCancelAccountPasswordGuard(navigation, copy = PASSWORD_COPY) {
   const { resetAccountFlow } = useAccountFlow();
   const [isSheetVisible, setIsSheetVisible] = useState(false);
   const hasCancelledRef = useRef(false);
@@ -48,14 +56,13 @@ export default function useCancelAccountPasswordGuard(navigation) {
 
   return {
     onBack: () => setIsSheetVisible(true),
+    cancel: cancelChange,
     sheetProps: {
       visible: isSheetVisible,
       onKeepGoing: () => setIsSheetVisible(false),
       onCancelSignup: cancelChange,
       title: 'Cancel?',
-      message: "This will cancel changing your password. Your progress will be lost and you'll need to start again.",
-      keepGoingAccessibilityLabel: 'No, continue changing password',
-      cancelAccessibilityLabel: 'Yes, cancel password change',
+      ...copy,
     },
   };
 }
