@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardAvoider from '../../components/KeyboardAvoider/KeyboardAvoider';
 import ScreenHeader from '../../components/ScreenHeader/ScreenHeader';
 import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
 import TextField from '../../components/TextField/TextField';
@@ -66,10 +65,7 @@ export default function LoginEmail({ navigation, route }) {
       <SafeAreaView style={styles?.safeArea}>
         <ScreenHeader onBack={() => navigation?.goBack?.()} />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles?.keyboardAvoidingView}
-        >
+        <KeyboardAvoider style={styles?.keyboardAvoidingView}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles?.container}>
               <View style={styles?.form}>
@@ -125,7 +121,7 @@ export default function LoginEmail({ navigation, route }) {
               </View>
             </View>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+        </KeyboardAvoider>
       </SafeAreaView>
     </View>
   );
