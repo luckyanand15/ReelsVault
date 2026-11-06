@@ -13,11 +13,14 @@ import styles from './TextField.styles';
 // floatingError: the error sits in the space below the field without adding
 // to its height, so nothing under the field moves when it appears. The hint
 // floats in the same spot, so swapping hint for error doesn't move anything.
+// showErrorText={false}: keep the red error border but let the screen render
+// the message itself (e.g. beside a link in the row under the field).
 export default function TextField({
   label,
   required = false,
   error,
   floatingError = false,
+  showErrorText = true,
   labelAccessory,
   hint,
   inputRef,
@@ -68,7 +71,7 @@ export default function TextField({
         </HardShadow>
       )}
 
-      {error ? (
+      {error && !showErrorText ? null : error ? (
         <Text
           style={[
             styles?.errorText,

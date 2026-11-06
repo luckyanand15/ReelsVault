@@ -135,6 +135,7 @@ export default function LoginPassword({ navigation }) {
                     label="Password"
                     required
                     error={error}
+                    showErrorText={false}
                     labelAccessory={showHideToggle}
                     value={password}
                     onChangeText={handlePasswordChange}
@@ -147,20 +148,33 @@ export default function LoginPassword({ navigation }) {
                     onSubmitEditing={handleArrowPress}
                   />
 
-                  <TouchableOpacity
-                    style={styles?.forgotPasswordButton}
-                    onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                  >
-                    <Text style={[styles?.forgotPasswordText, { color: colors?.fg }]}>
-                      Forgot password?
-                    </Text>
-                    {/* Android can't colour a text underline, so draw it */}
-                    <View
-                      style={[styles?.forgotPasswordUnderline, { backgroundColor: colors?.pink }]}
-                    />
-                  </TouchableOpacity>
+                  {/* Error (left, wraps) shares a row with the link (right),
+                      so a one-line error doesn't push anything down */}
+                  <View style={styles?.belowFieldRow}>
+                    {error ? (
+                      <Text
+                        style={[styles?.errorText, { color: colors?.pinkText }]}
+                        accessibilityLiveRegion="polite"
+                      >
+                        {error}
+                      </Text>
+                    ) : null}
+
+                    <TouchableOpacity
+                      style={styles?.forgotPasswordButton}
+                      onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles?.forgotPasswordText, { color: colors?.fg }]}>
+                        Forgot password?
+                      </Text>
+                      {/* Android can't colour a text underline, so draw it */}
+                      <View
+                        style={[styles?.forgotPasswordUnderline, { backgroundColor: colors?.pink }]}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
 
