@@ -12,6 +12,7 @@ import LoginPassword from '../screens/Login/LoginPassword';
 import ForgotPasswordEmail from '../screens/ForgotPassword/ForgotPasswordEmail';
 import ForgotPasswordOtp from '../screens/ForgotPassword/ForgotPasswordOtp';
 import ForgotPasswordReset from '../screens/ForgotPassword/ForgotPasswordReset';
+import ForgotPasswordConfirmPassword from '../screens/ForgotPassword/ForgotPasswordConfirmPassword';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
 import EditName from '../screens/Account/EditName';
@@ -51,6 +52,10 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.ForgotPasswordEmail} component={ForgotPasswordEmail} />
       <Stack.Screen name={routes.ForgotPasswordOtp} component={ForgotPasswordOtp} />
       <Stack.Screen name={routes.ForgotPasswordReset} component={ForgotPasswordReset} />
+      <Stack.Screen
+        name={routes.ForgotPasswordConfirmPassword}
+        component={ForgotPasswordConfirmPassword}
+      />
       <Stack.Screen name={routes.Dashboard} component={Dashboard} />
       <Stack.Screen name={routes.Settings} component={Settings} />
       <Stack.Screen name={routes.ManageCategories} component={ManageCategories} />

@@ -11,6 +11,7 @@ const routes = {
   ForgotPasswordEmail: 'ForgotPasswordEmail',
   ForgotPasswordOtp: 'ForgotPasswordOtp',
   ForgotPasswordReset: 'ForgotPasswordReset',
+  ForgotPasswordConfirmPassword: 'ForgotPasswordConfirmPassword',
   Dashboard: 'Dashboard',
   Settings: 'Settings',
   ManageCategories: 'ManageCategories',

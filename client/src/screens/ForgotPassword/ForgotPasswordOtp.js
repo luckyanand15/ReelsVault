@@ -198,7 +198,7 @@ export default function ForgotPasswordOtp({ navigation, route }) {
     >
       {/* "If an account exists": the server doesn't say whether it does, so
           neither can this screen. */}
-      <AuthHeading step="Step 2 of 3" title={'Enter reset\ncode'}>
+      <AuthHeading step="Step 2 of 4" title={'Enter reset\ncode'}>
         {alreadySent
           ? 'We already sent a 6-digit code to'
           : 'If an account exists for'}{' '}

@@ -115,7 +115,7 @@ export default function ForgotPasswordEmail({ navigation, route }) {
         />
       }
     >
-      <AuthHeading step="Step 1 of 3" title={'Forgot your\npassword?'}>
+      <AuthHeading step="Step 1 of 4" title={'Forgot your\npassword?'}>
         Enter the email address for your account and we'll send you a code to reset it.
       </AuthHeading>
 
