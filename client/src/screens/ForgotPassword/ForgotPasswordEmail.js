@@ -123,6 +123,7 @@ export default function ForgotPasswordEmail({ navigation, route }) {
         label="Email Address"
         required
         error={error}
+        floatingError
         value={email}
         onChangeText={handleEmailChange}
         placeholder="Enter your email address"

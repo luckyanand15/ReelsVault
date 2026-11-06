@@ -190,6 +190,7 @@ export default function ForgotPasswordReset({ navigation }) {
           label="Confirm New Password"
           required
           error={error || (showMismatch ? 'Passwords do not match.' : '')}
+          floatingError
           value={confirmPassword}
           onChangeText={handleConfirmChange}
           placeholder="Re-enter your new password"
