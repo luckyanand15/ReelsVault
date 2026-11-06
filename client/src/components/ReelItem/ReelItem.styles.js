@@ -1,78 +1,112 @@
 import { StyleSheet } from 'react-native';
-import theme from '../../constants/theme';
+import { fonts } from '../../constants/theme';
 
 const styles = StyleSheet.create({
+  // List row
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme?.spacing?.md,
-    borderRadius: theme?.borderRadius?.lg,
-    backgroundColor: theme?.colors?.surface,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
+    gap: 14,
+    padding: 10,
+    paddingRight: 14,
+    borderRadius: 24,
+    borderWidth: 2,
   },
-  // Portrait box (reels are 9:16); the category icon sits in the same box
-  // when there is no thumbnail, so rows stay aligned.
   thumbnail: {
-    width: 54,
-    height: 72,
-    borderRadius: theme?.borderRadius?.md,
-    backgroundColor: theme?.colors?.gray200,
-    marginRight: theme?.spacing?.md,
+    width: 68,
+    height: 88,
+    borderRadius: 16,
+    borderWidth: 2,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
   thumbnailImage: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFill,
   },
-  icon: {
+  fallbackIcon: {
     fontSize: 28,
   },
   textContainer: {
     flex: 1,
+    minWidth: 0,
+    gap: 8,
   },
   title: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
-    color: theme?.colors?.textPrimary,
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    lineHeight: 19,
   },
-  host: {
-    fontSize: theme?.typography?.fontSize?.xs,
-    color: theme?.colors?.textMuted,
-    marginTop: 2,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  arrow: {
-    fontSize: theme?.typography?.fontSize?.lg,
-    color: theme?.colors?.textMuted,
-    marginLeft: theme?.spacing?.sm,
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+    paddingVertical: 3,
+    paddingHorizontal: 9,
+    borderRadius: 999,
+  },
+  pillIcon: {
+    fontSize: 12,
+  },
+  pillText: {
+    flexShrink: 1,
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+  },
+  source: {
+    flexShrink: 0,
+    fontFamily: fonts.body,
+    fontSize: 12,
   },
 
-  // Grid tile: width comes from the parent (3 per row).
+  // Grid card
   gridContainer: {
-    borderRadius: theme?.borderRadius?.lg,
-    backgroundColor: theme?.colors?.surface,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   gridThumbnail: {
     width: '100%',
     aspectRatio: 9 / 16,
-    backgroundColor: theme?.colors?.gray200,
+    borderRadius: 18,
+    borderWidth: 2,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+  },
+  fallbackIconGrid: {
+    fontSize: 32,
+  },
+  badge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeIcon: {
+    fontSize: 13,
   },
   gridTextContainer: {
-    paddingHorizontal: theme?.spacing?.sm,
-    paddingVertical: theme?.spacing?.xs + 2,
+    paddingTop: 10,
+    paddingHorizontal: 1,
+    gap: 3,
   },
   gridTitle: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
-    color: theme?.colors?.textPrimary,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    lineHeight: 16,
+  },
+  gridCategory: {
+    fontFamily: fonts.body,
+    fontSize: 11,
   },
 });
 

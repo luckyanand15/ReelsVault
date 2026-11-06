@@ -72,11 +72,57 @@ export const latterSpacing = {
   xl: 2,
 }
 
+// Redesign (see client/DESIGN.md): themed tokens, swapped by ThemeContext
+export const palettes = {
+  dark: {
+    bg: '#130F22',
+    dots: '#2B2250',
+    surf: '#221B3D',
+    line: '#4B3C85',
+    fg: '#F7F3FF',
+    mut: '#B9B0D6',
+    outline: '#F7F3FF',
+    scrim: 'rgba(19,15,34,0.86)',
+    pinkText: '#FF4D8D',
+  },
+  light: {
+    bg: '#F6F2FF',
+    dots: '#DCD2F4',
+    surf: '#FFFFFF',
+    line: '#B9AEE0',
+    fg: '#14102A',
+    mut: '#554A7A',
+    outline: '#14102A',
+    scrim: 'rgba(246,242,255,0.88)',
+    pinkText: '#D81B64',
+  },
+};
+
+// Same in both themes. Text on any bright fill is always ink.
+export const fixedColors = {
+  accent: '#C8F53C',
+  pink: '#FF4D8D',
+  cyan: '#3DDCFF',
+  yellow: '#FFD43B',
+  ink: '#14102A',
+};
+
+// One file per weight; pick the weight by family name, not fontWeight
+export const fonts = {
+  displaySemiBold: 'Unbounded-SemiBold',
+  display: 'Unbounded-ExtraBold',
+  body: 'DMSans-Medium',
+  bodyBold: 'DMSans-Bold',
+};
+
 const theme = {
   colors,
   spacing,
   typography,
   borderRadius,
+  palettes,
+  fixedColors,
+  fonts,
 };
 
 export default theme;

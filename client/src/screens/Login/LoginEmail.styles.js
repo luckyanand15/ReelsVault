@@ -1,122 +1,52 @@
 import { StyleSheet } from 'react-native';
-import theme from '../../constants/theme';
+import { fonts } from '../../constants/theme';
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: theme?.colors?.background,
   },
   keyboardAvoidingView: {
     flex: 1,
   },
   container: {
     flex: 1,
-    paddingHorizontal: theme?.spacing?.xl,
-    paddingTop: theme?.spacing?.lg,
-    paddingBottom: theme?.spacing?.xl,
+    paddingHorizontal: 28,
+    paddingTop: 56,
+    paddingBottom: 40,
     justifyContent: 'space-between',
   },
+  form: {
+    gap: 36,
+  },
   headerContent: {
-    marginTop: theme?.spacing?.md,
-    marginBottom: theme?.spacing?.xl,
+    gap: 12,
   },
   title: {
-    fontSize: theme?.typography?.fontSize?.xxl,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.textPrimary,
-    marginBottom: theme?.spacing?.xs,
+    fontFamily: fonts.display,
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -1,
   },
   subtitle: {
-    fontSize: theme?.typography?.fontSize?.md,
-    color: theme?.colors?.textMuted,
+    fontFamily: fonts.body,
+    fontSize: 16,
     lineHeight: 22,
   },
   successBanner: {
-    backgroundColor: '#F0FFF4',
-    borderWidth: 1,
-    borderColor: '#9AE6B4',
-    borderRadius: theme?.borderRadius?.lg,
-    padding: theme?.spacing?.md,
-    marginBottom: theme?.spacing?.lg,
+    borderWidth: 2,
+    borderRadius: 18,
+    padding: 16,
   },
   successText: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: '#276749',
+    fontFamily: fonts.body,
+    fontSize: 14,
     lineHeight: 20,
-  },
-  form: {
-    flex: 1,
-    gap: theme?.spacing?.lg,
-  },
-  inputGroup: {
-    gap: theme?.spacing?.xs,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
-    color: theme?.colors?.textPrimary,
-  },
-  star: {
-    color: '#E53E3E',
-    fontWeight: theme?.typography?.fontWeight?.bold,
-  },
-  input: {
-    height: 52,
-    borderWidth: 1.5,
-    borderColor: theme?.colors?.border,
-    borderRadius: theme?.borderRadius?.lg,
-    paddingHorizontal: theme?.spacing?.md,
-    fontSize: theme?.typography?.fontSize?.md,
-    color: theme?.colors?.textPrimary,
-    backgroundColor: theme?.colors?.surface,
-  },
-  inputFocused: {
-    borderColor: theme?.colors?.textPrimary,
-    backgroundColor: theme?.colors?.background,
-  },
-  inputError: {
-    borderColor: '#E53E3E',
-  },
-  errorText: {
-    fontSize: theme?.typography?.fontSize?.xs,
-    color: '#E53E3E',
-    marginTop: 2,
   },
   footer: {
     alignItems: 'flex-end',
-    paddingVertical: theme?.spacing?.md,
-  },
-  arrowButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme?.colors?.textPrimary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  arrowButtonDisabled: {
-    backgroundColor: theme?.colors?.gray300,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  arrowIcon: {
-    fontSize: 24,
-    color: theme?.colors?.background,
-    fontWeight: 'bold',
-  },
-  arrowIconDisabled: {
-    color: theme?.colors?.gray500,
   },
 });
 

@@ -1,2 +1,2 @@
-// Same layout as the signup password step.
-export { default } from '../Signup/SignupPassword.styles';
+// Same layout as the account password step.
+export { default } from './AccountPassword.styles';

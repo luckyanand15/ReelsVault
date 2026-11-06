@@ -1,12 +1,18 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import routes from '../../routes/routes';
+import { useTheme } from '../../context/ThemeContext';
+import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
+import BrandMark from '../../components/BrandMark/BrandMark';
+import PrimaryButton from '../../components/PrimaryButton/PrimaryButton';
+import WelcomeCollage from './WelcomeCollage';
 import styles from './Welcome.styles';
 
 export default function Welcome() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   const handleNavigateToSignup = () => {
     navigation?.navigate?.(routes?.Signup);
@@ -17,38 +23,41 @@ export default function Welcome() {
   };
 
   return (
-    <SafeAreaView style={styles?.safeArea}>
-      <View style={styles?.container}>
-        {/* Core Content: Logo and Title */}
-        <View style={styles?.content}>
-          <View style={styles?.logoContainer}>
-            <Text style={styles?.logoEmoji}>🎬</Text>
+    <View style={[styles?.root, { backgroundColor: colors?.bg }]}>
+      <ScreenBackground />
+
+      <SafeAreaView style={styles?.safeArea}>
+        <View style={styles?.header}>
+          <BrandMark />
+        </View>
+
+        <WelcomeCollage />
+
+        {/* Copy + actions */}
+        <View style={styles?.footer}>
+          <View style={styles?.copy}>
+            <Text
+              style={[styles?.title, { color: colors?.fg }]}
+              accessibilityRole="header"
+            >
+              {'Save it.\nSort it.\nFind it.'}
+            </Text>
+            <Text style={[styles?.subtitle, { color: colors?.mut }]}>
+              Your space to organize, categorize and search the Reels and Shorts
+              you save.
+            </Text>
           </View>
-          <Text style={styles?.title}>Welcome to Reels Vault</Text>
-          <Text style={styles?.subtitle}>
-            Your premium, space to organize, categorize, Reels and Shorts.
-          </Text>
-        </View>
 
-        {/* Auth Buttons */}
-        <View style={styles?.buttonContainer}>
-          <TouchableOpacity
-            style={[styles?.button, styles?.signUpButton]}
-            onPress={handleNavigateToSignup}
-            activeOpacity={0.8}
-          >
-            <Text style={styles?.signUpButtonText}>Sign up</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles?.button, styles?.loginButton]}
-            onPress={handleNavigateToLogin}
-            activeOpacity={0.7}
-          >
-            <Text style={styles?.loginButtonText}>Login</Text>
-          </TouchableOpacity>
+          <View style={styles?.buttonContainer}>
+            <PrimaryButton title="Sign up" onPress={handleNavigateToSignup} />
+            <PrimaryButton
+              title="Login"
+              variant="secondary"
+              onPress={handleNavigateToLogin}
+            />
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

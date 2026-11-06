@@ -9,7 +9,7 @@ import { fetchCategories } from '../api/category.api';
 import { mapCategory } from '../utils/mapCategory';
 import { useAuth } from './AuthContext';
 
-export const ALL_CATEGORY = { id: 'all', label: 'All', icon: '✨' };
+export const ALL_CATEGORY = { id: 'all', label: 'All', icon: '✦' };
 
 const CategoriesContext = createContext(null);
 

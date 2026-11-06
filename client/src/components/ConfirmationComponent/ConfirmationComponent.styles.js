@@ -1,80 +1,65 @@
 import { StyleSheet } from 'react-native';
-import theme from '../../constants/theme';
+import { fonts } from '../../constants/theme';
 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme?.spacing?.lg,
+    paddingHorizontal: 24,
   },
   backdropTouch: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
-  dialogContainer: {
+  dialogWrap: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: theme?.colors?.background,
-    borderRadius: theme?.borderRadius?.xl,
-    padding: theme?.spacing?.lg,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
+  },
+  dialogContainer: {
+    borderRadius: 24,
+    borderWidth: 2,
+    padding: 24,
+    gap: 10,
   },
   title: {
-    fontSize: theme?.typography?.fontSize?.lg,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.textPrimary,
-    marginBottom: theme?.spacing?.xs,
+    fontFamily: fonts.display,
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
   message: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: theme?.colors?.textSecondary,
-    lineHeight: 20,
-    marginTop: theme?.spacing?.xs,
-    marginBottom: theme?.spacing?.md,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 22,
   },
   buttonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme?.spacing?.sm,
-    marginTop: theme?.spacing?.xs,
+    gap: 12,
+    marginTop: 12,
+  },
+  button: {
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButton: {
     flex: 1,
-    height: 44,
-    borderRadius: theme?.borderRadius?.md,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-    backgroundColor: theme?.colors?.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  cancelButtonText: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
-    color: theme?.colors?.textPrimary,
-  },
-  confirmButton: {
+  confirmWrap: {
     flex: 1,
-    height: 44,
-    borderRadius: theme?.borderRadius?.md,
-    backgroundColor: theme?.colors?.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  confirmButtonDestructive: {
-    backgroundColor: '#DC2626', // Vibrant red for destructive action
+  buttonText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
   },
-  confirmButtonText: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.background,
+  pressedPush: {
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+  },
+  pressedFade: {
+    opacity: 0.7,
   },
 });
 

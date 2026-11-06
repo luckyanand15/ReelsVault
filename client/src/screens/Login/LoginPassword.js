@@ -2,30 +2,32 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import ScreenHeader from '../../components/ScreenHeader/ScreenHeader';
+import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { LoginStep, useLoginFlow } from '../../context/LoginFlowContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { login } from '../../api/auth.api';
 import styles from './LoginPassword.styles';
 
 export default function LoginPassword({ navigation }) {
   const { canAccessStep, loginData } = useLoginFlow();
   const { authLogin } = useAuth();
+  const { colors } = useTheme();
   const { email } = loginData;
   const canAccessPasswordStep = canAccessStep(LoginStep.Password) && Boolean(email);
 
   const [password, setPassword] = useState('');
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,103 +80,107 @@ export default function LoginPassword({ navigation }) {
     return null;
   }
 
+  const showHideToggle = (
+    <TouchableOpacity
+      style={styles?.toggleButton}
+      onPress={() => setShowPassword((prev) => !prev)}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+    >
+      <Text style={[styles?.toggleText, { color: colors?.fg }]}>
+        {showPassword ? 'Hide' : 'Show'}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <View style={[styles?.root, { backgroundColor: colors?.bg }]}>
+      <ScreenBackground variant="auth" circleColor={colors?.cyan} />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            {/* Header Content */}
-            <View style={styles?.headerContent}>
-              <Text style={styles?.title}>Enter your password</Text>
-              <Text style={styles?.subtitle}>
-                Logging in as {email}
-              </Text>
-            </View>
+      <SafeAreaView style={styles?.safeArea}>
+        <ScreenHeader onBack={() => navigation?.goBack?.()} />
 
-            {/* Input Form */}
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Password <Text style={styles?.star}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((prev) => !prev)}
-                    activeOpacity={0.7}
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles?.keyboardAvoidingView}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles?.container}>
+              <View style={styles?.form}>
+                {/* Header Content */}
+                <View style={styles?.headerContent}>
+                  <Text
+                    style={[styles?.title, { color: colors?.fg }]}
+                    accessibilityRole="header"
                   >
-                    <Text style={styles?.toggleText}>
-                      {showPassword ? 'Hide' : 'Show'}
+                    {'Enter your\npassword'}
+                  </Text>
+                  <View
+                    style={[
+                      styles?.emailPill,
+                      { backgroundColor: colors?.surf, borderColor: colors?.line },
+                    ]}
+                    accessible
+                    accessibilityLabel={`Logging in as ${email}`}
+                  >
+                    <Text
+                      style={[styles?.emailPillText, { color: colors?.mut }]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {email}
                     </Text>
+                  </View>
+                </View>
+
+                <View style={styles?.inputGroup}>
+                  <TextField
+                    label="Password"
+                    required
+                    error={error}
+                    labelAccessory={showHideToggle}
+                    value={password}
+                    onChangeText={handlePasswordChange}
+                    placeholder="Enter your password"
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="password"
+                    returnKeyType="done"
+                    onSubmitEditing={handleArrowPress}
+                  />
+
+                  <TouchableOpacity
+                    style={styles?.forgotPasswordButton}
+                    onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles?.forgotPasswordText, { color: colors?.fg }]}>
+                      Forgot password?
+                    </Text>
+                    {/* Android can't colour a text underline, so draw it */}
+                    <View
+                      style={[styles?.forgotPasswordUnderline, { backgroundColor: colors?.pink }]}
+                    />
                   </TouchableOpacity>
                 </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    passwordFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#A3A3A3"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                />
-                {!!error && <Text style={styles?.errorText}>{error}</Text>}
               </View>
 
-              <TouchableOpacity
-                style={styles?.forgotPasswordButton}
-                onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-              >
-                <Text style={styles?.forgotPasswordText}>Forgot password?</Text>
-              </TouchableOpacity>
+              {/* Footer with Arrow Button */}
+              <View style={styles?.footer}>
+                <RoundArrowButton
+                  onPress={handleArrowPress}
+                  active={isFormValid}
+                  loading={isSubmitting}
+                  accessibilityLabel="Log in"
+                />
+              </View>
             </View>
-
-            {/* Footer with Arrow Button */}
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isFormValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isFormValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Log in"
-                accessibilityState={{ disabled: !isFormValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[
-                      styles?.arrowIcon,
-                      !isFormValid && styles?.arrowIconDisabled,
-                    ]}
-                  >
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }

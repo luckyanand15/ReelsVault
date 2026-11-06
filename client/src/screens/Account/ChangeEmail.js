@@ -1,36 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { AccountFlow, useAccountFlow } from '../../context/AccountFlowContext';
 import { OTP_RESEND_COOLDOWN_SECONDS, OTP_VALID_MS } from '../../context/SignupFlowContext';
+import { useTheme } from '../../context/ThemeContext';
 import { sendEmailChangeOtp } from '../../api/account.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import { ERROR_CODES } from '../../constants/errorCodes';
 import { exitToSettings, isReauthRequired } from './accountFlowErrors';
-import styles from './ChangeEmail.styles';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Step 2 of changing the email: the new address, which gets the code.
 export default function ChangeEmail({ navigation }) {
   const { accountData, markOtpSent, resetAccountFlow } = useAccountFlow();
+  const { colors } = useTheme();
   const { reauthToken, newEmail: sentEmail, otpSentAt } = accountData;
   const canAccessStep = accountData.flow === AccountFlow.Email && Boolean(reauthToken);
 
   const [email, setEmail] = useState(sentEmail);
-  const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -107,78 +97,37 @@ export default function ChangeEmail({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      circleColor={colors?.cyan}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isEmailValid}
+          loading={isSubmitting}
+          accessibilityLabel="Send code"
+        />
+      }
+    >
+      <AuthHeading step="Step 2 of 3" title={'Your new\nemail'}>
+        We'll send a code to this address to make sure it's yours.
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 2 of 3</Text>
-              <Text style={styles?.title}>Your new email</Text>
-              <Text style={styles?.subtitle}>
-                We'll send a code to this address to make sure it's yours.
-              </Text>
-            </View>
-
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    New Email Address <Text style={styles?.star}>*</Text>
-                  </Text>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    emailFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  placeholder="Enter your new email address"
-                  placeholderTextColor="#A3A3A3"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="emailAddress"
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                  autoFocus
-                />
-                {!!error && <Text style={styles?.errorText}>{error}</Text>}
-              </View>
-            </View>
-
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isEmailValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isEmailValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Send code"
-                accessibilityState={{ disabled: !isEmailValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text style={[styles?.arrowIcon, !isEmailValid && styles?.arrowIconDisabled]}>
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <TextField
+        label="New Email Address"
+        required
+        error={error}
+        value={email}
+        onChangeText={handleEmailChange}
+        placeholder="Enter your new email address"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="emailAddress"
+        returnKeyType="done"
+        onSubmitEditing={handleArrowPress}
+        autoFocus
+      />
+    </AuthLayout>
   );
 }

@@ -1,222 +1,178 @@
 import { StyleSheet } from 'react-native';
-import theme from '../../constants/theme';
+import { fonts } from '../../constants/theme';
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: theme?.colors?.background,
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme?.spacing?.md,
-  },
-  card: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: theme?.spacing?.xl,
-    borderRadius: theme?.borderRadius?.xl,
-    backgroundColor: theme?.colors?.surface,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-    width: '90%',
-  },
-  icon: {
-    fontSize: 56,
-    marginBottom: theme?.spacing?.md,
-  },
-  title: {
-    fontSize: theme?.typography?.fontSize?.xxl,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.textPrimary,
-    marginBottom: theme?.spacing?.xs,
-  },
-  subtitle: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: theme?.colors?.textMuted,
-    textAlign: 'center',
   },
   reelsContainer: {
     flex: 1,
     alignSelf: 'stretch',
   },
-  reelsList: {
-    gap: theme?.spacing?.sm,
-    paddingBottom: 100, // keeps the last reel clear of the FAB
-  },
-  gridRow: {
-    gap: theme?.spacing?.sm,
-  },
-  listFooter: {
-    paddingVertical: theme?.spacing?.md,
-  },
-  emptyList: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 
-  // List / Grid toggle
-  viewToggleRow: {
+  // Search + grid/list toggle
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme?.spacing?.sm,
-    paddingHorizontal: theme?.spacing?.md,
-    paddingTop: theme?.spacing?.sm,
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
-
-  // Search box (shares the row with the view toggle)
   searchBox: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 34,
-    paddingHorizontal: theme?.spacing?.sm,
-    borderRadius: theme?.borderRadius?.md,
-    backgroundColor: theme?.colors?.gray100,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
-  },
-  searchIcon: {
-    fontSize: theme?.typography?.fontSize?.md,
-    color: theme?.colors?.textMuted,
-    marginRight: theme?.spacing?.xs,
+    gap: 10,
+    height: 48,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 2,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 0,
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: theme?.colors?.textPrimary,
-  },
-  searchClear: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: theme?.colors?.textMuted,
-    paddingLeft: theme?.spacing?.xs,
-  },
-  searchHint: {
-    fontSize: theme?.typography?.fontSize?.xs,
-    color: theme?.colors?.textMuted,
-    marginBottom: theme?.spacing?.xs,
+    fontFamily: fonts.body,
+    fontSize: 15,
   },
   viewToggle: {
     flexDirection: 'row',
-    padding: 2,
-    borderRadius: theme?.borderRadius?.md,
-    backgroundColor: theme?.colors?.gray100,
-    borderWidth: 1,
-    borderColor: theme?.colors?.border,
+    gap: 4,
+    padding: 3,
+    borderRadius: 16,
+    borderWidth: 2,
   },
   viewToggleButton: {
-    width: 34,
-    height: 28,
-    borderRadius: theme?.borderRadius?.sm,
+    width: 44,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  viewToggleButtonActive: {
-    backgroundColor: theme?.colors?.background,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+
+  // Reels list
+  reelsList: {
+    paddingHorizontal: 20,
+    paddingTop: 6,
   },
-  listIcon: {
-    width: 14,
-    height: 12,
-    justifyContent: 'space-between',
+  reelsGrid: {
+    rowGap: 20,
   },
-  listIconBar: {
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: theme?.colors?.textMuted,
+  reelsRows: {
+    rowGap: 14,
   },
-  gridIcon: {
-    width: 12,
-    height: 12,
+  gridRow: {
+    columnGap: 12,
+    alignItems: 'flex-start',
+  },
+  emptyList: {
+    flexGrow: 1,
+  },
+  listHeader: {
+    paddingBottom: 2,
+    gap: 8,
+  },
+  sectionRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
-    alignContent: 'space-between',
+    gap: 12,
   },
-  gridIconCell: {
-    width: 5,
-    height: 5,
-    borderRadius: 1,
-    backgroundColor: theme?.colors?.textMuted,
+  sectionTitle: {
+    flexShrink: 1,
+    fontFamily: fonts.display,
+    fontSize: 16,
+    letterSpacing: -0.2,
   },
-  viewIconActive: {
-    backgroundColor: theme?.colors?.textPrimary,
+  sectionCount: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+  },
+  searchHint: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+  },
+  listFooter: {
+    paddingVertical: 16,
+  },
+  loader: {
+    marginTop: 40,
+  },
+  emptyCard: {
+    paddingVertical: 36,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyTitle: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 
-  // FAB Backdrop
+  // + button and its menu
   fabBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    zIndex: 90,
-    elevation: 90,
+    ...StyleSheet.absoluteFill,
   },
-
-  // FAB Container & Button
   fabContainer: {
     position: 'absolute',
-    bottom: theme?.spacing?.xl,
-    right: theme?.spacing?.lg,
-    alignItems: 'flex-end',
-    zIndex: 100,
-    elevation: 100,
+    right: 20,
   },
-  fabButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme?.colors?.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  fabButtonActive: {
-    backgroundColor: theme?.colors?.gray800,
+  fabOpen: {
     transform: [{ rotate: '45deg' }],
   },
-  fabIconText: {
-    color: theme?.colors?.background,
-    fontSize: 28,
-    fontWeight: '300',
-    marginTop: -2,
+  fabButton: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  // Options Menu Popup
   menuContainer: {
-    marginBottom: theme?.spacing?.md,
-    gap: theme?.spacing?.sm,
+    position: 'absolute',
+    right: 20,
     alignItems: 'flex-end',
-    paddingRight: theme?.spacing?.xs,
+    gap: 14,
   },
   menuItem: {
-    paddingVertical: theme?.spacing?.xs,
-    paddingHorizontal: theme?.spacing?.sm,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    elevation: 0,
-    shadowOpacity: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    height: 56,
+    paddingLeft: 10,
+    paddingRight: 22,
+    borderRadius: 28,
+    borderWidth: 2,
   },
-  menuItemDisabled: {
-    opacity: 0.5,
+  menuItemIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   menuItemText: {
-    fontSize: theme?.typography?.fontSize?.md,
-    fontWeight: theme?.typography?.fontWeight?.bold,
-    color: theme?.colors?.textPrimary,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
   },
-  menuItemTextDisabled: {
-    color: theme?.colors?.textMuted,
-    fontWeight: theme?.typography?.fontWeight?.medium,
+  pressedPush: {
+    transform: [{ translateX: 2 }, { translateY: 2 }],
   },
 });
 

@@ -1,20 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import { View, Text, TouchableOpacity } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { AccountFlow, useAccountFlow } from '../../context/AccountFlowContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { changePassword } from '../../api/account.api';
 import { ERROR_CODES } from '../../constants/errorCodes';
 import { exitToSettings, isReauthRequired } from './accountFlowErrors';
@@ -28,14 +20,13 @@ const MAX_PASSWORD_BYTES = 72;
 export default function ChangePassword({ navigation }) {
   const { accountData, resetAccountFlow } = useAccountFlow();
   const { replaceTokens } = useAuth();
+  const { colors } = useTheme();
   const { flow, reauthToken, changeToken } = accountData;
   const canAccessStep =
     flow === AccountFlow.Password && Boolean(reauthToken) && Boolean(changeToken);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [confirmFocused, setConfirmFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,8 +46,8 @@ export default function ChangePassword({ navigation }) {
   // Bytes, not characters: an emoji counts as up to 4.
   const isPasswordShortEnough = new TextEncoder().encode(password).length <= MAX_PASSWORD_BYTES;
   const doPasswordsMatch = password === confirmPassword;
-  // hasLetter is left out on purpose: the button stays enabled so pressing it
-  // shows the reason, instead of a disabled button with no explanation.
+  // Only the look of the arrow: it stays pressable so pressing it shows the
+  // reason, instead of a disabled button with no explanation.
   const isFormValid = isPasswordLongEnough && confirmPassword.length > 0 && doPasswordsMatch;
 
   const handlePasswordChange = (text) => {
@@ -126,122 +117,72 @@ export default function ChangePassword({ navigation }) {
 
   const showMismatch = confirmPassword.length > 0 && !doPasswordsMatch;
 
+  const showHideToggle = (
+    <TouchableOpacity
+      style={styles?.toggleButton}
+      onPress={() => setShowPassword((prev) => !prev)}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+    >
+      <Text style={[styles?.toggleText, { color: colors?.fg }]}>
+        {showPassword ? 'Hide' : 'Show'}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      circleColor={colors?.yellow}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isFormValid}
+          loading={isSubmitting}
+          accessibilityLabel="Change password"
+        />
+      }
+    >
+      <AuthHeading step="Step 3 of 3" title={'Set a new\npassword'}>
+        You'll stay logged in here. Your other devices will be logged out.
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 3 of 3</Text>
-              <Text style={styles?.title}>Set a new password</Text>
-              <Text style={styles?.subtitle}>
-                You'll stay logged in here. Your other devices will be logged out.
-              </Text>
-            </View>
+      <View style={styles?.fields}>
+        <TextField
+          label="New Password"
+          required
+          labelAccessory={showHideToggle}
+          hint={`${MIN_PASSWORD_LENGTH} to ${MAX_PASSWORD_BYTES} characters, including a letter.`}
+          value={password}
+          onChangeText={handlePasswordChange}
+          placeholder="Enter your new password"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          returnKeyType="next"
+          onSubmitEditing={() => confirmInputRef.current?.focus()}
+          submitBehavior="submit"
+          autoFocus
+        />
 
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    New Password <Text style={styles?.star}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((prev) => !prev)}
-                    activeOpacity={0.7}
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    <Text style={styles?.toggleText}>{showPassword ? 'Hide' : 'Show'}</Text>
-                  </TouchableOpacity>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    passwordFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  placeholder="Enter your new password"
-                  placeholderTextColor="#A3A3A3"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="newPassword"
-                  returnKeyType="next"
-                  onSubmitEditing={() => confirmInputRef.current?.focus()}
-                  submitBehavior="submit"
-                  autoFocus
-                />
-                <Text style={styles?.hintText}>
-                  {MIN_PASSWORD_LENGTH} to {MAX_PASSWORD_BYTES} characters, including a letter.
-                </Text>
-              </View>
-
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Confirm New Password <Text style={styles?.star}>*</Text>
-                  </Text>
-                </View>
-                <TextInput
-                  ref={confirmInputRef}
-                  style={[
-                    styles?.input,
-                    confirmFocused && styles?.inputFocused,
-                    (showMismatch || !!error) && styles?.inputError,
-                  ]}
-                  value={confirmPassword}
-                  onChangeText={handleConfirmChange}
-                  onFocus={() => setConfirmFocused(true)}
-                  onBlur={() => setConfirmFocused(false)}
-                  placeholder="Re-enter your new password"
-                  placeholderTextColor="#A3A3A3"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="newPassword"
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                />
-                {error ? (
-                  <Text style={styles?.errorText}>{error}</Text>
-                ) : showMismatch ? (
-                  <Text style={styles?.errorText}>Passwords do not match.</Text>
-                ) : null}
-              </View>
-            </View>
-
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isFormValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isFormValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Change password"
-                accessibilityState={{ disabled: !isFormValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text style={[styles?.arrowIcon, !isFormValid && styles?.arrowIconDisabled]}>
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <TextField
+          inputRef={confirmInputRef}
+          label="Confirm New Password"
+          required
+          error={error || (showMismatch ? 'Passwords do not match.' : '')}
+          value={confirmPassword}
+          onChangeText={handleConfirmChange}
+          placeholder="Re-enter your new password"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          returnKeyType="done"
+          onSubmitEditing={handleArrowPress}
+        />
+      </View>
+    </AuthLayout>
   );
 }

@@ -1,85 +1,55 @@
 import { StyleSheet } from 'react-native';
-import theme from '../../constants/theme';
-import categoryModalStyles from '../AddCategoryModal/AddCategoryModal.styles';
+import { fonts } from '../../constants/theme';
 
-// Same drawer look as AddCategoryModal, plus the category chips row.
+// Sheet frame lives in BottomSheet; these are the Add Reel sections.
+// EditReelModal reuses the label, suggestion and error styles.
 const styles = StyleSheet.create({
-  ...categoryModalStyles,
+  section: {
+    gap: 10,
+  },
+  label: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+  },
+  // Chips run edge to edge of the sheet (its side padding is 24)
+  chipsScroll: {
+    marginHorizontal: -24,
+  },
   chipsContent: {
-    gap: theme?.spacing?.sm,
-    paddingVertical: theme?.spacing?.xs,
-    marginBottom: theme?.spacing?.sm,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme?.spacing?.md,
-    paddingVertical: theme?.spacing?.xs + 2,
-    borderRadius: theme?.borderRadius?.round,
-    backgroundColor: theme?.colors?.gray100,
-    borderWidth: 1,
-    borderColor: theme?.colors?.gray200,
-  },
-  activeChip: {
-    backgroundColor: theme?.colors?.textPrimary,
-    borderColor: theme?.colors?.textPrimary,
-  },
-  newChip: {
-    backgroundColor: theme?.colors?.background,
-    borderStyle: 'dashed',
-    borderColor: theme?.colors?.gray400,
-  },
-  chipIcon: {
-    marginRight: theme?.spacing?.xs,
-    fontSize: theme?.typography?.fontSize?.sm,
-  },
-  chipText: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    fontWeight: theme?.typography?.fontWeight?.medium,
-    color: theme?.colors?.textSecondary,
-  },
-  activeChipText: {
-    color: theme?.colors?.white,
-    fontWeight: theme?.typography?.fontWeight?.semibold,
+    gap: 10,
+    paddingHorizontal: 24,
+    paddingTop: 2,
+    paddingBottom: 4, // Room for the selected chip's 3px shadow
   },
   // Tappable title suggestion under the Title input.
   suggestion: {
-    marginTop: -theme?.spacing?.xs,
-    marginBottom: theme?.spacing?.md,
-    paddingHorizontal: theme?.spacing?.md,
-    paddingVertical: theme?.spacing?.sm,
-    borderRadius: theme?.borderRadius?.md,
-    backgroundColor: theme?.colors?.gray100,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: theme?.colors?.gray400,
   },
   suggestionLabel: {
-    fontSize: theme?.typography?.fontSize?.xs,
-    color: theme?.colors?.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: 12,
     marginBottom: 2,
   },
   suggestionText: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    fontWeight: theme?.typography?.fontWeight?.medium,
-    color: theme?.colors?.textPrimary,
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
   },
   findingTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme?.spacing?.xs,
-    marginTop: -theme?.spacing?.xs,
-    marginBottom: theme?.spacing?.md,
+    gap: 8,
   },
   findingTitleText: {
-    fontSize: theme?.typography?.fontSize?.xs,
-    color: theme?.colors?.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: 13,
   },
   errorText: {
-    fontSize: theme?.typography?.fontSize?.sm,
-    color: '#D32F2F',
-    marginTop: -theme?.spacing?.sm,
-    marginBottom: theme?.spacing?.sm,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
   },
 });
 

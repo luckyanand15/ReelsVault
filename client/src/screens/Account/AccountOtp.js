@@ -1,20 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import { Text } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import OtpCodeField from '../../components/OtpCodeField/OtpCodeField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { AccountFlow, useAccountFlow } from '../../context/AccountFlowContext';
 import { OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS } from '../../context/SignupFlowContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   confirmEmailChange,
   sendEmailChangeOtp,
@@ -36,6 +28,7 @@ export default function AccountOtp({ navigation, route }) {
   // earlier is still valid.
   const alreadySent = Boolean(route?.params?.alreadySent);
   const { accountData, confirmPasswordOtp, markOtpSent, resetAccountFlow } = useAccountFlow();
+  const { colors } = useTheme();
   const { flow, reauthToken, newEmail, otpSentAt } = accountData;
   const isEmailFlow = flow === AccountFlow.Email;
   const canAccessStep =
@@ -198,6 +191,17 @@ export default function AccountOtp({ navigation, route }) {
     }
   };
 
+  // The code verifies itself on the sixth digit; the arrow retries it, or
+  // says what's missing.
+  const handleArrowPress = () => {
+    const code = otp.join('');
+    if (code.length < 6) {
+      setError('Enter the 6-digit code.');
+      return;
+    }
+    handleVerify(code);
+  };
+
   if (!canAccessStep) {
     return null;
   }
@@ -205,72 +209,43 @@ export default function AccountOtp({ navigation, route }) {
   const sentTo = isEmailFlow ? newEmail : 'your current email';
 
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
+    <AuthLayout
+      // Matches the Settings row: email cyan, password yellow.
+      circleColor={isEmailFlow ? colors?.cyan : colors?.yellow}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={otp.join('').length === 6}
+          loading={isVerifying}
+          accessibilityLabel="Verify code"
+        />
+      }
+    >
+      <AuthHeading
+        step={isEmailFlow ? 'Step 3 of 3' : 'Step 2 of 3'}
+        title={'Enter the\ncode'}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>
-                {isEmailFlow ? 'Step 3 of 3' : 'Step 2 of 3'}
-              </Text>
-              <Text style={styles?.title}>Enter the code</Text>
-              <Text style={styles?.subtitle}>
-                {alreadySent ? 'We already sent a 6-digit code to' : "We've sent a 6-digit code to"}{' '}
-                <Text style={styles?.emailHighlight}>{sentTo}</Text>
-                {alreadySent ? '. It is still valid, so you can use it below.' : '.'}
-              </Text>
-            </View>
+        {alreadySent ? 'We already sent a 6-digit code to' : "We've sent a 6-digit code to"}{' '}
+        <Text style={[styles?.emailHighlight, { color: colors?.fg }]}>{sentTo}</Text>
+        {alreadySent ? '. It is still valid, so you can use it below.' : '.'}
+      </AuthHeading>
 
-            <View style={styles?.form}>
-              <View style={styles?.otpContainer}>
-                {otp.map((digit, index) => (
-                  <TextInput
-                    key={index}
-                    ref={(ref) => (inputRefs.current[index] = ref)}
-                    style={[
-                      styles?.otpBox,
-                      focusedIndex === index && styles?.otpBoxFocused,
-                      !!error && styles?.otpBoxError,
-                    ]}
-                    value={digit}
-                    onChangeText={(text) => handleChangeText(text, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    onFocus={() => setFocusedIndex(index)}
-                    onBlur={() => setFocusedIndex(null)}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    selectTextOnFocus
-                    autoFocus={index === 0}
-                  />
-                ))}
-              </View>
-
-              {isVerifying && <ActivityIndicator />}
-
-              {error ? <Text style={styles?.errorText}>{error}</Text> : null}
-
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={resendCooldown > 0 || isResending}
-                activeOpacity={0.7}
-              >
-                <Text style={styles?.hintText}>
-                  {isResending
-                    ? 'Sending...'
-                    : resendCooldown > 0
-                    ? `Resend code in ${resendCooldown}s`
-                    : "Didn't receive the code? Resend"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <OtpCodeField
+        digits={otp}
+        inputRefs={inputRefs}
+        focusedIndex={focusedIndex}
+        onFocusIndex={setFocusedIndex}
+        onChangeDigit={handleChangeText}
+        onKeyPress={handleKeyPress}
+        error={error}
+        resend={{
+          canResend: resendCooldown <= 0 && !isResending,
+          isResending,
+          cooldown: resendCooldown,
+          onPress: handleResend,
+        }}
+      />
+    </AuthLayout>
   );
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import Welcome from '../screens/Welcome/Welcome';
 import Signup from '../screens/Signup/Signup';
+import SignupLastName from '../screens/Signup/SignupLastName';
 import SignupEmail from '../screens/Signup/SignupEmail';
 import SignupOtp from '../screens/Signup/SignupOtp';
 import SignupPassword from '../screens/Signup/SignupPassword';
@@ -39,6 +40,7 @@ export default function AppNavigator() {
     >
       <Stack.Screen name={routes.Welcome} component={Welcome} />
       <Stack.Screen name={routes.Signup} component={Signup} />
+      <Stack.Screen name={routes.SignupLastName} component={SignupLastName} />
       <Stack.Screen name={routes.SignupEmail} component={SignupEmail} />
       <Stack.Screen name={routes.SignupOtp} component={SignupOtp} />
       <Stack.Screen name={routes.SignupPassword} component={SignupPassword} />

@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Modal,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   ScrollView,
-  Keyboard,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
+import BottomSheet from '../BottomSheet/BottomSheet';
+import Chip from '../Chip/Chip';
+import TextField from '../TextField/TextField';
+import PrimaryButton from '../PrimaryButton/PrimaryButton';
 import AddCategoryModal from '../AddCategoryModal/AddCategoryModal';
+import { useTheme } from '../../context/ThemeContext';
 import { fetchReelTitle } from '../../api/reel.api';
 import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './AddReelModal.styles';
@@ -28,7 +28,9 @@ export default function AddReelModal({
   onAddCategory,
   categories = [],
   defaultCategoryId = null,
+  defaultUrl = '',
 }) {
+  const { colors } = useTheme();
   const [categoryId, setCategoryId] = useState(null);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -39,41 +41,21 @@ export default function AddReelModal({
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (visible) {
       setCategoryId(defaultCategoryId);
       setTitle('');
-      setUrl('');
+      setUrl(defaultUrl);
       setError('');
     }
-  }, [visible, defaultCategoryId]);
-
-  useEffect(() => {
-    const showEvent =
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent =
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSub = Keyboard.addListener(showEvent, e => {
-      setKeyboardHeight(e?.endCoordinates?.height || 260);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  }, [visible, defaultCategoryId, defaultUrl]);
 
   const trimmedTitle = title.trim();
   const trimmedUrl = url.trim();
   // A blank title saves with the suggested one.
   const finalTitle = trimmedTitle || suggestedTitle;
-  const canSave = !!categoryId && !!finalTitle && !!trimmedUrl && !isSaving;
+  const isReady = !!categoryId && !!finalTitle && !!trimmedUrl;
 
   // Look up a title for each new link; a reply for a link since changed or
   // a closed drawer is dropped.
@@ -105,14 +87,30 @@ export default function AddReelModal({
 
   const handleClose = () => {
     if (isSaving) return;
-    setKeyboardHeight(0);
     if (onClose) onClose();
   };
 
+  // The button is never disabled: a press with something missing says what.
   const handleSave = async () => {
-    if (!canSave) return;
+    if (isSaving) return;
+    if (!categoryId) {
+      setError('Pick a category.');
+      return;
+    }
+    if (!trimmedUrl) {
+      setError('Paste a link.');
+      return;
+    }
     if (!URL_PATTERN.test(trimmedUrl)) {
       setError('Please paste a valid link starting with http:// or https://');
+      return;
+    }
+    if (!finalTitle) {
+      setError(
+        isFindingTitle
+          ? 'Still finding a title. Wait a moment or type one.'
+          : 'Add a title.',
+      );
       return;
     }
 
@@ -121,7 +119,6 @@ export default function AddReelModal({
     try {
       await onSave({ categoryId, title: finalTitle, url: trimmedUrl });
       setIsSaving(false);
-      setKeyboardHeight(0);
       if (onClose) onClose();
     } catch (saveError) {
       setIsSaving(false);
@@ -148,156 +145,124 @@ export default function AddReelModal({
   };
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      animationType="slide"
-      transparent={true}
-      statusBarTranslucent={true}
-      onRequestClose={handleClose}
+      onClose={handleClose}
+      title="Add Reel"
+      barColor={colors?.accent}
+      nested={
+        <AddCategoryModal
+          visible={isAddCategoryOpen}
+          onClose={() => setIsAddCategoryOpen(false)}
+          onAddCategory={handleAddCategory}
+        />
+      }
     >
-      <View style={styles?.overlay}>
-        <TouchableWithoutFeedback onPress={handleClose}>
-          <View style={styles?.backdropTouch} />
-        </TouchableWithoutFeedback>
-
-        <View
-          style={[
-            styles?.drawerContainer,
-            keyboardHeight > 0 && { paddingBottom: keyboardHeight + 16 },
-          ]}
+      <View style={styles?.section}>
+        <Text style={[styles?.label, { color: colors?.fg }]}>Category</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={styles?.chipsScroll}
+          contentContainerStyle={styles?.chipsContent}
         >
-          <View style={styles?.dragHandleContainer}>
-            <View style={styles?.dragHandle} />
-          </View>
-
-          <View style={styles?.header}>
-            <Text style={styles?.title}>Add Reel</Text>
-            <TouchableOpacity
-              style={styles?.closeButton}
-              onPress={handleClose}
-              activeOpacity={0.7}
-            >
-              <Text style={styles?.closeText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles?.formContainer}>
-            <Text style={styles?.label}>Category</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles?.chipsContent}
-            >
-              {categories.map(item => {
-                const isSelected = item?.id === categoryId;
-                return (
-                  <TouchableOpacity
-                    key={item?.id}
-                    style={[styles?.chip, isSelected && styles?.activeChip]}
-                    onPress={() => {
-                      setCategoryId(item?.id);
-                      if (error) setError('');
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles?.chipIcon}>{item?.icon}</Text>
-                    <Text
-                      style={[
-                        styles?.chipText,
-                        isSelected && styles?.activeChipText,
-                      ]}
-                    >
-                      {item?.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-              <TouchableOpacity
-                style={[styles?.chip, styles?.newChip]}
-                onPress={() => setIsAddCategoryOpen(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles?.chipText}>+ New Category</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-            <Text style={styles?.label}>Link</Text>
-            <TextInput
-              style={styles?.input}
-              placeholder="Paste the reel / short link"
-              placeholderTextColor="#A3A3A3"
-              value={url}
-              onChangeText={text => {
-                pastedRef.current = text.length - url.length > 1;
-                setUrl(text);
+          {categories.map(item => (
+            <Chip
+              key={item?.id}
+              label={item?.label}
+              icon={item?.icon}
+              selected={item?.id === categoryId}
+              onPress={() => {
+                setCategoryId(item?.id);
                 if (error) setError('');
               }}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              maxLength={2048}
             />
-
-            <Text style={styles?.label}>Title</Text>
-            <TextInput
-              style={styles?.input}
-              placeholder="e.g. 5-minute pasta recipe"
-              placeholderTextColor="#A3A3A3"
-              value={title}
-              onChangeText={setTitle}
-              maxLength={100}
-            />
-
-            {suggestedTitle && suggestedTitle !== trimmedTitle ? (
-              <TouchableOpacity
-                style={styles?.suggestion}
-                onPress={() => setTitle(suggestedTitle)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles?.suggestionLabel}>
-                  {trimmedTitle
-                    ? 'Use suggested title'
-                    : 'Suggested (used if left blank)'}
-                </Text>
-                <Text style={styles?.suggestionText} numberOfLines={2}>
-                  {suggestedTitle}
-                </Text>
-              </TouchableOpacity>
-            ) : isFindingTitle ? (
-              <View style={styles?.findingTitle}>
-                <ActivityIndicator size="small" color="#A3A3A3" />
-                <Text style={styles?.findingTitleText}>Finding a title…</Text>
-              </View>
-            ) : null}
-
-            {error ? <Text style={styles?.errorText}>{error}</Text> : null}
-
-            <TouchableOpacity
-              style={[
-                styles?.submitButton,
-                !canSave && styles?.disabledSubmitButton,
-              ]}
-              onPress={handleSave}
-              disabled={!canSave}
-              activeOpacity={0.8}
-            >
-              {isSaving ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles?.submitButtonText}>Save Reel</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+          ))}
+          <Chip
+            variant="new"
+            label="New Category"
+            onPress={() => setIsAddCategoryOpen(true)}
+          />
+        </ScrollView>
       </View>
 
-      {/* Rendered inside this Modal so iOS can stack it on top */}
-      <AddCategoryModal
-        visible={isAddCategoryOpen}
-        onClose={() => setIsAddCategoryOpen(false)}
-        onAddCategory={handleAddCategory}
+      <TextField
+        variant="sheet"
+        label="Link"
+        placeholder="Paste the reel / short link"
+        value={url}
+        onChangeText={text => {
+          pastedRef.current = text.length - url.length > 1;
+          setUrl(text);
+          if (error) setError('');
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="url"
+        maxLength={2048}
       />
-    </Modal>
+
+      <View style={styles?.section}>
+        <TextField
+          variant="sheet"
+          label="Title"
+          placeholder="e.g. 5-minute pasta recipe"
+          value={title}
+          onChangeText={text => {
+            setTitle(text);
+            if (error) setError('');
+          }}
+          maxLength={100}
+        />
+
+        {suggestedTitle && suggestedTitle !== trimmedTitle ? (
+          <TouchableOpacity
+            style={[
+              styles?.suggestion,
+              { backgroundColor: colors?.bg, borderColor: colors?.line },
+            ]}
+            onPress={() => setTitle(suggestedTitle)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+          >
+            <Text style={[styles?.suggestionLabel, { color: colors?.mut }]}>
+              {trimmedTitle
+                ? 'Use suggested title'
+                : 'Suggested (used if left blank)'}
+            </Text>
+            <Text
+              style={[styles?.suggestionText, { color: colors?.fg }]}
+              numberOfLines={2}
+            >
+              {suggestedTitle}
+            </Text>
+          </TouchableOpacity>
+        ) : isFindingTitle ? (
+          <View style={styles?.findingTitle}>
+            <ActivityIndicator size="small" color={colors?.mut} />
+            <Text style={[styles?.findingTitleText, { color: colors?.mut }]}>
+              Finding a title…
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles?.section}>
+        {error ? (
+          <Text style={[styles?.errorText, { color: colors?.pinkText }]}>
+            {error}
+          </Text>
+        ) : null}
+
+        <PrimaryButton
+          title="Save Reel"
+          onPress={handleSave}
+          inactive={!isReady}
+          loading={isSaving}
+          height={58}
+        />
+      </View>
+    </BottomSheet>
   );
 }

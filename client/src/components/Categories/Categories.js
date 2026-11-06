@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import Chip from '../Chip/Chip';
 import styles from './Categories.styles';
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'all', label: 'All', icon: '✨' },
+  { id: 'all', label: 'All', icon: '✦' },
   { id: 'shopping', label: 'Shopping', icon: '🛍️' },
   { id: 'binge', label: 'Binge', icon: '🎬' },
   { id: 'music', label: 'Music', icon: '🎵' },
@@ -15,6 +16,8 @@ export const DEFAULT_CATEGORIES = [
   { id: 'gaming', label: 'Gaming', icon: '🎮' },
 ];
 
+// Dashboard category chips: All, then the user's categories. Scrolls the
+// selected chip into view when it changes (e.g. after a swipe).
 export default function Categories({
   categories = DEFAULT_CATEGORIES,
   selectedCategory,
@@ -55,30 +58,19 @@ export default function Categories({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles?.scrollContent}
       >
-        {categories.map(item => {
-          const isSelected = item?.id === currentActive;
-
-          return (
-            <TouchableOpacity
-              key={item?.id}
-              style={[styles?.categoryChip, isSelected && styles?.activeChip]}
-              onPress={() => handleSelect(item?.id)}
-              onLayout={e => {
-                chipLayouts.current[item?.id] = e.nativeEvent.layout;
-              }}
-              activeOpacity={0.7}
-            >
-              {item?.icon ? (
-                <Text style={styles?.chipIcon}>{item?.icon}</Text>
-              ) : null}
-              <Text
-                style={[styles?.chipText, isSelected && styles?.activeChipText]}
-              >
-                {item?.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {categories.map(item => (
+          <Chip
+            key={item?.id}
+            look="dashboard"
+            label={item?.label}
+            icon={item?.icon}
+            selected={item?.id === currentActive}
+            onPress={() => handleSelect(item?.id)}
+            onLayout={e => {
+              chipLayouts.current[item?.id] = e.nativeEvent.layout;
+            }}
+          />
+        ))}
       </ScrollView>
     </View>
   );

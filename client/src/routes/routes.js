@@ -1,6 +1,7 @@
 const routes = {
   Welcome: 'Welcome',
   Signup: 'Signup',
+  SignupLastName: 'SignupLastName',
   SignupEmail: 'SignupEmail',
   SignupOtp: 'SignupOtp',
   SignupPassword: 'SignupPassword',

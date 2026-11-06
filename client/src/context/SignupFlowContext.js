@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
 export const SignupStep = {
-  Name: 0,
-  Email: 1,
-  Otp: 2,
-  Password: 3,
+  FirstName: 0,
+  LastName: 1,
+  Email: 2,
+  Otp: 3,
+  Password: 4,
 };
 
 // Mirrors OTP_TTL_MINUTES on the server: how long a sent code stays usable.
@@ -30,18 +31,27 @@ const SignupFlowContext = createContext(null);
 
 export function SignupFlowProvider({ children }) {
   const [signupData, setSignupData] = useState(initialSignupData);
-  const [currentStep, setCurrentStep] = useState(SignupStep.Name);
+  const [currentStep, setCurrentStep] = useState(SignupStep.FirstName);
 
   const value = useMemo(
     () => ({
       signupData,
       canAccessStep: (step) => currentStep >= step,
-      continueWithName: ({ firstName, lastName }) => {
-        setSignupData({
+      // Starts the flow afresh but keeps any last name already typed, so
+      // going back to fix the first name doesn't wipe it.
+      continueWithFirstName: ({ firstName }) => {
+        setSignupData((currentData) => ({
           ...initialSignupData,
           firstName,
+          lastName: currentData.lastName,
+        }));
+        setCurrentStep(SignupStep.LastName);
+      },
+      continueWithLastName: ({ lastName }) => {
+        setSignupData((currentData) => ({
+          ...currentData,
           lastName,
-        });
+        }));
         setCurrentStep(SignupStep.Email);
       },
       continueWithEmail: ({ email, otpSentAt }) => {

@@ -1,20 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../../components/Header/Header';
+import { View, Text, TouchableOpacity } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { createUser } from '../../api/user.api';
 import styles from './SignupPassword.styles';
 
@@ -25,6 +17,7 @@ const MAX_PASSWORD_BYTES = 72;
 export default function SignupPassword({ navigation }) {
   const { canAccessStep, completeSignup, signupData } = useSignupFlow();
   const { authLogin } = useAuth();
+  const { colors } = useTheme();
   const { firstName, lastName, email, isEmailVerified, verificationToken } = signupData;
   const canAccessPasswordStep =
     canAccessStep(SignupStep.Password) &&
@@ -34,8 +27,6 @@ export default function SignupPassword({ navigation }) {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [confirmFocused, setConfirmFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,8 +47,8 @@ export default function SignupPassword({ navigation }) {
   const isPasswordShortEnough =
     new TextEncoder().encode(password).length <= MAX_PASSWORD_BYTES;
   const doPasswordsMatch = password === confirmPassword;
-  // hasLetter is left out on purpose: the button stays enabled so pressing it
-  // shows the reason, instead of a disabled button with no explanation.
+  // Only the look of the arrow: it stays pressable so pressing it shows the
+  // reason, instead of a disabled button with no explanation.
   const isFormValid = isPasswordLongEnough && confirmPassword.length > 0 && doPasswordsMatch;
 
   const handlePasswordChange = (text) => {
@@ -138,131 +129,71 @@ export default function SignupPassword({ navigation }) {
 
   const showMismatch = confirmPassword.length > 0 && !doPasswordsMatch;
 
+  const showHideToggle = (
+    <TouchableOpacity
+      style={styles?.toggleButton}
+      onPress={() => setShowPassword((prev) => !prev)}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+    >
+      <Text style={[styles?.toggleText, { color: colors?.fg }]}>
+        {showPassword ? 'Hide' : 'Show'}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles?.safeArea} edges={['top', 'left', 'right']}>
-      <Header onLeftPress={() => navigation?.goBack?.()} />
+    <AuthLayout
+      circleColor={colors?.accent}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isFormValid}
+          loading={isSubmitting}
+          accessibilityLabel="Create account and go to Dashboard"
+        />
+      }
+    >
+      <AuthHeading step="Step 5 of 5" title={'Create a\npassword'}>
+        You'll use this password to log into Reels Vault.
+      </AuthHeading>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles?.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles?.container}>
-            {/* Header Content */}
-            <View style={styles?.headerContent}>
-              <Text style={styles?.stepIndicator}>Step 4 of 4</Text>
-              <Text style={styles?.title}>Create a password</Text>
-              <Text style={styles?.subtitle}>
-                You'll use this password to log into Reels Vault.
-              </Text>
-            </View>
+      <View style={styles?.fields}>
+        <TextField
+          label="Password"
+          required
+          labelAccessory={showHideToggle}
+          hint={`${MIN_PASSWORD_LENGTH} to ${MAX_PASSWORD_BYTES} characters, including a letter.`}
+          value={password}
+          onChangeText={handlePasswordChange}
+          placeholder="Enter your password"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          returnKeyType="next"
+          onSubmitEditing={() => confirmInputRef.current?.focus()}
+          blurOnSubmit={false}
+        />
 
-            {/* Input Form */}
-            <View style={styles?.form}>
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Password <Text style={styles?.star}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((prev) => !prev)}
-                    activeOpacity={0.7}
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    <Text style={styles?.toggleText}>
-                      {showPassword ? 'Hide' : 'Show'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <TextInput
-                  style={[
-                    styles?.input,
-                    passwordFocused && styles?.inputFocused,
-                    !!error && styles?.inputError,
-                  ]}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#A3A3A3"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="newPassword"
-                  returnKeyType="next"
-                  onSubmitEditing={() => confirmInputRef.current?.focus()}
-                  blurOnSubmit={false}
-                />
-                <Text style={styles?.hintText}>
-                  {MIN_PASSWORD_LENGTH} to {MAX_PASSWORD_BYTES} characters, including a letter.
-                </Text>
-              </View>
-
-              <View style={styles?.inputGroup}>
-                <View style={styles?.labelRow}>
-                  <Text style={styles?.label}>
-                    Confirm Password <Text style={styles?.star}>*</Text>
-                  </Text>
-                </View>
-                <TextInput
-                  ref={confirmInputRef}
-                  style={[
-                    styles?.input,
-                    confirmFocused && styles?.inputFocused,
-                    (showMismatch || !!error) && styles?.inputError,
-                  ]}
-                  value={confirmPassword}
-                  onChangeText={handleConfirmChange}
-                  onFocus={() => setConfirmFocused(true)}
-                  onBlur={() => setConfirmFocused(false)}
-                  placeholder="Re-enter your password"
-                  placeholderTextColor="#A3A3A3"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  textContentType="newPassword"
-                  returnKeyType="done"
-                  onSubmitEditing={handleArrowPress}
-                />
-                {error ? (
-                  <Text style={styles?.errorText}>{error}</Text>
-                ) : showMismatch ? (
-                  <Text style={styles?.errorText}>Passwords do not match.</Text>
-                ) : null}
-              </View>
-            </View>
-
-            {/* Footer with Arrow Button */}
-            <View style={styles?.footer}>
-              <TouchableOpacity
-                style={[
-                  styles?.arrowButton,
-                  (!isFormValid || isSubmitting) && styles?.arrowButtonDisabled,
-                ]}
-                onPress={handleArrowPress}
-                disabled={!isFormValid || isSubmitting}
-                activeOpacity={0.8}
-                accessibilityLabel="Create account and go to Dashboard"
-                accessibilityState={{ disabled: !isFormValid || isSubmitting }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={styles?.arrowIcon?.color} />
-                ) : (
-                  <Text
-                    style={[
-                      styles?.arrowIcon,
-                      !isFormValid && styles?.arrowIconDisabled,
-                    ]}
-                  >
-                    ➔
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <TextField
+          inputRef={confirmInputRef}
+          label="Confirm Password"
+          required
+          error={error || (showMismatch ? 'Passwords do not match.' : '')}
+          value={confirmPassword}
+          onChangeText={handleConfirmChange}
+          placeholder="Re-enter your password"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          returnKeyType="done"
+          onSubmitEditing={handleArrowPress}
+        />
+      </View>
+    </AuthLayout>
   );
 }

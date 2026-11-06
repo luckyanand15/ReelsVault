@@ -11,6 +11,12 @@ const getReels = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: reels, nextCursor });
 });
 
+// { all, categories: { [categoryId]: count } } for the dashboard headings.
+const getReelCounts = asyncHandler(async (req, res) => {
+  const counts = await reelService.getReelCounts(req.userId);
+  res.status(200).json({ success: true, data: counts });
+});
+
 const searchReels = asyncHandler(async (req, res) => {
   const { reels, nextPage, fuzzy } = await searchService.searchSavedReels(
     req.userId,
@@ -112,6 +118,7 @@ const deleteReel = asyncHandler(async (req, res) => {
 
 module.exports = {
   getReels,
+  getReelCounts,
   searchReels,
   createReel,
   previewReel,
