@@ -65,8 +65,10 @@ export function AuthProvider({ children }) {
   }, [applySession, clearSession]);
 
   const authLogin = async ({ user, accessToken, refreshToken }) => {
+    // Throw rather than return quietly: callers navigate to the Dashboard
+    // once this resolves, which would land the user there with no session.
     if (!user?.id || !accessToken || !refreshToken) {
-      return;
+      throw new Error('Incomplete session from server');
     }
     const session = { userId: user.id, accessToken, refreshToken };
     await secureSession.saveSession(session);

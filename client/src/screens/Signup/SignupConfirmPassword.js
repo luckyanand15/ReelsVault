@@ -11,7 +11,7 @@ import { createUser } from '../../api/user.api';
 import styles from './SignupPassword.styles';
 
 export default function SignupConfirmPassword({ navigation }) {
-  const { canAccessStep, completeSignup, signupData } = useSignupFlow();
+  const { canAccessStep, completeSignup, resetSignup, signupData } = useSignupFlow();
   const { authLogin } = useAuth();
   const { colors } = useTheme();
   const { firstName, lastName, email, isEmailVerified, verificationToken, password } =
@@ -29,6 +29,7 @@ export default function SignupConfirmPassword({ navigation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasCompletedSignupRef = useRef(false);
+  const shouldResetSignupOnUnmountRef = useRef(false);
 
   useEffect(() => {
     if (!canAccessConfirmStep && !hasCompletedSignupRef.current) {
@@ -36,7 +37,22 @@ export default function SignupConfirmPassword({ navigation }) {
     }
   }, [canAccessConfirmStep, navigation]);
 
-  const doPasswordsMatch = password === confirmPassword;
+  useEffect(
+    () => () => {
+      if (shouldResetSignupOnUnmountRef.current) {
+        resetSignup();
+      }
+    },
+    // resetSignup only calls state setters; the cleanup must run on unmount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // Once the account is created the held password is cleared while this
+  // screen is still animating out, so stop comparing against it then:
+  // otherwise "Passwords do not match." flashes on the way to the Dashboard.
+  const doPasswordsMatch =
+    hasCompletedSignupRef.current || password === confirmPassword;
   // Only the look of the arrow: it stays pressable so pressing it shows the
   // reason, instead of a disabled button with no explanation.
   const isFormValid = confirmPassword.length > 0 && doPasswordsMatch;
@@ -61,22 +77,15 @@ export default function SignupConfirmPassword({ navigation }) {
     setIsSubmitting(true);
     setError('');
 
+    let session;
     try {
-      const session = await createUser({
+      session = await createUser({
         firstName,
         lastName,
         email,
         verificationToken,
         password,
         confirmPassword,
-      });
-      hasCompletedSignupRef.current = true;
-      completeSignup({ userId: session?.user?.id });
-      await authLogin(session);
-      // Reset navigation stack and open Dashboard
-      navigation.reset({
-        index: 0,
-        routes: [{ name: routes.Dashboard }],
       });
     } catch (err) {
       if (err?.response?.status === 409) {
@@ -86,9 +95,37 @@ export default function SignupConfirmPassword({ navigation }) {
           err?.response?.data?.message || 'Something went wrong. Please try again.',
         );
       }
-    } finally {
       setIsSubmitting(false);
+      return;
     }
+
+    // From here the account exists on the server, so a retry would only get
+    // a 409. Whatever happens next, this screen is done.
+    hasCompletedSignupRef.current = true;
+
+    try {
+      await authLogin(session);
+    } catch (err) {
+      console.error('Failed to log in after signup:', err?.message);
+      // Send them to log in with the account they just made. The signup
+      // data is cleared on unmount, once the signup screens have left the
+      // stack (clearing it now would trip their redirect back to the start).
+      shouldResetSignupOnUnmountRef.current = true;
+      navigation.reset({
+        index: 1,
+        routes: [
+          { name: routes.Welcome },
+          { name: routes.LoginEmail, params: { email, accountCreated: true } },
+        ],
+      });
+      return;
+    }
+
+    navigation.reset({
+      index: 0,
+      routes: [{ name: routes.Dashboard }],
+    });
+    completeSignup({ userId: session?.user?.id });
   };
 
   if (!canAccessConfirmStep && !hasCompletedSignupRef.current) {
