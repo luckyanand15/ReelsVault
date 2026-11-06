@@ -40,7 +40,7 @@ export default function SignupLastName({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 2 of 5" title={'What\'s your\nlast name?'}>
+      <AuthHeading step="Step 2 of 6" title={'What\'s your\nlast name?'}>
         This is optional — you can skip it.
       </AuthHeading>
 

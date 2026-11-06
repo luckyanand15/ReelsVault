@@ -1,44 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import TextField from '../../components/TextField/TextField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
-import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { createUser } from '../../api/user.api';
 import styles from './SignupPassword.styles';
 
-const MIN_PASSWORD_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 8;
 // bcrypt ignores anything past 72 bytes; must match user.validator.js.
-const MAX_PASSWORD_BYTES = 72;
+export const MAX_PASSWORD_BYTES = 72;
 
 export default function SignupPassword({ navigation }) {
-  const { canAccessStep, completeSignup, signupData } = useSignupFlow();
-  const { authLogin } = useAuth();
+  const { canAccessStep, continueWithPassword, signupData } = useSignupFlow();
   const { colors } = useTheme();
-  const { firstName, lastName, email, isEmailVerified, verificationToken } = signupData;
+  const { userId, email, isEmailVerified, verificationToken } = signupData;
+  // Once the confirm screen creates the account it clears the token; this
+  // screen is still in the stack then and must not bounce back to the start.
+  const hasCompletedSignup = Boolean(userId);
   const canAccessPasswordStep =
     canAccessStep(SignupStep.Password) &&
     Boolean(email) &&
     isEmailVerified &&
     Boolean(verificationToken);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState(signupData?.password ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const confirmInputRef = useRef(null);
-  const hasCompletedSignupRef = useRef(false);
 
   useEffect(() => {
-    if (!canAccessPasswordStep && !hasCompletedSignupRef.current) {
+    if (!canAccessPasswordStep && !hasCompletedSignup) {
       navigation.replace(routes.Signup);
     }
-  }, [canAccessPasswordStep, navigation]);
+  }, [canAccessPasswordStep, hasCompletedSignup, navigation]);
 
   const isPasswordLongEnough = password.length >= MIN_PASSWORD_LENGTH;
   // Must match the server rule in user.validator.js.
@@ -46,10 +41,9 @@ export default function SignupPassword({ navigation }) {
   // Bytes, not characters: an emoji counts as up to 4.
   const isPasswordShortEnough =
     new TextEncoder().encode(password).length <= MAX_PASSWORD_BYTES;
-  const doPasswordsMatch = password === confirmPassword;
   // Only the look of the arrow: it stays pressable so pressing it shows the
   // reason, instead of a disabled button with no explanation.
-  const isFormValid = isPasswordLongEnough && confirmPassword.length > 0 && doPasswordsMatch;
+  const isFormValid = isPasswordLongEnough && isPasswordShortEnough && hasLetter;
 
   const handlePasswordChange = (text) => {
     setPassword(text);
@@ -58,14 +52,7 @@ export default function SignupPassword({ navigation }) {
     }
   };
 
-  const handleConfirmChange = (text) => {
-    setConfirmPassword(text);
-    if (error) {
-      setError('');
-    }
-  };
-
-  const handleArrowPress = async () => {
+  const handleArrowPress = () => {
     if (!isPasswordLongEnough) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
@@ -81,53 +68,13 @@ export default function SignupPassword({ navigation }) {
       return;
     }
 
-    if (!doPasswordsMatch) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    if (isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const session = await createUser({
-        firstName,
-        lastName,
-        email,
-        verificationToken,
-        password,
-        confirmPassword,
-      });
-      hasCompletedSignupRef.current = true;
-      completeSignup({ userId: session?.user?.id });
-      await authLogin(session);
-      // Reset navigation stack and open Dashboard
-      navigation.reset({
-        index: 0,
-        routes: [{ name: routes.Dashboard }],
-      });
-    } catch (err) {
-      if (err?.response?.status === 409) {
-        setError('This email is already registered.');
-      } else {
-        setError(
-          err?.response?.data?.message || 'Something went wrong. Please try again.',
-        );
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    continueWithPassword({ password });
+    navigation.navigate(routes.SignupConfirmPassword);
   };
 
-  if (!canAccessPasswordStep) {
+  if (!canAccessPasswordStep && !hasCompletedSignup) {
     return null;
   }
-
-  const showMismatch = confirmPassword.length > 0 && !doPasswordsMatch;
 
   const showHideToggle = (
     <TouchableOpacity
@@ -151,12 +98,11 @@ export default function SignupPassword({ navigation }) {
         <RoundArrowButton
           onPress={handleArrowPress}
           active={isFormValid}
-          loading={isSubmitting}
-          accessibilityLabel="Create account and go to Dashboard"
+          accessibilityLabel="Next step"
         />
       }
     >
-      <AuthHeading step="Step 5 of 5" title={'Create a\npassword'}>
+      <AuthHeading step="Step 5 of 6" title={'Create a\npassword'}>
         You'll use this password to log into Reels Vault.
       </AuthHeading>
 
@@ -166,6 +112,7 @@ export default function SignupPassword({ navigation }) {
           required
           labelAccessory={showHideToggle}
           hint={`${MIN_PASSWORD_LENGTH} to ${MAX_PASSWORD_BYTES} characters, including a letter.`}
+          error={error}
           value={password}
           onChangeText={handlePasswordChange}
           placeholder="Enter your password"
@@ -174,24 +121,9 @@ export default function SignupPassword({ navigation }) {
           autoCorrect={false}
           textContentType="newPassword"
           returnKeyType="next"
-          onSubmitEditing={() => confirmInputRef.current?.focus()}
-          blurOnSubmit={false}
-        />
-
-        <TextField
-          inputRef={confirmInputRef}
-          label="Confirm Password"
-          required
-          error={error || (showMismatch ? 'Passwords do not match.' : '')}
-          value={confirmPassword}
-          onChangeText={handleConfirmChange}
-          placeholder="Re-enter your password"
-          secureTextEntry={!showPassword}
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="newPassword"
-          returnKeyType="done"
+          autoFocus
           onSubmitEditing={handleArrowPress}
+          submitBehavior="submit"
         />
       </View>
     </AuthLayout>

@@ -193,7 +193,7 @@ export default function SignupOtp({ navigation, route }) {
         />
       }
     >
-      <AuthHeading step="Step 4 of 5" title={'Enter verification\ncode'}>
+      <AuthHeading step="Step 4 of 6" title={'Enter verification\ncode'}>
         {alreadySent ? 'We already sent a 6-digit code to' : 'We sent a 6-digit code to'}{' '}
         <Text style={[styles?.emailHighlight, { color: colors?.fg }]}>
           {email || 'your email'}

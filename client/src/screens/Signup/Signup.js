@@ -42,7 +42,7 @@ export default function Signup({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 1 of 5" title={'What\'s your\nfirst name?'}>
+      <AuthHeading step="Step 1 of 6" title={'What\'s your\nfirst name?'}>
         Enter your first name to get started.
       </AuthHeading>
 

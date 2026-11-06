@@ -125,7 +125,7 @@ export default function SignupEmail({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 3 of 5" title={'What\'s your\nemail?'}>
+      <AuthHeading step="Step 3 of 6" title={'What\'s your\nemail?'}>
         Enter your email address to continue setting up your account.
       </AuthHeading>
 
