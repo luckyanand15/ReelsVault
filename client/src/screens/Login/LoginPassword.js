@@ -146,6 +146,7 @@ export default function LoginPassword({ navigation }) {
                     textContentType="password"
                     returnKeyType="done"
                     onSubmitEditing={handleArrowPress}
+                    autoFocus
                   />
 
                   {/* Error (left, wraps) shares a row with the link (right),

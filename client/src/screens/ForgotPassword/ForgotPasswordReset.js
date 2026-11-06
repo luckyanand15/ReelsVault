@@ -182,6 +182,7 @@ export default function ForgotPasswordReset({ navigation }) {
           returnKeyType="next"
           onSubmitEditing={() => confirmInputRef.current?.focus()}
           blurOnSubmit={false}
+          autoFocus
         />
 
         <TextField

@@ -123,6 +123,7 @@ export default function LoginEmail({ navigation, route }) {
                   autoCorrect={false}
                   returnKeyType="done"
                   onSubmitEditing={handleArrowPress}
+                  autoFocus
                 />
               </View>
 
