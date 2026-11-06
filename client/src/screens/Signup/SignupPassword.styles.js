@@ -6,9 +6,10 @@ const styles = StyleSheet.create({
   fields: {
     gap: 22,
   },
-  // Label row is 44 tall here (toggle tap target); TextField centres the label
+  // Same height as the label row (20) so the label sits where it does on
+  // the First Name screen; hitSlop on the button keeps a 44px tap target.
   toggleButton: {
-    height: 44,
+    height: 20,
     paddingHorizontal: 4,
     justifyContent: 'center',
   },

@@ -79,6 +79,7 @@ export default function SignupPassword({ navigation }) {
   const showHideToggle = (
     <TouchableOpacity
       style={styles?.toggleButton}
+      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
       onPress={() => setShowPassword((prev) => !prev)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -113,6 +114,7 @@ export default function SignupPassword({ navigation }) {
           labelAccessory={showHideToggle}
           hint={`${MIN_PASSWORD_LENGTH} to ${MAX_PASSWORD_BYTES} characters, including a letter.`}
           error={error}
+          floatingError
           value={password}
           onChangeText={handlePasswordChange}
           placeholder="Enter your password"

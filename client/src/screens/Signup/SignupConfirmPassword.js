@@ -100,6 +100,7 @@ export default function SignupConfirmPassword({ navigation }) {
   const showHideToggle = (
     <TouchableOpacity
       style={styles?.toggleButton}
+      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
       onPress={() => setShowPassword((prev) => !prev)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -134,6 +135,7 @@ export default function SignupConfirmPassword({ navigation }) {
           required
           labelAccessory={showHideToggle}
           error={error || (showMismatch ? 'Passwords do not match.' : '')}
+          floatingError
           value={confirmPassword}
           onChangeText={handleConfirmChange}
           placeholder="Re-enter your password"
