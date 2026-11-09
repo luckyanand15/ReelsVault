@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../ScreenHeader/ScreenHeader';
 import ScreenBackground from '../ScreenBackground/ScreenBackground';
-import HardShadow from '../HardShadow/HardShadow';
 import Icon from '../Icon/Icon';
 import AddCategoryModal from '../AddCategoryModal/AddCategoryModal';
 import ConfirmationComponent from '../ConfirmationComponent/ConfirmationComponent';
@@ -218,86 +217,84 @@ export default function ManageCategories({ navigation }) {
               </Text>
             </View>
           ) : (
-            <HardShadow color={colors?.accent} offset={5} borderRadius={24}>
-              {/* Not overflow-hidden: a row dragged past the edge stays visible */}
-              <View
-                style={[
-                  styles?.categoryListCard,
-                  { backgroundColor: colors?.surf, borderColor: colors?.outline },
-                ]}
-              >
-                {displayCategories.map((item, index) => {
-                  const isDragging = draggingIndex === index;
-                  const isLast = index === displayCategories.length - 1;
-                  const panResponder = panResponders.current[index];
-                  const label = item?.label;
+            // Not overflow-hidden: a row dragged past the edge stays visible
+            <View
+              style={[
+                styles?.categoryListCard,
+                { backgroundColor: colors?.surf, borderColor: colors?.outline },
+              ]}
+            >
+              {displayCategories.map((item, index) => {
+                const isDragging = draggingIndex === index;
+                const isLast = index === displayCategories.length - 1;
+                const panResponder = panResponders.current[index];
+                const label = item?.label;
 
-                  return (
-                    <Animated.View
-                      key={item?.id}
-                      onLayout={e => {
-                        if (index === 0 && e.nativeEvent.layout.height > 0) {
-                          setRowHeight(e.nativeEvent.layout.height);
-                        }
-                      }}
-                      style={[
-                        styles?.categoryRow,
-                        !isLast && { borderBottomColor: colors?.line },
-                        isDragging && [
-                          styles?.draggingRow,
-                          { backgroundColor: colors?.bg, borderColor: colors?.accent },
-                          { transform: [{ translateY: dragY }] },
-                        ],
-                      ]}
+                return (
+                  <Animated.View
+                    key={item?.id}
+                    onLayout={e => {
+                      if (index === 0 && e.nativeEvent.layout.height > 0) {
+                        setRowHeight(e.nativeEvent.layout.height);
+                      }
+                    }}
+                    style={[
+                      styles?.categoryRow,
+                      !isLast && { borderBottomColor: colors?.line },
+                      isDragging && [
+                        styles?.draggingRow,
+                        { backgroundColor: colors?.bg, borderColor: colors?.accent },
+                        { transform: [{ translateY: dragY }] },
+                      ],
+                    ]}
+                  >
+                    <View
+                      style={styles?.dragHandleTouch}
+                      accessible
+                      accessibilityLabel={`Drag to reorder ${label}`}
+                      {...(panResponder?.panHandlers || {})}
                     >
-                      <View
-                        style={styles?.dragHandleTouch}
-                        accessible
-                        accessibilityLabel={`Drag to reorder ${label}`}
-                        {...(panResponder?.panHandlers || {})}
-                      >
-                        <Icon
-                          name="menu"
-                          size={22}
-                          strokeWidth={2.8}
-                          color={isDragging ? colors?.fg : colors?.mut}
-                        />
-                      </View>
+                      <Icon
+                        name="menu"
+                        size={22}
+                        strokeWidth={2.8}
+                        color={isDragging ? colors?.fg : colors?.mut}
+                      />
+                    </View>
 
-                      <View style={[styles?.iconTile, { backgroundColor: colors?.accent }]}>
-                        <Text style={styles?.categoryIcon}>{item?.icon || '📁'}</Text>
-                      </View>
-                      <Text
-                        style={[styles?.categoryLabel, { color: colors?.fg }]}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {label}
-                      </Text>
+                    <View style={[styles?.iconTile, { backgroundColor: colors?.accent }]}>
+                      <Text style={styles?.categoryIcon}>{item?.icon || '📁'}</Text>
+                    </View>
+                    <Text
+                      style={[styles?.categoryLabel, { color: colors?.fg }]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {label}
+                    </Text>
 
-                      <TouchableOpacity
-                        style={styles?.actionButton}
-                        onPress={() => handleEditCategory(item)}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Edit ${label}`}
-                      >
-                        <Icon name="pencil" size={20} strokeWidth={2.4} color={colors?.fg} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles?.actionButton}
-                        onPress={() => handleDeleteCategory(item)}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Delete ${label}`}
-                      >
-                        <Icon name="close" size={20} strokeWidth={2.8} color={colors?.pinkText} />
-                      </TouchableOpacity>
-                    </Animated.View>
-                  );
-                })}
-              </View>
-            </HardShadow>
+                    <TouchableOpacity
+                      style={styles?.actionButton}
+                      onPress={() => handleEditCategory(item)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Edit ${label}`}
+                    >
+                      <Icon name="pencil" size={20} strokeWidth={2.4} color={colors?.fg} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles?.actionButton}
+                      onPress={() => handleDeleteCategory(item)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${label}`}
+                    >
+                      <Icon name="close" size={20} strokeWidth={2.8} color={colors?.pinkText} />
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
+            </View>
           )}
         </ScrollView>
       </SafeAreaView>

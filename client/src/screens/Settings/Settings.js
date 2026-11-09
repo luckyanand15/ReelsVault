@@ -76,7 +76,7 @@ export default function Settings({ navigation, route }) {
             </TouchableOpacity>
           )}
 
-          <SettingsGroup label="Profile" shadowColor={colors?.accent}>
+          <SettingsGroup label="Profile">
             <SettingsRow
               icon="user"
               tileColor={colors?.accent}
@@ -107,7 +107,7 @@ export default function Settings({ navigation, route }) {
             />
           </SettingsGroup>
 
-          <SettingsGroup label="Categories" shadowColor={colors?.cyan}>
+          <SettingsGroup label="Categories">
             <SettingsRow
               icon="tag"
               tileColor={colors?.pink}
@@ -117,7 +117,7 @@ export default function Settings({ navigation, route }) {
             />
           </SettingsGroup>
 
-          <SettingsGroup label="Account" shadowColor={colors?.pink}>
+          <SettingsGroup label="Account">
             <SettingsRow
               icon="logout"
               tileColor={colors?.fg}
