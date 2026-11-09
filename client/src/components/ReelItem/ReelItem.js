@@ -1,14 +1,15 @@
 import React, { memo, useEffect, useState } from 'react';
 import { Text, View, TouchableOpacity, Linking, Image } from 'react-native';
 import Icon from '../Icon/Icon';
+import SourceIcon from '../SourceIcon/SourceIcon';
 import { useTheme } from '../../context/ThemeContext';
-import { reelSource } from '../../utils/reelSource';
+import { reelSource, reelSourceId } from '../../utils/reelSource';
 import styles from './ReelItem.styles';
 
 // onThumbnailMissing fires when the reel has no thumbnail or its image fails
 // to load (Instagram/TikTok links expire); the parent decides whether to ask
 // the server for a fresh one.
-// variant 'grid' renders a 9:16 card (category badge on the thumbnail, title
+// variant 'grid' renders a 9:16 card (source app logo on the thumbnail, title
 // and category name below) sized by the parent through `style`; 'list' is the
 // full-width row with a category pill and the source.
 // onLongPress(reel) opens the parent's reel actions. title is the reel's
@@ -31,6 +32,7 @@ function ReelItem({
   const [failedUrl, setFailedUrl] = useState(null);
   const showThumbnail = !!thumbnailUrl && thumbnailUrl !== failedUrl;
   const source = reelSource(reel?.url);
+  const sourceId = reelSourceId(reel?.url);
 
   useEffect(() => {
     if (!thumbnailUrl) {
@@ -70,9 +72,9 @@ function ReelItem({
           {icon || '🎬'}
         </Text>
       )}
-      {isGrid && !!icon && (
-        <View style={[styles?.badge, { backgroundColor: colors?.accent }]}>
-          <Text style={styles?.badgeIcon}>{icon}</Text>
+      {isGrid && !!sourceId && (
+        <View style={styles?.badge}>
+          <SourceIcon source={sourceId} size={16} />
         </View>
       )}
     </View>
