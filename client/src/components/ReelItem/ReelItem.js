@@ -11,7 +11,8 @@ import styles from './ReelItem.styles';
 // the server for a fresh one.
 // variant 'grid' renders a 9:16 card (source app logo on the thumbnail, title
 // and category name below) sized by the parent through `style`; 'list' is the
-// full-width row with a category pill and the source.
+// full-width row with a category pill and the source app logo (the host
+// name for sites without one).
 // onLongPress(reel) opens the parent's reel actions. title is the reel's
 // title in the category being shown; icon and categoryLabel are that
 // category's.
@@ -129,9 +130,13 @@ function ReelItem({
                   </Text>
                 </View>
               )}
-              <Text style={[styles?.source, { color: colors?.mut }]} numberOfLines={1}>
-                {source}
-              </Text>
+              {sourceId ? (
+                <SourceIcon source={sourceId} size={16} />
+              ) : (
+                <Text style={[styles?.source, { color: colors?.mut }]} numberOfLines={1}>
+                  {source}
+                </Text>
+              )}
             </View>
           </View>
           <Icon name="chevronRight" size={20} color={colors?.mut} />
