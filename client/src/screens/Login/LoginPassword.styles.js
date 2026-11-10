@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   form: {
-    gap: 36,
+    gap: 16,
   },
   headerContent: {
     gap: 12,
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   // Label row is 44 tall here (toggle tap target); TextField centres the label
   toggleButton: {
-    height: 44,
+    // height: 44,
     paddingHorizontal: 4,
     justifyContent: 'center',
   },
@@ -55,8 +55,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 14,
   },
+  belowFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  // Takes the space left of the link and wraps there. marginTop lines its
+  // first line up with the link text (centred in the 44 tall button).
+  errorText: {
+    flex: 1,
+    marginTop: 11,
+    marginRight: 16,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    lineHeight: 17,
+  },
   forgotPasswordButton: {
-    alignSelf: 'flex-end',
+    marginLeft: 'auto',
+    flexShrink: 0,
     height: 44,
     justifyContent: 'center',
   },

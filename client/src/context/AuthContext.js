@@ -65,8 +65,10 @@ export function AuthProvider({ children }) {
   }, [applySession, clearSession]);
 
   const authLogin = async ({ user, accessToken, refreshToken }) => {
+    // Throw rather than return quietly: callers navigate to the Dashboard
+    // once this resolves, which would land the user there with no session.
     if (!user?.id || !accessToken || !refreshToken) {
-      return;
+      throw new Error('Incomplete session from server');
     }
     const session = { userId: user.id, accessToken, refreshToken };
     await secureSession.saveSession(session);
@@ -93,8 +95,14 @@ export function AuthProvider({ children }) {
     await clearSession();
   };
 
+  // Forgets the session on this device only, for when the server has already
+  // ended it (e.g. the account was deleted), so there's nothing to revoke.
+  const endLocalSession = () => clearSession();
+
   return (
-    <AuthContext.Provider value={{ userId, isLoading, authLogin, replaceTokens, logout }}>
+    <AuthContext.Provider
+      value={{ userId, isLoading, authLogin, replaceTokens, logout, endLocalSession }}
+    >
       {children}
     </AuthContext.Provider>
   );

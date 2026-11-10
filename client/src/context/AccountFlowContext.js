@@ -4,6 +4,8 @@ import React, { createContext, useContext, useMemo, useState } from 'react';
 export const AccountFlow = {
   Email: 'email',
   Password: 'password',
+  // Delete account: code first, then a final confirm, then the password.
+  Delete: 'delete',
 };
 
 const initialAccountData = {
@@ -16,6 +18,11 @@ const initialAccountData = {
   otpSentAt: null,
   // Password flow: from the verified code, spent when the password is set.
   changeToken: '',
+  // Password flow: held between the new-password and confirm screens; sent
+  // to the server only from the confirm screen.
+  newPassword: '',
+  // Delete flow: from the verified code, spent along with the password.
+  deleteToken: '',
 };
 
 const AccountFlowContext = createContext(null);
@@ -26,7 +33,7 @@ export function AccountFlowProvider({ children }) {
   const value = useMemo(
     () => ({
       accountData,
-      startAccountFlow: ({ flow, reauthToken }) => {
+      startAccountFlow: ({ flow, reauthToken = '' }) => {
         setAccountData({ ...initialAccountData, flow, reauthToken });
       },
       markOtpSent: ({ newEmail, otpSentAt = Date.now() } = {}) => {
@@ -35,10 +42,17 @@ export function AccountFlowProvider({ children }) {
           newEmail: newEmail ?? currentData.newEmail,
           otpSentAt,
           changeToken: '',
+          deleteToken: '',
         }));
       },
       confirmPasswordOtp: ({ changeToken }) => {
         setAccountData((currentData) => ({ ...currentData, changeToken }));
+      },
+      confirmDeleteOtp: ({ deleteToken }) => {
+        setAccountData((currentData) => ({ ...currentData, deleteToken }));
+      },
+      setNewPassword: ({ newPassword }) => {
+        setAccountData((currentData) => ({ ...currentData, newPassword }));
       },
       resetAccountFlow: () => setAccountData(initialAccountData),
     }),

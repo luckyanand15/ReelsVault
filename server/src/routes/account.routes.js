@@ -10,6 +10,8 @@ const {
   passwordOtpSchema,
   verifyPasswordOtpSchema,
   changePasswordSchema,
+  verifyDeleteOtpSchema,
+  deleteAccountSchema,
 } = require('../validators/account.validator');
 const controller = require('../controllers/account.controller');
 
@@ -55,5 +57,16 @@ router.post(
   validate(changePasswordSchema),
   controller.changePassword,
 );
+
+// Delete account: send a code to the current address, trade it for a
+// deleteToken, then delete with that token and the current password.
+router.post('/delete/otp', otpSendLimiter, controller.sendDeleteAccountOtp);
+router.post(
+  '/delete/verify',
+  otpVerifyLimiter,
+  validate(verifyDeleteOtpSchema),
+  controller.verifyDeleteAccountOtp,
+);
+router.post('/delete', authLimiter, validate(deleteAccountSchema), controller.deleteAccount);
 
 module.exports = router;

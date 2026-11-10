@@ -8,10 +8,13 @@ import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
 import styles from './Signup.styles';
 
 export default function SignupLastName({ navigation }) {
-  const { canAccessStep, continueWithLastName, signupData } = useSignupFlow();
+  const { canAccessStep, continueWithLastName } = useSignupFlow();
   const canAccessLastNameStep = canAccessStep(SignupStep.LastName);
 
-  const [lastName, setLastName] = useState(signupData?.lastName ?? '');
+  // Always starts empty: this screen is only freshly mounted when arriving
+  // from the first-name screen, and going back past it should clear it.
+  // (Returning here from the email screen keeps the mounted state as-is.)
+  const [lastName, setLastName] = useState('');
 
   useEffect(() => {
     if (!canAccessLastNameStep) {
@@ -40,7 +43,7 @@ export default function SignupLastName({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 2 of 5" title={'What\'s your\nlast name?'}>
+      <AuthHeading step="Step 2 of 6" title={'What\'s your\nlast name?'}>
         This is optional — you can skip it.
       </AuthHeading>
 

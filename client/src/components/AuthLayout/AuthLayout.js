@@ -2,12 +2,11 @@ import React from 'react';
 import {
   View,
   Text,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardAvoider from '../KeyboardAvoider/KeyboardAvoider';
 import ScreenHeader from '../ScreenHeader/ScreenHeader';
 import ScreenBackground from '../ScreenBackground/ScreenBackground';
 import { useTheme } from '../../context/ThemeContext';
@@ -33,17 +32,14 @@ export default function AuthLayout({
       <SafeAreaView style={styles?.safeArea}>
         <ScreenHeader onBack={onBack} />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles?.keyboardAvoidingView}
-        >
+        <KeyboardAvoider style={styles?.keyboardAvoidingView}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles?.container}>
               <View style={[styles?.form, formStyle]}>{children}</View>
               {!!footer && <View style={styles?.footer}>{footer}</View>}
             </View>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+        </KeyboardAvoider>
       </SafeAreaView>
     </View>
   );

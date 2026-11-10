@@ -32,6 +32,17 @@ const handleAccountError = (res, err) => {
   return false;
 };
 
+const sendLoginLocked = (res, err) => {
+  const minutes = Math.ceil(err.retryAfter / 60);
+  res.set('Retry-After', String(err.retryAfter));
+  return res.status(429).json({
+    success: false,
+    code: ERROR_CODES.LOGIN_LOCKED,
+    retryAfter: err.retryAfter,
+    message: `Too many incorrect passwords. Please try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`,
+  });
+};
+
 const handled = handler =>
   asyncHandler(async (req, res) => {
     try {
@@ -55,14 +66,7 @@ const reauthenticate = handled(async (req, res) => {
     res.status(200).json({ success: true, data });
   } catch (err) {
     if (err instanceof authService.LoginLockedError) {
-      const minutes = Math.ceil(err.retryAfter / 60);
-      res.set('Retry-After', String(err.retryAfter));
-      return res.status(429).json({
-        success: false,
-        code: ERROR_CODES.LOGIN_LOCKED,
-        retryAfter: err.retryAfter,
-        message: `Too many incorrect passwords. Please try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`,
-      });
+      return sendLoginLocked(res, err);
     }
     if (err instanceof accountService.IncorrectPasswordError) {
       return res.status(400).json({ success: false, message: 'Incorrect password' });
@@ -145,6 +149,45 @@ const changePassword = handled(async (req, res) => {
   res.status(200).json({ success: true, message: 'Password updated', data: tokens });
 });
 
+const sendDeleteAccountOtp = handled(async (req, res) => {
+  await accountService.sendDeleteAccountOtp(req.userId);
+  res.status(200).json({ success: true, message: 'OTP sent successfully' });
+});
+
+const verifyDeleteAccountOtp = handled(async (req, res) => {
+  const result = await accountService.verifyDeleteAccountOtp(req.userId, req.body);
+  if (!result.valid) {
+    return res.status(400).json({ success: false, message: result.message });
+  }
+  res.status(200).json({
+    success: true,
+    message: 'OTP verified successfully',
+    data: { deleteToken: result.verificationToken },
+  });
+});
+
+const deleteAccount = handled(async (req, res) => {
+  try {
+    await accountService.deleteAccount(req.userId, req.body, req.ip);
+  } catch (err) {
+    if (err instanceof authService.LoginLockedError) {
+      return sendLoginLocked(res, err);
+    }
+    if (err instanceof accountService.IncorrectPasswordError) {
+      return res.status(400).json({ success: false, message: 'Incorrect password' });
+    }
+    if (err instanceof accountService.InvalidDeleteTokenError) {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.DELETE_TOKEN_INVALID,
+        message: 'Your code has expired. Please start again.',
+      });
+    }
+    throw err;
+  }
+  res.status(200).json({ success: true, message: 'Account deleted' });
+});
+
 module.exports = {
   updateName,
   reauthenticate,
@@ -153,4 +196,7 @@ module.exports = {
   sendPasswordChangeOtp,
   verifyPasswordChangeOtp,
   changePassword,
+  sendDeleteAccountOtp,
+  verifyDeleteAccountOtp,
+  deleteAccount,
 };

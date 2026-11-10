@@ -74,6 +74,20 @@ const sendEmailChangedEmail = (oldEmail, newEmail) =>
     `<p>The email for your ReelsVault account was just changed to <strong>${newEmail}</strong>. This address will no longer be used to log in.</p><p>If this wasn't you, someone else may have access to your account.</p>`,
   );
 
+const sendAccountDeleteOtpEmail = (email, code, ttlMinutes) =>
+  sendEmail(
+    email,
+    'Confirm deleting your ReelsVault account',
+    `<p>Your ReelsVault code to delete your account is <strong>${code}</strong>.</p><p>This code expires in ${ttlMinutes} minutes.</p><p>If you didn't ask to delete your account, don't share this code with anyone. Your account stays as it is.</p>`,
+  );
+
+const sendAccountDeletedEmail = email =>
+  sendEmail(
+    email,
+    'Your ReelsVault account was deleted',
+    `<p>Your ReelsVault account has been deleted, along with all your saved reels and categories.</p><p>Thanks for using ReelsVault. You're welcome to sign up again any time.</p>`,
+  );
+
 module.exports = {
   sendOtpEmail,
   sendPasswordResetEmail,
@@ -81,4 +95,6 @@ module.exports = {
   sendPasswordChangeOtpEmail,
   sendEmailChangeOtpEmail,
   sendEmailChangedEmail,
+  sendAccountDeleteOtpEmail,
+  sendAccountDeletedEmail,
 };

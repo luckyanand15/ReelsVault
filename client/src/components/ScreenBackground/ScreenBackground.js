@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Defs, Pattern, Circle, Rect, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../../context/ThemeContext';
 import styles from './ScreenBackground.styles';
 
@@ -18,13 +18,12 @@ export function Sparkle({ size, color, style }) {
 }
 
 // Decorative screen backdrop.
-// variant: 'welcome' (dots, big circle, two sparkles), 'auth' (login screens:
-// dots, smaller circle, one sparkle), 'inner' (Settings and other inner
-// screens: dots, smaller circle), 'calm' (Dashboard: circle only).
+// variant: 'welcome' (big circle, two sparkles), 'auth' (login screens:
+// smaller circle, one sparkle), 'inner' (Settings and other inner
+// screens: smaller circle), 'calm' (Dashboard: circle only).
 // circleColor defaults to pink.
 export default function ScreenBackground({ variant = 'welcome', circleColor }) {
   const { colors } = useTheme();
-  const showDots = variant !== 'calm';
 
   return (
     <View
@@ -33,22 +32,6 @@ export default function ScreenBackground({ variant = 'welcome', circleColor }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {showDots && (
-        <Svg width="100%" height="100%" style={styles?.dots}>
-          <Defs>
-            <Pattern
-              id="screenDots"
-              width={22}
-              height={22}
-              patternUnits="userSpaceOnUse"
-            >
-              <Circle cx={11} cy={11} r={1.5} fill={colors?.dots} />
-            </Pattern>
-          </Defs>
-          <Rect width="100%" height="100%" fill="url(#screenDots)" />
-        </Svg>
-      )}
-
       <View
         style={[
           variant === 'auth' || variant === 'inner'

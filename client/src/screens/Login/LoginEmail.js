@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardAvoider from '../../components/KeyboardAvoider/KeyboardAvoider';
 import ScreenHeader from '../../components/ScreenHeader/ScreenHeader';
 import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
 import TextField from '../../components/TextField/TextField';
@@ -20,8 +19,8 @@ import styles from './LoginEmail.styles';
 export default function LoginEmail({ navigation, route }) {
   const { confirmEmail } = useLoginFlow();
   const { colors } = useTheme();
-  // Set after a password reset, which lands the user back here.
-  const passwordReset = Boolean(route?.params?.passwordReset);
+  // Set when signup created the account but couldn't log the user in.
+  const accountCreated = Boolean(route?.params?.accountCreated);
 
   const [email, setEmail] = useState(route?.params?.email ?? '');
   const [error, setError] = useState('');
@@ -66,10 +65,7 @@ export default function LoginEmail({ navigation, route }) {
       <SafeAreaView style={styles?.safeArea}>
         <ScreenHeader onBack={() => navigation?.goBack?.()} />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles?.keyboardAvoidingView}
-        >
+        <KeyboardAvoider style={styles?.keyboardAvoidingView}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles?.container}>
               <View style={styles?.form}>
@@ -86,7 +82,7 @@ export default function LoginEmail({ navigation, route }) {
                   </Text>
                 </View>
 
-                {passwordReset && (
+                {accountCreated && (
                   <View
                     style={[
                       styles?.successBanner,
@@ -94,8 +90,7 @@ export default function LoginEmail({ navigation, route }) {
                     ]}
                   >
                     <Text style={[styles?.successText, { color: colors?.fg }]}>
-                      Your password has been changed and you've been logged out on all devices.
-                      Log in with your new password.
+                      Your account was created. Log in to continue.
                     </Text>
                   </View>
                 )}
@@ -112,6 +107,7 @@ export default function LoginEmail({ navigation, route }) {
                   autoCorrect={false}
                   returnKeyType="done"
                   onSubmitEditing={handleArrowPress}
+                  autoFocus
                 />
               </View>
 
@@ -125,7 +121,7 @@ export default function LoginEmail({ navigation, route }) {
               </View>
             </View>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+        </KeyboardAvoider>
       </SafeAreaView>
     </View>
   );

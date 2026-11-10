@@ -1,17 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import TextField from '../../components/TextField/TextField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+import CancelSignupSheet from '../../components/CancelSignupSheet/CancelSignupSheet';
+import useCancelForgotPasswordGuard from '../../hooks/useCancelForgotPasswordGuard';
 import { useTheme } from '../../context/ThemeContext';
 import routes from '../../routes/routes';
 import {
   ForgotPasswordStep,
   useForgotPasswordFlow,
 } from '../../context/ForgotPasswordFlowContext';
-import { useLoginFlow } from '../../context/LoginFlowContext';
-import { resetPassword } from '../../api/auth.api';
-import { ERROR_CODES } from '../../constants/errorCodes';
 import styles from './ForgotPasswordReset.styles';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -19,27 +18,22 @@ const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_BYTES = 72;
 
 export default function ForgotPasswordReset({ navigation }) {
-  const { canAccessStep, forgotPasswordData, resetForgotPasswordFlow } =
+  const { canAccessStep, continueWithPassword, forgotPasswordData } =
     useForgotPasswordFlow();
-  const { resetLoginFlow } = useLoginFlow();
   const { colors } = useTheme();
+  const cancelGuard = useCancelForgotPasswordGuard(navigation);
   const { email, resetToken } = forgotPasswordData;
   const canAccessResetStep =
     canAccessStep(ForgotPasswordStep.Reset) && Boolean(email) && Boolean(resetToken);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState(forgotPasswordData?.password ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const confirmInputRef = useRef(null);
-  // Set before this screen clears the flow on its way out, so the guard
-  // below doesn't also try to redirect.
-  const isLeavingRef = useRef(false);
 
   useEffect(() => {
-    if (!canAccessResetStep && !isLeavingRef.current) {
+    // Only while on top: when the confirm screen finishes it clears the flow
+    // while this screen is still in the stack, and that must not redirect.
+    if (!canAccessResetStep && navigation.isFocused()) {
       navigation.replace(routes.ForgotPasswordEmail);
     }
   }, [canAccessResetStep, navigation]);
@@ -50,10 +44,9 @@ export default function ForgotPasswordReset({ navigation }) {
   // Bytes, not characters: an emoji counts as up to 4.
   const isPasswordShortEnough =
     new TextEncoder().encode(password).length <= MAX_PASSWORD_BYTES;
-  const doPasswordsMatch = password === confirmPassword;
-  // hasLetter is left out on purpose: the button stays enabled so pressing it
-  // shows the reason, instead of a disabled button with no explanation.
-  const isFormValid = isPasswordLongEnough && confirmPassword.length > 0 && doPasswordsMatch;
+  // Only the look of the arrow: it stays pressable so pressing it shows the
+  // reason, instead of a disabled button with no explanation.
+  const isFormValid = isPasswordLongEnough && isPasswordShortEnough && hasLetter;
 
   const handlePasswordChange = (text) => {
     setPassword(text);
@@ -62,14 +55,7 @@ export default function ForgotPasswordReset({ navigation }) {
     }
   };
 
-  const handleConfirmChange = (text) => {
-    setConfirmPassword(text);
-    if (error) {
-      setError('');
-    }
-  };
-
-  const handleArrowPress = async () => {
+  const handleArrowPress = () => {
     if (!isPasswordLongEnough) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
@@ -85,59 +71,18 @@ export default function ForgotPasswordReset({ navigation }) {
       return;
     }
 
-    if (!doPasswordsMatch) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    if (isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      await resetPassword({ email, resetToken, password, confirmPassword });
-      isLeavingRef.current = true;
-      // The server has ended every session for this account, so start the
-      // login flow from scratch: email first, then the new password.
-      navigation.reset({
-        index: 1,
-        routes: [
-          { name: routes.Welcome },
-          { name: routes.LoginEmail, params: { email, passwordReset: true } },
-        ],
-      });
-      resetForgotPasswordFlow();
-      resetLoginFlow();
-    } catch (err) {
-      const { data } = err?.response || {};
-      if (data?.code === ERROR_CODES.RESET_TOKEN_INVALID) {
-        // The verified code expired before the password was set. Go back to
-        // the email step to get a new one.
-        isLeavingRef.current = true;
-        navigation.popTo(routes.ForgotPasswordEmail, { notice: data.message });
-        resetForgotPasswordFlow();
-      } else {
-        setError(
-          err?.response?.data?.message || 'Something went wrong. Please try again.',
-        );
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    continueWithPassword({ password });
+    navigation.navigate(routes.ForgotPasswordConfirmPassword);
   };
 
   if (!canAccessResetStep) {
     return null;
   }
 
-  const showMismatch = confirmPassword.length > 0 && !doPasswordsMatch;
-
   const showHideToggle = (
     <TouchableOpacity
       style={styles?.toggleButton}
+      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
       onPress={() => setShowPassword((prev) => !prev)}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -152,18 +97,17 @@ export default function ForgotPasswordReset({ navigation }) {
   return (
     <AuthLayout
       circleColor={colors?.cyan}
-      onBack={() => navigation?.goBack?.()}
+      onBack={cancelGuard.onBack}
       footer={
         <RoundArrowButton
           onPress={handleArrowPress}
           active={isFormValid}
-          loading={isSubmitting}
-          accessibilityLabel="Change password"
+          accessibilityLabel="Next step"
         />
       }
     >
-      <AuthHeading step="Step 3 of 3" title={'Set a new\npassword'}>
-        You'll be logged out on all your devices and can log in again with this password.
+      <AuthHeading step="Step 3 of 4" title={'Set a new\npassword'}>
+        You'll use this password to log into Reels Vault.
       </AuthHeading>
 
       <View style={styles?.fields}>
@@ -172,6 +116,8 @@ export default function ForgotPasswordReset({ navigation }) {
           required
           labelAccessory={showHideToggle}
           hint={`${MIN_PASSWORD_LENGTH} to ${MAX_PASSWORD_BYTES} characters, including a letter.`}
+          error={error}
+          floatingError
           value={password}
           onChangeText={handlePasswordChange}
           placeholder="Enter your new password"
@@ -180,26 +126,13 @@ export default function ForgotPasswordReset({ navigation }) {
           autoCorrect={false}
           textContentType="newPassword"
           returnKeyType="next"
-          onSubmitEditing={() => confirmInputRef.current?.focus()}
-          blurOnSubmit={false}
-        />
-
-        <TextField
-          inputRef={confirmInputRef}
-          label="Confirm New Password"
-          required
-          error={error || (showMismatch ? 'Passwords do not match.' : '')}
-          value={confirmPassword}
-          onChangeText={handleConfirmChange}
-          placeholder="Re-enter your new password"
-          secureTextEntry={!showPassword}
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="newPassword"
-          returnKeyType="done"
+          autoFocus
           onSubmitEditing={handleArrowPress}
+          submitBehavior="submit"
         />
       </View>
+
+      <CancelSignupSheet {...cancelGuard.sheetProps} />
     </AuthLayout>
   );
 }

@@ -6,11 +6,14 @@ import SignupLastName from '../screens/Signup/SignupLastName';
 import SignupEmail from '../screens/Signup/SignupEmail';
 import SignupOtp from '../screens/Signup/SignupOtp';
 import SignupPassword from '../screens/Signup/SignupPassword';
+import SignupConfirmPassword from '../screens/Signup/SignupConfirmPassword';
 import LoginEmail from '../screens/Login/LoginEmail';
 import LoginPassword from '../screens/Login/LoginPassword';
 import ForgotPasswordEmail from '../screens/ForgotPassword/ForgotPasswordEmail';
 import ForgotPasswordOtp from '../screens/ForgotPassword/ForgotPasswordOtp';
 import ForgotPasswordReset from '../screens/ForgotPassword/ForgotPasswordReset';
+import ForgotPasswordConfirmPassword from '../screens/ForgotPassword/ForgotPasswordConfirmPassword';
+import ForgotPasswordSuccess from '../screens/ForgotPassword/ForgotPasswordSuccess';
 import Dashboard from '../screens/Dashboard/Dashboard';
 import Settings from '../screens/Settings/Settings';
 import EditName from '../screens/Account/EditName';
@@ -18,6 +21,11 @@ import AccountPassword from '../screens/Account/AccountPassword';
 import ChangeEmail from '../screens/Account/ChangeEmail';
 import AccountOtp from '../screens/Account/AccountOtp';
 import ChangePassword from '../screens/Account/ChangePassword';
+import ChangePasswordConfirm from '../screens/Account/ChangePasswordConfirm';
+import DeleteAccount from '../screens/Account/DeleteAccount';
+import DeleteAccountConfirm from '../screens/Account/DeleteAccountConfirm';
+import DeleteAccountPassword from '../screens/Account/DeleteAccountPassword';
+import DeleteAccountSuccess from '../screens/Account/DeleteAccountSuccess';
 import ManageCategories from '../components/ManageCategories/ManageCategories';
 import routes from '../routes/routes';
 import { useAuth } from '../context/AuthContext';
@@ -44,11 +52,17 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.SignupEmail} component={SignupEmail} />
       <Stack.Screen name={routes.SignupOtp} component={SignupOtp} />
       <Stack.Screen name={routes.SignupPassword} component={SignupPassword} />
+      <Stack.Screen name={routes.SignupConfirmPassword} component={SignupConfirmPassword} />
       <Stack.Screen name={routes.LoginEmail} component={LoginEmail} />
       <Stack.Screen name={routes.LoginPassword} component={LoginPassword} />
       <Stack.Screen name={routes.ForgotPasswordEmail} component={ForgotPasswordEmail} />
       <Stack.Screen name={routes.ForgotPasswordOtp} component={ForgotPasswordOtp} />
       <Stack.Screen name={routes.ForgotPasswordReset} component={ForgotPasswordReset} />
+      <Stack.Screen
+        name={routes.ForgotPasswordConfirmPassword}
+        component={ForgotPasswordConfirmPassword}
+      />
+      <Stack.Screen name={routes.ForgotPasswordSuccess} component={ForgotPasswordSuccess} />
       <Stack.Screen name={routes.Dashboard} component={Dashboard} />
       <Stack.Screen name={routes.Settings} component={Settings} />
       <Stack.Screen name={routes.ManageCategories} component={ManageCategories} />
@@ -57,6 +71,11 @@ export default function AppNavigator() {
       <Stack.Screen name={routes.ChangeEmail} component={ChangeEmail} />
       <Stack.Screen name={routes.AccountOtp} component={AccountOtp} />
       <Stack.Screen name={routes.ChangePassword} component={ChangePassword} />
+      <Stack.Screen name={routes.ChangePasswordConfirm} component={ChangePasswordConfirm} />
+      <Stack.Screen name={routes.DeleteAccount} component={DeleteAccount} />
+      <Stack.Screen name={routes.DeleteAccountConfirm} component={DeleteAccountConfirm} />
+      <Stack.Screen name={routes.DeleteAccountPassword} component={DeleteAccountPassword} />
+      <Stack.Screen name={routes.DeleteAccountSuccess} component={DeleteAccountSuccess} />
     </Stack.Navigator>
   );
 }

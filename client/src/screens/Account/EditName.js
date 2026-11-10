@@ -63,7 +63,7 @@ export default function EditName({ navigation, route }) {
         />
       }
     >
-      <AuthHeading title={'Your\nname'}>
+      <AuthHeading title={'Your name'}>
         This is how your name appears in ReelsVault.
       </AuthHeading>
 

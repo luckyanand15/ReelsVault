@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import OtpCodeField from '../../components/OtpCodeField/OtpCodeField';
-import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+// import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import { useTheme } from '../../context/ThemeContext';
 import routes from '../../routes/routes';
 import { OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS } from '../../context/SignupFlowContext';
@@ -170,14 +170,14 @@ export default function ForgotPasswordOtp({ navigation, route }) {
 
   // The code verifies itself on the sixth digit; the arrow retries it, or
   // says what's missing.
-  const handleArrowPress = () => {
-    const code = otp.join('');
-    if (code.length < 6) {
-      setError('Enter the 6-digit code.');
-      return;
-    }
-    handleVerify(code);
-  };
+  // const handleArrowPress = () => {
+    // const code = otp.join('');
+    // if (code.length < 6) {
+      // setError('Enter the 6-digit code.');
+      // return;
+    // }
+    // handleVerify(code);
+  // };
 
   const canResend = resendCooldown <= 0 && !isResending;
 
@@ -185,18 +185,20 @@ export default function ForgotPasswordOtp({ navigation, route }) {
     <AuthLayout
       circleColor={colors?.yellow}
       onBack={() => navigation?.goBack?.()}
-      footer={
-        <RoundArrowButton
-          onPress={handleArrowPress}
-          active={otp.join('').length === 6}
-          loading={isVerifying}
-          accessibilityLabel="Verify code"
-        />
-      }
+      // Arrow hidden: the code verifies and moves on by itself on the 6th
+      // digit. Uncomment (with handleArrowPress and the import) to bring it back.
+      // footer={
+        // <RoundArrowButton
+          // onPress={handleArrowPress}
+          // active={otp.join('').length === 6}
+          // loading={isVerifying}
+          // accessibilityLabel="Verify code"
+        // />
+      // }
     >
       {/* "If an account exists": the server doesn't say whether it does, so
           neither can this screen. */}
-      <AuthHeading step="Step 2 of 3" title={'Enter reset\ncode'}>
+      <AuthHeading step="Step 2 of 4" title={'Enter reset\ncode'}>
         {alreadySent
           ? 'We already sent a 6-digit code to'
           : 'If an account exists for'}{' '}
@@ -216,6 +218,7 @@ export default function ForgotPasswordOtp({ navigation, route }) {
         onChangeDigit={handleChangeText}
         onKeyPress={handleKeyPress}
         error={error}
+        verifying={isVerifying}
         resend={{
           canResend,
           isResending,

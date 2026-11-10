@@ -1,11 +1,15 @@
 const User = require('../models/User');
+const Category = require('../models/Category');
+const Reel = require('../models/Reel');
+const SavedReel = require('../models/SavedReel');
+const LoginAttempt = require('../models/LoginAttempt');
 const authService = require('./auth.service');
 const otpService = require('./otp.service');
 const tokenService = require('./token.service');
 const brevoService = require('./brevo.service');
 const { signReauthToken, verifyReauthToken } = require('../utils/jwt');
 
-const { EmailChange, PasswordChange } = otpService.OTP_PURPOSE;
+const { EmailChange, PasswordChange, AccountDelete } = otpService.OTP_PURPOSE;
 
 class UserNotFoundError extends Error {}
 class IncorrectPasswordError extends Error {}
@@ -14,6 +18,7 @@ class EmailInUseError extends Error {}
 class SameEmailError extends Error {}
 class SamePasswordError extends Error {}
 class InvalidChangeTokenError extends Error {}
+class InvalidDeleteTokenError extends Error {}
 
 const toSafeUser = user => {
   const { password: _password, ...safeUser } = user.toJSON();
@@ -194,6 +199,68 @@ const changePassword = async (userId, { reauthToken, changeToken, password }) =>
   return tokens;
 };
 
+// Delete account, step one: a code to the account's own address. Unlike the
+// email and password changes this comes before the password, which is the
+// last step and is checked in deleteAccount itself.
+const sendDeleteAccountOtp = async userId => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new UserNotFoundError('User not found.');
+  }
+  const code = await otpService.createOtp(user.email, AccountDelete);
+  await brevoService.sendAccountDeleteOtpEmail(user.email, code, otpService.OTP_TTL_MINUTES);
+};
+
+// Same shape as otpService.verifyOtp; the verificationToken is what
+// deleteAccount spends.
+const verifyDeleteAccountOtp = async (userId, { code }) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new UserNotFoundError('User not found.');
+  }
+  return otpService.verifyOtp(user.email, code, AccountDelete);
+};
+
+// Deletes the user and everything they own. Needs both the token from the
+// verified code and the current password.
+const deleteAccount = async (userId, { deleteToken, password }, ip) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    throw new UserNotFoundError('User not found.');
+  }
+
+  // Same lockout as login, so this can't be used to guess the password faster.
+  await authService.assertNotLocked(user.email, ip);
+  if (!(await user.comparePassword(password))) {
+    await authService.recordFailedLogin(user.email, ip);
+    throw new IncorrectPasswordError('Incorrect password.');
+  }
+  await authService.clearFailedLogins(user.email, ip);
+
+  // Checked after the password, so a typo doesn't spend the code.
+  const isVerified = await otpService.consumeVerifiedOtp(user.email, deleteToken, AccountDelete);
+  if (!isVerified) {
+    throw new InvalidDeleteTokenError('Your code has expired. Please start again.');
+  }
+
+  // Sessions first, so nothing can keep using the account while it's being
+  // removed. The user goes last: if a step fails it still exists, and the
+  // user can log in and delete it again.
+  await tokenService.revokeAllForUser(user.id);
+  await SavedReel.deleteMany({ userId: user.id });
+  await Reel.deleteMany({ userId: user.id });
+  await Category.deleteMany({ userId: user.id });
+  await LoginAttempt.deleteMany({ email: user.email });
+  await User.deleteOne({ _id: user.id });
+
+  // The account is already gone, so a failed notice mustn't fail the request.
+  try {
+    await brevoService.sendAccountDeletedEmail(user.email);
+  } catch (err) {
+    console.error('Account deleted email failed:', err.message);
+  }
+};
+
 module.exports = {
   updateName,
   reauthenticate,
@@ -202,6 +269,9 @@ module.exports = {
   sendPasswordChangeOtp,
   verifyPasswordChangeOtp,
   changePassword,
+  sendDeleteAccountOtp,
+  verifyDeleteAccountOtp,
+  deleteAccount,
   UserNotFoundError,
   IncorrectPasswordError,
   ReauthRequiredError,
@@ -209,4 +279,5 @@ module.exports = {
   SameEmailError,
   SamePasswordError,
   InvalidChangeTokenError,
+  InvalidDeleteTokenError,
 };

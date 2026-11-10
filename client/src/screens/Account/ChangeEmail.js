@@ -117,6 +117,7 @@ export default function ChangeEmail({ navigation }) {
         label="New Email Address"
         required
         error={error}
+        floatingError
         value={email}
         onChangeText={handleEmailChange}
         placeholder="Enter your new email address"

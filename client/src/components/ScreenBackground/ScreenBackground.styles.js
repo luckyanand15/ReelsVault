@@ -5,9 +5,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
-  dots: {
-    ...StyleSheet.absoluteFill,
-  },
   circle: {
     position: 'absolute',
     top: -80,

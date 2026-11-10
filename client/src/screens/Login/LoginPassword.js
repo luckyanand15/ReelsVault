@@ -3,12 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardAvoider from '../../components/KeyboardAvoider/KeyboardAvoider';
 import ScreenHeader from '../../components/ScreenHeader/ScreenHeader';
 import ScreenBackground from '../../components/ScreenBackground/ScreenBackground';
 import TextField from '../../components/TextField/TextField';
@@ -101,10 +100,7 @@ export default function LoginPassword({ navigation }) {
       <SafeAreaView style={styles?.safeArea}>
         <ScreenHeader onBack={() => navigation?.goBack?.()} />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles?.keyboardAvoidingView}
-        >
+        <KeyboardAvoider style={styles?.keyboardAvoidingView}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles?.container}>
               <View style={styles?.form}>
@@ -139,6 +135,7 @@ export default function LoginPassword({ navigation }) {
                     label="Password"
                     required
                     error={error}
+                    showErrorText={false}
                     labelAccessory={showHideToggle}
                     value={password}
                     onChangeText={handlePasswordChange}
@@ -149,22 +146,36 @@ export default function LoginPassword({ navigation }) {
                     textContentType="password"
                     returnKeyType="done"
                     onSubmitEditing={handleArrowPress}
+                    autoFocus
                   />
 
-                  <TouchableOpacity
-                    style={styles?.forgotPasswordButton}
-                    onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                  >
-                    <Text style={[styles?.forgotPasswordText, { color: colors?.fg }]}>
-                      Forgot password?
-                    </Text>
-                    {/* Android can't colour a text underline, so draw it */}
-                    <View
-                      style={[styles?.forgotPasswordUnderline, { backgroundColor: colors?.pink }]}
-                    />
-                  </TouchableOpacity>
+                  {/* Error (left, wraps) shares a row with the link (right),
+                      so a one-line error doesn't push anything down */}
+                  <View style={styles?.belowFieldRow}>
+                    {error ? (
+                      <Text
+                        style={[styles?.errorText, { color: colors?.pinkText }]}
+                        accessibilityLiveRegion="polite"
+                      >
+                        {error}
+                      </Text>
+                    ) : null}
+
+                    <TouchableOpacity
+                      style={styles?.forgotPasswordButton}
+                      onPress={() => navigation.navigate(routes.ForgotPasswordEmail, { email })}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles?.forgotPasswordText, { color: colors?.fg }]}>
+                        Forgot password?
+                      </Text>
+                      {/* Android can't colour a text underline, so draw it */}
+                      <View
+                        style={[styles?.forgotPasswordUnderline, { backgroundColor: colors?.pink }]}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
 
@@ -179,7 +190,7 @@ export default function LoginPassword({ navigation }) {
               </View>
             </View>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+        </KeyboardAvoider>
       </SafeAreaView>
     </View>
   );

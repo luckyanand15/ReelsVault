@@ -19,7 +19,7 @@ const otpSchema = new mongoose.Schema(
     // Keep in sync with OTP_PURPOSE in otp.service.js.
     purpose: {
       type: String,
-      enum: ['signup', 'password_reset', 'email_change', 'password_change'],
+      enum: ['signup', 'password_reset', 'email_change', 'password_change', 'account_delete'],
       default: 'signup',
     },
     attempts: {

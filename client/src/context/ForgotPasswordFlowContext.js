@@ -4,6 +4,7 @@ export const ForgotPasswordStep = {
   Email: 0,
   Otp: 1,
   Reset: 2,
+  ConfirmPassword: 3,
 };
 
 const initialForgotPasswordData = {
@@ -13,6 +14,9 @@ const initialForgotPasswordData = {
   // back and continues with the same address.
   otpSentAt: null,
   resetToken: '',
+  // Held between the new-password and confirm screens; sent to the server
+  // only from the confirm screen.
+  password: '',
 };
 
 const ForgotPasswordFlowContext = createContext(null);
@@ -38,6 +42,10 @@ export function ForgotPasswordFlowProvider({ children }) {
       confirmOtp: ({ resetToken }) => {
         setForgotPasswordData((currentData) => ({ ...currentData, resetToken }));
         setCurrentStep(ForgotPasswordStep.Reset);
+      },
+      continueWithPassword: ({ password }) => {
+        setForgotPasswordData((currentData) => ({ ...currentData, password }));
+        setCurrentStep(ForgotPasswordStep.ConfirmPassword);
       },
       // Also used when the reset token is rejected, so the user starts over
       // with a fresh code instead of being stuck on the password screen.

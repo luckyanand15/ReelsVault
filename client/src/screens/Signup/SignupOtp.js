@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Text } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import OtpCodeField from '../../components/OtpCodeField/OtpCodeField';
-import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+// import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
 import routes from '../../routes/routes';
 import {
   OTP_RESEND_COOLDOWN_SECONDS as RESEND_COOLDOWN_SECONDS,
@@ -167,14 +167,14 @@ export default function SignupOtp({ navigation, route }) {
 
   // The code verifies itself on the sixth digit; the arrow retries it, or
   // says what's missing.
-  const handleArrowPress = () => {
-    const code = otp.join('');
-    if (code.length < 6) {
-      setError('Enter the 6-digit code.');
-      return;
-    }
-    handleVerify(code);
-  };
+  // const handleArrowPress = () => {
+    // const code = otp.join('');
+    // if (code.length < 6) {
+      // setError('Enter the 6-digit code.');
+      // return;
+    // }
+    // handleVerify(code);
+  // };
 
   if (!canAccessOtpStep) {
     return null;
@@ -184,16 +184,18 @@ export default function SignupOtp({ navigation, route }) {
     <AuthLayout
       circleColor={colors?.cyan}
       onBack={() => navigation?.goBack?.()}
-      footer={
-        <RoundArrowButton
-          onPress={handleArrowPress}
-          active={otp.join('').length === 6}
-          loading={isVerifying}
-          accessibilityLabel="Verify code"
-        />
-      }
+      // Arrow hidden: the code verifies and moves on by itself on the 6th
+      // digit. Uncomment (with handleArrowPress and the import) to bring it back.
+      // footer={
+        // <RoundArrowButton
+          // onPress={handleArrowPress}
+          // active={otp.join('').length === 6}
+          // loading={isVerifying}
+          // accessibilityLabel="Verify code"
+        // />
+      // }
     >
-      <AuthHeading step="Step 4 of 5" title={'Enter verification\ncode'}>
+      <AuthHeading step="Step 4 of 6" title={'Enter verification\ncode'}>
         {alreadySent ? 'We already sent a 6-digit code to' : 'We sent a 6-digit code to'}{' '}
         <Text style={[styles?.emailHighlight, { color: colors?.fg }]}>
           {email || 'your email'}
@@ -209,6 +211,7 @@ export default function SignupOtp({ navigation, route }) {
         onChangeDigit={handleChangeText}
         onKeyPress={handleKeyPress}
         error={error}
+        verifying={isVerifying}
         resend={{
           canResend: resendCooldown <= 0 && !isResending,
           isResending,

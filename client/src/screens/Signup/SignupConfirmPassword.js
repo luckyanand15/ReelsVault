@@ -1,0 +1,191 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
+import TextField from '../../components/TextField/TextField';
+import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
+import routes from '../../routes/routes';
+import { SignupStep, useSignupFlow } from '../../context/SignupFlowContext';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { createUser } from '../../api/user.api';
+import styles from './SignupPassword.styles';
+
+export default function SignupConfirmPassword({ navigation }) {
+  const { canAccessStep, completeSignup, resetSignup, signupData } = useSignupFlow();
+  const { authLogin } = useAuth();
+  const { colors } = useTheme();
+  const { firstName, lastName, email, isEmailVerified, verificationToken, password } =
+    signupData;
+  const canAccessConfirmStep =
+    canAccessStep(SignupStep.ConfirmPassword) &&
+    Boolean(email) &&
+    isEmailVerified &&
+    Boolean(verificationToken) &&
+    Boolean(password);
+
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const hasCompletedSignupRef = useRef(false);
+  const shouldResetSignupOnUnmountRef = useRef(false);
+
+  useEffect(() => {
+    if (!canAccessConfirmStep && !hasCompletedSignupRef.current) {
+      navigation.replace(routes.Signup);
+    }
+  }, [canAccessConfirmStep, navigation]);
+
+  useEffect(
+    () => () => {
+      if (shouldResetSignupOnUnmountRef.current) {
+        resetSignup();
+      }
+    },
+    // resetSignup only calls state setters; the cleanup must run on unmount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // Once the account is created the held password is cleared while this
+  // screen is still animating out, so stop comparing against it then:
+  // otherwise "Passwords do not match." flashes on the way to the Dashboard.
+  const doPasswordsMatch =
+    hasCompletedSignupRef.current || password === confirmPassword;
+  // Only the look of the arrow: it stays pressable so pressing it shows the
+  // reason, instead of a disabled button with no explanation.
+  const isFormValid = confirmPassword.length > 0 && doPasswordsMatch;
+
+  const handleConfirmChange = (text) => {
+    setConfirmPassword(text);
+    if (error) {
+      setError('');
+    }
+  };
+
+  const handleArrowPress = async () => {
+    if (!doPasswordsMatch) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    let session;
+    try {
+      session = await createUser({
+        firstName,
+        lastName,
+        email,
+        verificationToken,
+        password,
+        confirmPassword,
+      });
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        setError('This email is already registered.');
+      } else {
+        setError(
+          err?.response?.data?.message || 'Something went wrong. Please try again.',
+        );
+      }
+      setIsSubmitting(false);
+      return;
+    }
+
+    // From here the account exists on the server, so a retry would only get
+    // a 409. Whatever happens next, this screen is done.
+    hasCompletedSignupRef.current = true;
+
+    try {
+      await authLogin(session);
+    } catch (err) {
+      console.error('Failed to log in after signup:', err?.message);
+      // Send them to log in with the account they just made. The signup
+      // data is cleared on unmount, once the signup screens have left the
+      // stack (clearing it now would trip their redirect back to the start).
+      shouldResetSignupOnUnmountRef.current = true;
+      navigation.reset({
+        index: 1,
+        routes: [
+          { name: routes.Welcome },
+          { name: routes.LoginEmail, params: { email, accountCreated: true } },
+        ],
+      });
+      return;
+    }
+
+    navigation.reset({
+      index: 0,
+      routes: [{ name: routes.Dashboard }],
+    });
+    completeSignup({ userId: session?.user?.id });
+  };
+
+  if (!canAccessConfirmStep && !hasCompletedSignupRef.current) {
+    return null;
+  }
+
+  const showMismatch = confirmPassword.length > 0 && !doPasswordsMatch;
+
+  const showHideToggle = (
+    <TouchableOpacity
+      style={styles?.toggleButton}
+      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+      onPress={() => setShowPassword((prev) => !prev)}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+    >
+      <Text style={[styles?.toggleText, { color: colors?.fg }]}>
+        {showPassword ? 'Hide' : 'Show'}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <AuthLayout
+      circleColor={colors?.accent}
+      onBack={() => navigation?.goBack?.()}
+      footer={
+        <RoundArrowButton
+          onPress={handleArrowPress}
+          active={isFormValid}
+          loading={isSubmitting}
+          accessibilityLabel="Create account and go to Dashboard"
+        />
+      }
+    >
+      <AuthHeading step="Step 6 of 6" title={'Confirm your\npassword'}>
+        Re-enter your password to make sure it's right.
+      </AuthHeading>
+
+      <View style={styles?.fields}>
+        <TextField
+          label="Confirm Password"
+          required
+          labelAccessory={showHideToggle}
+          error={error || (showMismatch ? 'Passwords do not match.' : '')}
+          floatingError
+          value={confirmPassword}
+          onChangeText={handleConfirmChange}
+          placeholder="Re-enter your password"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          returnKeyType="done"
+          autoFocus
+          onSubmitEditing={handleArrowPress}
+          submitBehavior="submit"
+        />
+      </View>
+    </AuthLayout>
+  );
+}

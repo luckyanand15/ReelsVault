@@ -88,11 +88,9 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  badgeIcon: {
-    fontSize: 13,
   },
   gridTextContainer: {
     paddingTop: 10,

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import AuthLayout, { AuthHeading } from '../../components/AuthLayout/AuthLayout';
 import TextField from '../../components/TextField/TextField';
 import RoundArrowButton from '../../components/RoundArrowButton/RoundArrowButton';
@@ -13,6 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { sendOtp } from '../../api/otp.api';
 import { formatRetryAfter } from '../../utils/formatRetryAfter';
 import { ERROR_CODES } from '../../constants/errorCodes';
+import styles from './Signup.styles';
 
 export default function SignupEmail({ navigation }) {
   const { canAccessStep, continueWithEmail, signupData } = useSignupFlow();
@@ -114,7 +116,6 @@ export default function SignupEmail({ navigation }) {
   return (
     <AuthLayout
       circleColor={colors?.yellow}
-      formStyle={{ gap: 20 }}
       onBack={() => navigation?.goBack?.()}
       footer={
         <RoundArrowButton
@@ -125,25 +126,27 @@ export default function SignupEmail({ navigation }) {
         />
       }
     >
-      <AuthHeading step="Step 3 of 5" title={'What\'s your\nemail?'}>
+      <AuthHeading step="Step 3 of 6" title={'What\'s your\nemail?'}>
         Enter your email address to continue setting up your account.
       </AuthHeading>
 
-      <TextField
-        label="Email Address"
-        required
-        error={error}
-        floatingError
-        value={email}
-        onChangeText={handleEmailChange}
-        placeholder="Enter your email address"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="done"
-        onSubmitEditing={handleArrowPress}
-        autoFocus
-      />
+      <View style={styles?.fields}>
+        <TextField
+          label="Email Address"
+          required
+          error={error}
+          floatingError
+          value={email}
+          onChangeText={handleEmailChange}
+          placeholder="Enter your email address"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="done"
+          onSubmitEditing={handleArrowPress}
+          autoFocus
+        />
+      </View>
     </AuthLayout>
   );
 }

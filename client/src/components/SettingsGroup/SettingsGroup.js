@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import HardShadow from '../HardShadow/HardShadow';
 import Icon from '../Icon/Icon';
 import { useTheme } from '../../context/ThemeContext';
 import styles from './SettingsGroup.styles';
 
-// Uppercase eyebrow + outlined card with a hard shadow. Rows are separated by
+// Uppercase eyebrow + outlined card. Rows are separated by
 // 2px dividers, added here so rows don't need to know their position.
-export default function SettingsGroup({ label, shadowColor, children }) {
+export default function SettingsGroup({ label, children }) {
   const { colors } = useTheme();
   const rows = React.Children.toArray(children).filter(Boolean);
 
@@ -16,23 +15,21 @@ export default function SettingsGroup({ label, shadowColor, children }) {
       {!!label && (
         <Text style={[styles?.eyebrow, { color: colors?.mut }]}>{label}</Text>
       )}
-      <HardShadow color={shadowColor ?? colors?.accent} offset={5} borderRadius={24}>
-        <View
-          style={[
-            styles?.card,
-            { backgroundColor: colors?.surf, borderColor: colors?.outline },
-          ]}
-        >
-          {rows.map((row, index) => (
-            <React.Fragment key={row.key ?? index}>
-              {index > 0 && (
-                <View style={[styles?.divider, { backgroundColor: colors?.line }]} />
-              )}
-              {row}
-            </React.Fragment>
-          ))}
-        </View>
-      </HardShadow>
+      <View
+        style={[
+          styles?.card,
+          { backgroundColor: colors?.surf, borderColor: colors?.outline },
+        ]}
+      >
+        {rows.map((row, index) => (
+          <React.Fragment key={row.key ?? index}>
+            {index > 0 && (
+              <View style={[styles?.divider, { backgroundColor: colors?.line }]} />
+            )}
+            {row}
+          </React.Fragment>
+        ))}
+      </View>
     </View>
   );
 }
@@ -46,6 +43,7 @@ export function SettingsRow({
   title,
   titleColor,
   subtitle,
+  wrapSubtitle = false,
   showChevron = true,
   onPress,
 }) {
@@ -73,7 +71,7 @@ export function SettingsRow({
         {!!subtitle && (
           <Text
             style={[styles?.subtitle, { color: colors?.mut }]}
-            numberOfLines={1}
+            numberOfLines={wrapSubtitle ? 0 : 1}
             ellipsizeMode="tail"
           >
             {subtitle}

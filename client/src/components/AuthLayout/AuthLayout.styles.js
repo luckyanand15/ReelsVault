@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 28,
-    paddingTop: 56,
+    paddingTop: 50,
     paddingBottom: 40,
     justifyContent: 'space-between',
     // Minimum space between the form and the arrow once the keyboard
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   form: {
-    gap: 36,
+    gap: 26,
   },
   footer: {
     alignItems: 'flex-end',

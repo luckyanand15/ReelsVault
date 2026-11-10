@@ -6,6 +6,7 @@ export const SignupStep = {
   Email: 2,
   Otp: 3,
   Password: 4,
+  ConfirmPassword: 5,
 };
 
 // Mirrors OTP_TTL_MINUTES on the server: how long a sent code stays usable.
@@ -21,6 +22,9 @@ const initialSignupData = {
   email: '',
   isEmailVerified: false,
   verificationToken: '',
+  // Held only between the two password screens; cleared once the account
+  // is created.
+  password: '',
   // When the last code was sent to `email`. Lets the email screen skip
   // re-sending (and hitting the server's 30s cooldown) when the user goes
   // back and continues with the same address.
@@ -37,14 +41,13 @@ export function SignupFlowProvider({ children }) {
     () => ({
       signupData,
       canAccessStep: (step) => currentStep >= step,
-      // Starts the flow afresh but keeps any last name already typed, so
-      // going back to fix the first name doesn't wipe it.
+      // Starts the flow afresh. Anything entered on later screens is dropped,
+      // since going back past a screen clears what was typed there.
       continueWithFirstName: ({ firstName }) => {
-        setSignupData((currentData) => ({
+        setSignupData({
           ...initialSignupData,
           firstName,
-          lastName: currentData.lastName,
-        }));
+        });
         setCurrentStep(SignupStep.LastName);
       },
       continueWithLastName: ({ lastName }) => {
@@ -61,6 +64,7 @@ export function SignupFlowProvider({ children }) {
           email,
           isEmailVerified: false,
           verificationToken: '',
+          password: '',
           otpSentAt,
         }));
         setCurrentStep(SignupStep.Otp);
@@ -79,12 +83,25 @@ export function SignupFlowProvider({ children }) {
         }));
         setCurrentStep(SignupStep.Password);
       },
+      continueWithPassword: ({ password }) => {
+        setSignupData((currentData) => ({
+          ...currentData,
+          password,
+        }));
+        setCurrentStep(SignupStep.ConfirmPassword);
+      },
       completeSignup: ({ userId }) => {
         setSignupData((currentData) => ({
           ...currentData,
           userId,
           verificationToken: '',
+          password: '',
         }));
+      },
+      // Drops everything entered so far, e.g. when the user cancels signup.
+      resetSignup: () => {
+        setSignupData(initialSignupData);
+        setCurrentStep(SignupStep.FirstName);
       },
     }),
     [currentStep, signupData],

@@ -5,11 +5,14 @@ const routes = {
   SignupEmail: 'SignupEmail',
   SignupOtp: 'SignupOtp',
   SignupPassword: 'SignupPassword',
+  SignupConfirmPassword: 'SignupConfirmPassword',
   LoginEmail: 'LoginEmail',
   LoginPassword: 'LoginPassword',
   ForgotPasswordEmail: 'ForgotPasswordEmail',
   ForgotPasswordOtp: 'ForgotPasswordOtp',
   ForgotPasswordReset: 'ForgotPasswordReset',
+  ForgotPasswordConfirmPassword: 'ForgotPasswordConfirmPassword',
+  ForgotPasswordSuccess: 'ForgotPasswordSuccess',
   Dashboard: 'Dashboard',
   Settings: 'Settings',
   ManageCategories: 'ManageCategories',
@@ -18,6 +21,11 @@ const routes = {
   ChangeEmail: 'ChangeEmail',
   AccountOtp: 'AccountOtp',
   ChangePassword: 'ChangePassword',
+  ChangePasswordConfirm: 'ChangePasswordConfirm',
+  DeleteAccount: 'DeleteAccount',
+  DeleteAccountConfirm: 'DeleteAccountConfirm',
+  DeleteAccountPassword: 'DeleteAccountPassword',
+  DeleteAccountSuccess: 'DeleteAccountSuccess',
 };
 
 export default routes;

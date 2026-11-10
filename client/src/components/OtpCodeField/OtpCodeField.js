@@ -11,6 +11,8 @@ import styles from './OtpCodeField.styles';
 // digits: the six values. inputRefs: a ref holding the six TextInputs.
 // onChangeDigit(text, index) / onKeyPress(e, index) / onFocusIndex(index|null).
 // resend: { canResend, isResending, cooldown, onPress }.
+// verifying: shows "Verifying..." where the error goes, for screens with no
+// arrow spinner to say the code is being checked.
 export default function OtpCodeField({
   digits,
   inputRefs,
@@ -20,6 +22,7 @@ export default function OtpCodeField({
   onKeyPress,
   error,
   resend,
+  verifying = false,
 }) {
   const { colors } = useTheme();
   const { canResend, isResending, cooldown, onPress } = resend || {};
@@ -68,6 +71,13 @@ export default function OtpCodeField({
 
       {error ? (
         <Text style={[styles?.errorText, { color: colors?.pinkText }]}>{error}</Text>
+      ) : verifying ? (
+        <Text
+          style={[styles?.errorText, { color: colors?.mut }]}
+          accessibilityLiveRegion="polite"
+        >
+          Verifying...
+        </Text>
       ) : null}
 
       <TouchableOpacity
